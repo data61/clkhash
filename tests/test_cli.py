@@ -1,6 +1,9 @@
 """
 http://click.pocoo.org/5/testing/
 """
+from __future__ import print_function
+from __future__ import division
+
 import random
 import time
 
@@ -21,7 +24,7 @@ class CLITestHelper(unittest.TestCase):
     samples = 100
 
     def setUp(self):
-        super().setUp()
+        super(CLITestHelper, self).setUp()
         self.pii_file = NamedTemporaryFile('w', encoding='utf8')
         self.pii_file_2 = NamedTemporaryFile('w', encoding='utf8')
         self.schema_file = NamedTemporaryFile('w', encoding='utf8')
@@ -85,7 +88,8 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(anonlink.cli.cli, [])
-        for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
+        # for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
+        for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
             assert expected_command in result.output
 
     def test_version(self):
@@ -100,7 +104,7 @@ class BasicCLITests(unittest.TestCase):
         result = runner.invoke(anonlink.cli.cli, '--help')
 
         assert 'hash' in result.output
-        assert 'bench' in result.output
+        # assert 'bench' in result.output
         assert 'generate' in result.output
         assert 'Confidential Computing' in result.output
 
@@ -115,12 +119,12 @@ class BasicCLITests(unittest.TestCase):
         assert 'keys' in result.output
         assert 'schema' in result.output
 
-    def test_bench(self):
-        runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['benchmark',
-                                                  '--size', '20'])
-        assert 'Popcount speed:' in result.output
-        assert 'Comparisons per second' in result.output
+    # def test_bench(self):
+    #     runner = CliRunner()
+    #     result = runner.invoke(anonlink.cli.cli, ['benchmark',
+    #                                               '--size', '20'])
+    #     assert 'Popcount speed:' in result.output
+    #     assert 'Comparisons per second' in result.output
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
@@ -257,7 +261,7 @@ class TestHasherSimpleSchema(CLITestHelper):
 class TestCliInteractionWithService(CLITestHelper):
 
     def setUp(self):
-        super().setUp()
+        super(TestCliInteractionWithService, self).setUp()
         self.url = os.environ['TEST_ENTITY_SERVICE']
 
         # hash some PII for uploading

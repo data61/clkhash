@@ -11,6 +11,7 @@ TODO: Get first name distributions right by using distributions
 TODO: Generate realistic errors
 TODO: Add RESTfull api to generate reasonable name data as requested
 """
+from __future__ import print_function
 
 import csv
 import random
