@@ -10,7 +10,7 @@ import time
 import anonlink
 from anonlink import bloomfilter
 from anonlink import randomnames
-# from anonlink import benchmark as bench
+from anonlink import benchmark as bench
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -253,35 +253,36 @@ def results(mapping, apikey, watch, server, output):
         log(response.text)
 
 
-# @cli.command('benchmark', short_help='carry out a local benchmark')
+@cli.command('benchmark', short_help='carry out a local benchmark')
 # @click.option('--size', type=int, default=10000, help="Max size")
 # @click.option('--compare/--no-compare', default=False, help="Compare C and Python")
 # def benchmark(size, compare):
-#
-#     if compare:
-#         print(bench.compare_python_c(ntotal=1000, nsubset=600))
-#
-#     bench.compute_popcount_speed(100000)
-#
-#     bench.print_comparison_header()
-#
-#     possible_test_sizes = [
-#         1000, 2000, 3000, 4000,
-#         5000, 6000, 7000, 8000, 9000,
-#         10000,
-#         20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
-#         1000000,
-#         2000000
-#     ]
-#
-#     for test_size in possible_test_sizes:
-#         if test_size <= size:
-#             bench.compute_comparison_speed_parallel(
-#                 test_size, test_size
-#             )
-#
-#     print("Single Core:")
-#     bench.compute_comparison_speed(5000, 5000)
+def benchmark():
+
+    # if compare:
+    #     print(bench.compare_python_c(ntotal=1000, nsubset=600))
+
+    bench.compute_popcount_speed(100000)
+
+    # bench.print_comparison_header()
+    #
+    # possible_test_sizes = [
+    #     1000, 2000, 3000, 4000,
+    #     5000, 6000, 7000, 8000, 9000,
+    #     10000,
+    #     20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
+    #     1000000,
+    #     2000000
+    # ]
+    #
+    # for test_size in possible_test_sizes:
+    #     if test_size <= size:
+    #         bench.compute_comparison_speed_parallel(
+    #             test_size, test_size
+    #         )
+    #
+    # print("Single Core:")
+    # bench.compute_comparison_speed(5000, 5000)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')

@@ -88,8 +88,8 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(anonlink.cli.cli, [])
-        # for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
-        for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
+        for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
+        # for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
             assert expected_command in result.output
 
     def test_version(self):
@@ -119,12 +119,13 @@ class BasicCLITests(unittest.TestCase):
         assert 'keys' in result.output
         assert 'schema' in result.output
 
-    # def test_bench(self):
-    #     runner = CliRunner()
-    #     result = runner.invoke(anonlink.cli.cli, ['benchmark',
-    #                                               '--size', '20'])
-    #     assert 'Popcount speed:' in result.output
-    #     assert 'Comparisons per second' in result.output
+    def test_bench(self):
+        runner = CliRunner()
+        # result = runner.invoke(anonlink.cli.cli, ['benchmark',
+        #                                           '--size', '20'])
+        result = runner.invoke(anonlink.cli.cli, ['benchmark'])
+        assert 'Popcount speed:' in result.output
+        # assert 'Comparisons per second' in result.output
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
