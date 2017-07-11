@@ -94,7 +94,7 @@ class BasicCLITests(unittest.TestCase):
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(clkhash.cli.cli, [b'--version'])
+        result = runner.invoke(clkhash.cli.cli, ['--version'])
         assert result.exit_code == 0
         assert clkhash.__version__ in result.output
 
