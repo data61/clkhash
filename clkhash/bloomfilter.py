@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import base64
 
-from anonlink.identifier_types import basic_types
+from clkhash.identifier_types import basic_types
 
-from anonlink import bloommatcher as bm
+from clkhash import bloommatcher as bm
 import logging
 logging.basicConfig(level=logging.WARNING)
 

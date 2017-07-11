@@ -7,10 +7,10 @@ import csv
 import requests
 import time
 
-import anonlink
-from anonlink import bloomfilter
-from anonlink import randomnames
-from anonlink import benchmark as bench
+import clkhash
+from clkhash import bloomfilter
+from clkhash import randomnames
+from clkhash import benchmark as bench
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -20,7 +20,7 @@ def log(m, color='red'):
 
 
 @click.group("clkutil")
-@click.version_option(anonlink.__version__)
+@click.version_option(clkhash.__version__)
 @click.option('--verbose', '-v', is_flag=True,
               help='Enables verbose mode.')
 def cli(verbose=False):

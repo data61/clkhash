@@ -4,7 +4,7 @@ from timeit import default_timer as timer
 # from anonlink.bloomfilter import calculate_bloom_filters
 # from anonlink.entitymatch import *
 # from anonlink.randomnames import NameList
-from anonlink.util import popcount_vector, generate_clks, generate_bitarray
+from clkhash.util import popcount_vector, generate_clks, generate_bitarray
 # import anonlink.concurrent
 
 

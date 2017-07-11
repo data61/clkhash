@@ -7,9 +7,9 @@ from __future__ import division
 import random
 import time
 
-import anonlink
-import anonlink.cli
-from anonlink import randomnames
+import clkhash
+import clkhash.cli
+from clkhash import randomnames
 
 from click.testing import CliRunner
 
@@ -62,7 +62,7 @@ class CLITestHelper(unittest.TestCase):
 
         with NamedTemporaryFile() as output:
             command.extend(['-o', output.name])
-            cli_result = runner.invoke(anonlink.cli.cli, command)
+            cli_result = runner.invoke(clkhash.cli.cli, command)
             assert cli_result.exit_code == 0
             output.seek(0)
             return output.read().decode('utf-8')
@@ -87,21 +87,20 @@ class BasicCLITests(unittest.TestCase):
 
     def test_list_commands(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, [])
+        result = runner.invoke(clkhash.cli.cli, [])
         for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
         # for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
             assert expected_command in result.output
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--version'])
-        print(result.output)
+        result = runner.invoke(clkhash.cli.cli, ['--version'])
         assert result.exit_code == 0
-        assert anonlink.__version__ in result.output
+        assert clkhash.__version__ in result.output
 
     def test_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, '--help')
+        result = runner.invoke(clkhash.cli.cli, '--help')
 
         assert 'hash' in result.output
         # assert 'bench' in result.output
@@ -110,12 +109,12 @@ class BasicCLITests(unittest.TestCase):
 
     def test_hash_auto_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['hash'])
+        result = runner.invoke(clkhash.cli.cli, ['hash'])
         assert 'Missing argument' in result.output
 
     def test_hash_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['hash', '--help'])
+        result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
         assert 'keys' in result.output
         assert 'schema' in result.output
 
@@ -123,7 +122,7 @@ class BasicCLITests(unittest.TestCase):
         runner = CliRunner()
         # result = runner.invoke(anonlink.cli.cli, ['benchmark',
         #                                           '--size', '20'])
-        result = runner.invoke(anonlink.cli.cli, ['benchmark'])
+        result = runner.invoke(clkhash.cli.cli, ['benchmark'])
         assert 'Popcount speed:' in result.output
         # assert 'Comparisons per second' in result.output
 
@@ -142,7 +141,7 @@ class TestHashCommand(unittest.TestCase):
             with open('in.txt', 'w') as f:
                 f.write('Alice, 1967')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash', 'in.txt', '-'])
+            result = runner.invoke(clkhash.cli.cli, ['hash', 'in.txt', '-'])
             assert result.exit_code != 0
             self.assertIn('keys', result.output)
 
@@ -153,7 +152,7 @@ class TestHashCommand(unittest.TestCase):
             with open('in.txt', 'w') as f:
                 f.write('Alice, 1967')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash', 'in.txt', 'a', 'b', '-'])
+            result = runner.invoke(clkhash.cli.cli, ['hash', 'in.txt', 'a', 'b', '-'])
             self.assertIn('clks', result.output)
 
     def test_hash_with_provided_schema(self):
@@ -165,7 +164,7 @@ class TestHashCommand(unittest.TestCase):
             with open('schema.txt', 'w') as f:
                 f.write('NAME freetext,DOB YYYY')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash',
+            result = runner.invoke(clkhash.cli.cli, ['hash',
                                                       '--schema',
                                                       'schema.txt',
                                                       'in.txt',
@@ -188,7 +187,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
     def test_cli_includes_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--help'])
+        result = runner.invoke(clkhash.cli.cli, ['--help'])
         assert result.exit_code == 0
 
         assert 'Usage' in result.output
@@ -196,26 +195,28 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--version'])
+        result = runner.invoke(clkhash.cli.cli, ['--version'])
+        print(result.exit_code)
         assert result.exit_code == 0
-        self.assertIn(anonlink.__version__, result.output)
+        self.assertIn(clkhash.__version__, result.output)
 
     def test_generate_command(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'generate',
                                            '50',
                                            output.name])
             output.seek(0)
             out = output.read().decode('utf-8')
+        print(len(out))
         assert len(out) > 50
 
     def test_basic_hashing(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
                                            self.pii_file.name,
@@ -228,7 +229,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_hashing_with_given_keys(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         self.pii_file.name,
                                         'key1', 'key2',
@@ -245,13 +246,14 @@ class TestHasherSimpleSchema(CLITestHelper):
         runner = CliRunner()
 
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         '-s', self.schema_file.name,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
                                         output.name])
+            print(cli_result.exit_code)
             self.assertEqual(cli_result.exit_code, 0, cli_result.output)
             output.seek(0)
             json.loads(output.read().decode('utf-8'))
@@ -267,7 +269,7 @@ class TestCliInteractionWithService(CLITestHelper):
 
         # hash some PII for uploading
         runner = CliRunner()
-        cli_result = runner.invoke(anonlink.cli.cli,
+        cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                     '-s', self.schema_file.name,
                                     self.pii_file.name,
@@ -277,7 +279,7 @@ class TestCliInteractionWithService(CLITestHelper):
         assert cli_result.exit_code == 0
 
 
-        cli_result = runner.invoke(anonlink.cli.cli,
+        cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                     '-s', self.schema_file.name,
                                     self.pii_file_2.name,

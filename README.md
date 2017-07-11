@@ -9,7 +9,7 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in [A
 
 # CLI Tool
 
-After installation of the anonlink library you should have a `clkutil` program in your path.
+After installation of the clkhash library you should have a `clkutil` program in your path.
 
 This can be used to process PII data into Cryptographic Longterm Keys.
 The tool also has an option for generating fake pii data, and commands to upload hashes to an entity matching service.
@@ -32,7 +32,7 @@ the other entity - and not with the service carrying out the linkage.
 
 To use the clkutil without installation just run:
 
-    python -m anonlink.cli
+    python -m clkhash.cli
 
 
 # Tests
