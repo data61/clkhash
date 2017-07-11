@@ -262,7 +262,7 @@ def benchmark():
     # if compare:
     #     print(bench.compare_python_c(ntotal=1000, nsubset=600))
 
-    bench.compute_popcount_speed(100000)
+    bench.compute_popcount_speed(1000000)
 
     # bench.print_comparison_header()
     #

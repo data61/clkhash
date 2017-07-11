@@ -94,7 +94,7 @@ class BasicCLITests(unittest.TestCase):
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(clkhash.cli.cli, ['--version'])
+        result = runner.invoke(clkhash.cli.cli, [b'--version'])
         assert result.exit_code == 0
         assert clkhash.__version__ in result.output
 
@@ -196,7 +196,6 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_version(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['--version'])
-        print(result.exit_code)
         assert result.exit_code == 0
         self.assertIn(clkhash.__version__, result.output)
 
@@ -210,7 +209,6 @@ class TestHasherDefaultSchema(unittest.TestCase):
                                            output.name])
             output.seek(0)
             out = output.read().decode('utf-8')
-        print(len(out))
         assert len(out) > 50
 
     def test_basic_hashing(self):
@@ -253,7 +251,6 @@ class TestHasherSimpleSchema(CLITestHelper):
                                         'secretkey1',
                                         'secretkey2',
                                         output.name])
-            print(cli_result.exit_code)
             self.assertEqual(cli_result.exit_code, 0, cli_result.output)
             output.seek(0)
             json.loads(output.read().decode('utf-8'))
