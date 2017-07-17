@@ -1,6 +1,8 @@
 #!/usr/bin/env python3.4
 from __future__ import print_function
 
+import os
+
 import click
 import json
 import csv
@@ -11,6 +13,7 @@ import clkhash
 from clkhash import bloomfilter
 from clkhash import randomnames
 from clkhash import benchmark as bench
+from clkhash.identifier_types import identifier_type_from_description
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -139,7 +142,8 @@ def create(type, schema, server, output, verbose):
     log("Server Status: {}".format(status))
 
     if schema is not None:
-        schema_json = json.load(schema)
+        schema_object = load_schema(schema)
+        schema_json = json.dumps(schema_object)
     else:
         schema_json = 'NOT PROVIDED'
 
@@ -302,13 +306,30 @@ def generate(size, output, schema):
 def load_schema(schema_file):
     if schema_file is None:
         log("Assuming default schema")
-        schema = ('INDEX', 'NAME freetext', 'DOB YYYY/MM/DD', 'GENDER M or F')
+        schema = [
+            {"identifier": 'INDEX'},
+            {"identifier": 'NAME freetext'},
+            {"identifier": 'DOB YYYY/MM/DD'},
+            {"identifier": 'GENDER M or F'}
+        ]
     else:
-        log("Loading schema from file")
-        schema_line = schema_file.read().strip()
-        schema = [s.strip() for s in schema_line.split(",")]
+        filename, extension = os.path.splitext(schema_file.name)
+        log("Loading schema from {} file".format(extension))
+
+        if extension == '.json':
+            import json
+            schema = json.load(schema_file)
+        elif extension == '.yaml':
+            import yaml
+            schema = yaml.load(schema_file)
+        else:
+            schema_line = schema_file.read().strip()
+            schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
         log("{}".format(schema))
-    return schema
+
+    schema_types = [identifier_type_from_description(column) for column in schema]
+
+    return schema_types
 
 
 if __name__ == "__main__":

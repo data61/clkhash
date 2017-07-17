@@ -3,7 +3,7 @@
 
 
 """
-from . import bloommatcher as bm
+from . import bloomhash as bh
 
 
 class IdentifierType:
@@ -22,7 +22,7 @@ class IdentifierType:
         Can be set to zero to skip
         """
         self.weight = int(weight)
-        self.tokenizer = bm.unigramlist if unigram else bm.bigramlist
+        self.tokenizer = bh.unigramlist if unigram else bh.bigramlist
         self.kwargs = kwargs
 
     def __call__(self, entry):
@@ -75,3 +75,22 @@ weighted_types = {
 
     'PHONE freetext': IdentifierType(unigram=True, toremove='()-')
 }
+
+
+def identifier_type_from_description(schema_object):
+    """
+    Given a dict describing a feature, return an Identifier type.
+    :param schema_object:
+    :return:
+    """
+    assert "identifier" in schema_object
+    id = schema_object['identifier']
+
+    if id in basic_types:
+        return basic_types[id]
+    elif id in weighted_types:
+        return weighted_types[id]
+    else:
+        return IdentifierType(
+            weight=schema_object.get('weight', 1)
+        )

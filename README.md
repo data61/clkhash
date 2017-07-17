@@ -60,3 +60,6 @@ Limitations
 
 - Hashing doesn't utilize multiple CPUs.
 
+Schema
+------
+

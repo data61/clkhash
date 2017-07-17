@@ -7,16 +7,18 @@ from __future__ import division
 import random
 import time
 
+import json
+import os
+import unittest
+from tempfile import NamedTemporaryFile
+
 import clkhash
 import clkhash.cli
 from clkhash import randomnames
 
+import yaml
 from click.testing import CliRunner
 
-import json
-import os
-import unittest
-from tempfile import NamedTemporaryFile, TemporaryFile
 
 
 class CLITestHelper(unittest.TestCase):
@@ -27,7 +29,9 @@ class CLITestHelper(unittest.TestCase):
         super(CLITestHelper, self).setUp()
         self.pii_file = NamedTemporaryFile('w', encoding='utf8')
         self.pii_file_2 = NamedTemporaryFile('w', encoding='utf8')
-        self.schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.text_schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.json_schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.yaml_schema_file = NamedTemporaryFile('w', encoding='utf8')
         self.clk_file = NamedTemporaryFile('w', encoding='utf8')
         self.clk_file_2 = NamedTemporaryFile('w', encoding='utf8')
 
@@ -42,11 +46,23 @@ class CLITestHelper(unittest.TestCase):
                              ('NAME freetext', 'DOB YYYY/MM/DD'),
                              self.pii_file_2)
 
-        print('NAME freetext,DOB YYYY/MM/DD', file=self.schema_file)
+        print('NAME freetext,DOB YYYY/MM/DD', file=self.text_schema_file)
+
+        schema = [
+            {"identifier": "INDEX"},
+            {"identifier": "NAME freetext"},
+            {"identifier": "DOB YYYY/MM/DD"},
+            {"identifier": "GENDER M or F"}
+        ]
+
+        yaml.dump(schema, self.yaml_schema_file)
+        json.dump(schema, self.json_schema_file)
 
         self.pii_file.flush()
         self.pii_file_2.flush()
-        self.schema_file.flush()
+        self.text_schema_file.flush()
+        self.json_schema_file.flush()
+        self.yaml_schema_file.flush()
 
     def run_command_capture_stdout(self, command):
         """
@@ -238,15 +254,47 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
-class TestHasherSimpleSchema(CLITestHelper):
+class TestHasherGivenSchema(CLITestHelper):
 
-    def test_hashing_given_schema(self):
+    def test_hashing_given_text_schema(self):
         runner = CliRunner()
 
         with NamedTemporaryFile() as output:
             cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
-                                        '-s', self.schema_file.name,
+                                        '-s', self.text_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+
+    def test_hashing_given_json_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.json_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+
+    def test_hashing_given_yaml_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.yaml_schema_file.name,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -257,7 +305,7 @@ class TestHasherSimpleSchema(CLITestHelper):
 
 
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,
-                     "Set envvar INCLUDE_SERVICE to run. Disabled for jenkins")
+                     "Set envvar TEST_ENTITY_SERVICE to run. Disabled for jenkins")
 class TestCliInteractionWithService(CLITestHelper):
 
     def setUp(self):
@@ -268,7 +316,7 @@ class TestCliInteractionWithService(CLITestHelper):
         runner = CliRunner()
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
-                                    '-s', self.schema_file.name,
+                                    '-s', self.text_schema_file.name,
                                     self.pii_file.name,
                                     'secretkey1',
                                     'secretkey2',
@@ -278,7 +326,7 @@ class TestCliInteractionWithService(CLITestHelper):
 
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
-                                    '-s', self.schema_file.name,
+                                    '-s', self.text_schema_file.name,
                                     self.pii_file_2.name,
                                     'secretkey1',
                                     'secretkey2',
