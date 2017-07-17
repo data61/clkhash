@@ -10,5 +10,5 @@ python3.5 -m venv --clear venv
 ./venv/bin/python --version
 ./venv/bin/python setup.py test
 ./venv/bin/pip install -e .
-./venv/bin/nosetests --with-xunit --with-coverage --cover-inclusive --cover-package=anonlink
-./venv/bin/coverage html --omit="*/cpp_code/*" --omit="*build_matcher.py*"
+./venv/bin/nosetests --with-xunit --with-coverage --cover-inclusive --cover-package=clkhash
+./venv/bin/coverage html

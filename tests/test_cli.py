@@ -1,19 +1,24 @@
 """
 http://click.pocoo.org/5/testing/
 """
+from __future__ import print_function
+from __future__ import division
+
 import random
 import time
-
-import anonlink
-import anonlink.cli
-from anonlink import randomnames
-
-from click.testing import CliRunner
 
 import json
 import os
 import unittest
-from tempfile import NamedTemporaryFile, TemporaryFile
+from tempfile import NamedTemporaryFile
+
+import clkhash
+import clkhash.cli
+from clkhash import randomnames
+
+import yaml
+from click.testing import CliRunner
+
 
 
 class CLITestHelper(unittest.TestCase):
@@ -21,10 +26,12 @@ class CLITestHelper(unittest.TestCase):
     samples = 100
 
     def setUp(self):
-        super().setUp()
+        super(CLITestHelper, self).setUp()
         self.pii_file = NamedTemporaryFile('w', encoding='utf8')
         self.pii_file_2 = NamedTemporaryFile('w', encoding='utf8')
-        self.schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.text_schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.json_schema_file = NamedTemporaryFile('w', encoding='utf8')
+        self.yaml_schema_file = NamedTemporaryFile('w', encoding='utf8')
         self.clk_file = NamedTemporaryFile('w', encoding='utf8')
         self.clk_file_2 = NamedTemporaryFile('w', encoding='utf8')
 
@@ -39,11 +46,23 @@ class CLITestHelper(unittest.TestCase):
                              ('NAME freetext', 'DOB YYYY/MM/DD'),
                              self.pii_file_2)
 
-        print('NAME freetext,DOB YYYY/MM/DD', file=self.schema_file)
+        print('NAME freetext,DOB YYYY/MM/DD', file=self.text_schema_file)
+
+        schema = [
+            {"identifier": "INDEX"},
+            {"identifier": "NAME freetext"},
+            {"identifier": "DOB YYYY/MM/DD"},
+            {"identifier": "GENDER M or F"}
+        ]
+
+        yaml.dump(schema, self.yaml_schema_file)
+        json.dump(schema, self.json_schema_file)
 
         self.pii_file.flush()
         self.pii_file_2.flush()
-        self.schema_file.flush()
+        self.text_schema_file.flush()
+        self.json_schema_file.flush()
+        self.yaml_schema_file.flush()
 
     def run_command_capture_stdout(self, command):
         """
@@ -59,7 +78,7 @@ class CLITestHelper(unittest.TestCase):
 
         with NamedTemporaryFile() as output:
             command.extend(['-o', output.name])
-            cli_result = runner.invoke(anonlink.cli.cli, command)
+            cli_result = runner.invoke(clkhash.cli.cli, command)
             assert cli_result.exit_code == 0
             output.seek(0)
             return output.read().decode('utf-8')
@@ -84,43 +103,44 @@ class BasicCLITests(unittest.TestCase):
 
     def test_list_commands(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, [])
+        result = runner.invoke(clkhash.cli.cli, [])
         for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
+        # for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
             assert expected_command in result.output
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--version'])
-        print(result.output)
+        result = runner.invoke(clkhash.cli.cli, ['--version'])
         assert result.exit_code == 0
-        assert anonlink.__version__ in result.output
+        assert clkhash.__version__ in result.output
 
     def test_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, '--help')
+        result = runner.invoke(clkhash.cli.cli, '--help')
 
         assert 'hash' in result.output
-        assert 'bench' in result.output
+        # assert 'bench' in result.output
         assert 'generate' in result.output
         assert 'Confidential Computing' in result.output
 
     def test_hash_auto_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['hash'])
+        result = runner.invoke(clkhash.cli.cli, ['hash'])
         assert 'Missing argument' in result.output
 
     def test_hash_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['hash', '--help'])
+        result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
         assert 'keys' in result.output
         assert 'schema' in result.output
 
     def test_bench(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['benchmark',
-                                                  '--size', '20'])
+        # result = runner.invoke(anonlink.cli.cli, ['benchmark',
+        #                                           '--size', '20'])
+        result = runner.invoke(clkhash.cli.cli, ['benchmark'])
         assert 'Popcount speed:' in result.output
-        assert 'Comparisons per second' in result.output
+        # assert 'Comparisons per second' in result.output
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
@@ -137,7 +157,7 @@ class TestHashCommand(unittest.TestCase):
             with open('in.txt', 'w') as f:
                 f.write('Alice, 1967')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash', 'in.txt', '-'])
+            result = runner.invoke(clkhash.cli.cli, ['hash', 'in.txt', '-'])
             assert result.exit_code != 0
             self.assertIn('keys', result.output)
 
@@ -148,7 +168,7 @@ class TestHashCommand(unittest.TestCase):
             with open('in.txt', 'w') as f:
                 f.write('Alice, 1967')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash', 'in.txt', 'a', 'b', '-'])
+            result = runner.invoke(clkhash.cli.cli, ['hash', 'in.txt', 'a', 'b', '-'])
             self.assertIn('clks', result.output)
 
     def test_hash_with_provided_schema(self):
@@ -160,7 +180,7 @@ class TestHashCommand(unittest.TestCase):
             with open('schema.txt', 'w') as f:
                 f.write('NAME freetext,DOB YYYY')
 
-            result = runner.invoke(anonlink.cli.cli, ['hash',
+            result = runner.invoke(clkhash.cli.cli, ['hash',
                                                       '--schema',
                                                       'schema.txt',
                                                       'in.txt',
@@ -183,7 +203,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
     def test_cli_includes_help(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--help'])
+        result = runner.invoke(clkhash.cli.cli, ['--help'])
         assert result.exit_code == 0
 
         assert 'Usage' in result.output
@@ -191,14 +211,14 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
     def test_version(self):
         runner = CliRunner()
-        result = runner.invoke(anonlink.cli.cli, ['--version'])
+        result = runner.invoke(clkhash.cli.cli, ['--version'])
         assert result.exit_code == 0
-        self.assertIn(anonlink.__version__, result.output)
+        self.assertIn(clkhash.__version__, result.output)
 
     def test_generate_command(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'generate',
                                            '50',
@@ -210,7 +230,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_basic_hashing(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
                                            self.pii_file.name,
@@ -223,7 +243,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_hashing_with_given_keys(self):
         runner = CliRunner()
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         self.pii_file.name,
                                         'key1', 'key2',
@@ -234,15 +254,47 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
-class TestHasherSimpleSchema(CLITestHelper):
+class TestHasherGivenSchema(CLITestHelper):
 
-    def test_hashing_given_schema(self):
+    def test_hashing_given_text_schema(self):
         runner = CliRunner()
 
         with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(anonlink.cli.cli,
+            cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
-                                        '-s', self.schema_file.name,
+                                        '-s', self.text_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+
+    def test_hashing_given_json_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.json_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+
+    def test_hashing_given_yaml_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.yaml_schema_file.name,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -253,18 +305,18 @@ class TestHasherSimpleSchema(CLITestHelper):
 
 
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,
-                     "Set envvar INCLUDE_SERVICE to run. Disabled for jenkins")
+                     "Set envvar TEST_ENTITY_SERVICE to run. Disabled for jenkins")
 class TestCliInteractionWithService(CLITestHelper):
 
     def setUp(self):
-        super().setUp()
+        super(TestCliInteractionWithService, self).setUp()
         self.url = os.environ['TEST_ENTITY_SERVICE']
 
         # hash some PII for uploading
         runner = CliRunner()
-        cli_result = runner.invoke(anonlink.cli.cli,
+        cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
-                                    '-s', self.schema_file.name,
+                                    '-s', self.text_schema_file.name,
                                     self.pii_file.name,
                                     'secretkey1',
                                     'secretkey2',
@@ -272,9 +324,9 @@ class TestCliInteractionWithService(CLITestHelper):
         assert cli_result.exit_code == 0
 
 
-        cli_result = runner.invoke(anonlink.cli.cli,
+        cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
-                                    '-s', self.schema_file.name,
+                                    '-s', self.text_schema_file.name,
                                     self.pii_file_2.name,
                                     'secretkey1',
                                     'secretkey2',

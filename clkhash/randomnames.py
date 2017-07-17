@@ -11,6 +11,7 @@ TODO: Get first name distributions right by using distributions
 TODO: Generate realistic errors
 TODO: Add RESTfull api to generate reasonable name data as requested
 """
+from __future__ import print_function
 
 import csv
 import random
@@ -23,7 +24,7 @@ import pkgutil
 def load_csv_data(resource_name):
     """Loads a specified data file as csv and returns the first column as a Python list
     """
-    data = pkgutil.get_data('anonlink', 'data/{}'.format(resource_name)).decode('utf8')
+    data = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name)).decode('utf8')
     reader = csv.reader(data.splitlines())
     next(reader, None)  # skip the headers
     return list({row[0] for row in reader})

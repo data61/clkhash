@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import base64
 
-from anonlink.identifier_types import basic_types
 
-from anonlink import bloommatcher as bm
+from clkhash import bloomhash
 import logging
 logging.basicConfig(level=logging.WARNING)
 
@@ -28,7 +27,7 @@ def cryptoBloomFilter(record, tokenizers, key1="test1", key2="test2"):
         for token in tokenizer(entry):
             mlist.append(token)
 
-    bf = bm.hbloom(mlist, keysha1=key1, keymd5=key2)
+    bf = bloomhash.hbloom(mlist, keysha1=key1, keymd5=key2)
 
     return bf, record[0], bf.count()
 
@@ -44,7 +43,7 @@ def calculate_bloom_filters(dataset, schema, keys):
     return list(stream_bloom_filters(dataset, schema, keys))
 
 
-def stream_bloom_filters(dataset, schema, keys):
+def stream_bloom_filters(dataset, schema_types, keys):
     """
     Yield bloom filters
 
@@ -53,7 +52,7 @@ def stream_bloom_filters(dataset, schema, keys):
     :param keys: A tuple of two secret keys used in the HMAC.
     :return: Yields bloom filters as 3-tuples
     """
-    schema_types = [basic_types[column] for column in schema]
+
     for s in dataset:
         yield cryptoBloomFilter(s, schema_types, key1=keys[0], key2=keys[1])
 

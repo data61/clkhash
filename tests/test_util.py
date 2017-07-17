@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.4
 
 import unittest
-from anonlink import util
+from clkhash import util
 
 class TestUtilDataGeneration(unittest.TestCase):
 

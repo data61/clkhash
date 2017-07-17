@@ -1,4 +1,7 @@
 #!/usr/bin/env python3.4
+from __future__ import print_function
+
+import os
 
 import click
 import json
@@ -6,10 +9,11 @@ import csv
 import requests
 import time
 
-import anonlink
-from anonlink import bloomfilter
-from anonlink import randomnames
-from anonlink import benchmark as bench
+import clkhash
+from clkhash import bloomfilter
+from clkhash import randomnames
+from clkhash import benchmark as bench
+from clkhash.identifier_types import identifier_type_from_description
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -19,7 +23,7 @@ def log(m, color='red'):
 
 
 @click.group("clkutil")
-@click.version_option(anonlink.__version__)
+@click.version_option(clkhash.__version__)
 @click.option('--verbose', '-v', is_flag=True,
               help='Enables verbose mode.')
 def cli(verbose=False):
@@ -138,7 +142,8 @@ def create(type, schema, server, output, verbose):
     log("Server Status: {}".format(status))
 
     if schema is not None:
-        schema_json = json.load(schema)
+        schema_object = load_schema(schema)
+        schema_json = json.dumps(schema_object)
     else:
         schema_json = 'NOT PROVIDED'
 
@@ -253,34 +258,8 @@ def results(mapping, apikey, watch, server, output):
 
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
-@click.option('--size', type=int, default=10000, help="Max size")
-@click.option('--compare/--no-compare', default=False, help="Compare C and Python")
-def benchmark(size, compare):
-
-    if compare:
-        print(bench.compare_python_c(ntotal=1000, nsubset=600))
-
-    bench.compute_popcount_speed(100000)
-
-    bench.print_comparison_header()
-
-    possible_test_sizes = [
-        1000, 2000, 3000, 4000,
-        5000, 6000, 7000, 8000, 9000,
-        10000,
-        20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
-        1000000,
-        2000000
-    ]
-
-    for test_size in possible_test_sizes:
-        if test_size <= size:
-            bench.compute_comparison_speed_parallel(
-                test_size, test_size
-            )
-
-    print("Single Core:")
-    bench.compute_comparison_speed(5000, 5000)
+def benchmark():
+    bench.compute_popcount_speed(1000000)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')
@@ -300,13 +279,30 @@ def generate(size, output, schema):
 def load_schema(schema_file):
     if schema_file is None:
         log("Assuming default schema")
-        schema = ('INDEX', 'NAME freetext', 'DOB YYYY/MM/DD', 'GENDER M or F')
+        schema = [
+            {"identifier": 'INDEX'},
+            {"identifier": 'NAME freetext'},
+            {"identifier": 'DOB YYYY/MM/DD'},
+            {"identifier": 'GENDER M or F'}
+        ]
     else:
-        log("Loading schema from file")
-        schema_line = schema_file.read().strip()
-        schema = [s.strip() for s in schema_line.split(",")]
+        filename, extension = os.path.splitext(schema_file.name)
+        log("Loading schema from {} file".format(extension))
+
+        if extension == '.json':
+            import json
+            schema = json.load(schema_file)
+        elif extension == '.yaml':
+            import yaml
+            schema = yaml.load(schema_file)
+        else:
+            schema_line = schema_file.read().strip()
+            schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
         log("{}".format(schema))
-    return schema
+
+    schema_types = [identifier_type_from_description(column) for column in schema]
+
+    return schema_types
 
 
 if __name__ == "__main__":

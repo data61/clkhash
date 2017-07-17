@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from anonlink import randomnames as rn
+from clkhash import randomnames as rn
 
 __author__ = 'shardy'
 
