@@ -1,9 +1,13 @@
 import pkg_resources
 
-from clkhash import bloomhash
-from clkhash import bloomfilter
-from clkhash import identifier_types
-from clkhash import randomnames
+from . import bloomhash
+from . import bloomfilter
+from . import identifier_types
+from . import randomnames
 
-__version__ = pkg_resources.get_distribution('clkhash').version
+try:
+    __version__ = pkg_resources.get_distribution('clkhash').version
+except pkg_resources.DistributionNotFound:
+    __version__ = "development"
+
 __author__ = 'N1 Analytics'

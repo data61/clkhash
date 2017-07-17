@@ -1,11 +1,15 @@
 # CLK Hash
 
-Python implementation of cryptographic linkage keys.
+Python implementation of cryptographic linkage key hashing.
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
 
 
 # Installation
+
+Install the dependencies with:
+
+    pip install -f requirements.txt
 
 # CLI Tool
 
@@ -21,16 +25,18 @@ The tool also has an option for generating fake pii data, and commands to upload
     0,Libby Slemmer,1933/09/13,F
     1,Garold Staten,1928/11/23,M
     2,Yaritza Edman,1972/11/30,F
+    
+To hash this data using the default schema, with the secret key `horse staple`:
+
     $ clkutil hash fake-pii-out.csv horse staple /tmp/fake-clk.json
     Assuming default schema
     Hashing data
     CLK data written to /tmp/fake-clk.json
 
 
-Note the hash command takes two keys, these should only be shared with
-the other entity - and not with the service carrying out the linkage.
+Note the keys should only be shared with the other entity - and not with the service carrying out the linkage.
 
-To use the clkutil without installation just run:
+To use the clkutil without installation (after installing the dependencies) just run:
 
     python -m clkhash.cli
 
@@ -59,7 +65,4 @@ Limitations
 -----------
 
 - Hashing doesn't utilize multiple CPUs.
-
-Schema
-------
 
