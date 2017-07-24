@@ -304,11 +304,14 @@ class TestHasherGivenSchema(CLITestHelper):
 
     def test_hashing_default_yaml_schema(self):
         runner = CliRunner()
-
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.yaml'
+        )
         with NamedTemporaryFile() as output:
             cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
-                                        '-s', 'testdata/default-schema.yaml',
+                                        '-s', schema_file,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -319,11 +322,14 @@ class TestHasherGivenSchema(CLITestHelper):
 
     def test_hashing_default_json_schema(self):
         runner = CliRunner()
-
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.json'
+        )
         with NamedTemporaryFile() as output:
             cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
-                                        '-s', 'testdata/default-schema.json',
+                                        '-s', schema_file,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -334,11 +340,14 @@ class TestHasherGivenSchema(CLITestHelper):
 
     def test_hashing_weighted_json_schema(self):
         runner = CliRunner()
-
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/weighted-schema.json'
+        )
         with NamedTemporaryFile() as output:
             cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
-                                        '-s', 'testdata/weighted-schema.json',
+                                        '-s', schema_file,
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -394,7 +403,10 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
     def test_create_with_custom_schema(self):
-        schema_file_name = 'testdata/febrl-schema.json'
+        schema_file_name = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/febrl-schema.json'
+        )
 
         out = self.run_command_capture_json_output(['create', '--schema', schema_file_name])
 
