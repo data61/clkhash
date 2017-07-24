@@ -127,7 +127,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 @click.option('-o','--output', type=click.File('w'), default='-')
 @click.option('-t','--threshold', type=float, default=0.95)
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def create(type, schema, server, output, threhsold, verbose):
+def create(type, schema, server, output, threshold, verbose):
     """Create a new mapping on an entity matching server.
 
     See entity matching service documentation for details on mapping type, threshold
@@ -157,7 +157,7 @@ def create(type, schema, server, output, threhsold, verbose):
         json={
             'schema': schema_json,
             'result_type': type,
-            'threshold': threhsold
+            'threshold': threshold
         }
     )
 
