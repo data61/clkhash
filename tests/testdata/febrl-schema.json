@@ -1,0 +1,57 @@
+[
+  {
+    "identifier": "INDEX"
+  },
+  {
+    "identifier": "NAME freetext",
+    "notes": "Surname"
+  },
+  {
+    "identifier": "NAME freetext",
+    "notes": "Firstname"
+  },
+  {
+    "identifier": "ADDRESS House Number",
+    "notes": "Street Number"
+  },
+  {
+    "identifier": "ANY freetext",
+    "notes": "address 1"
+  },
+  {
+    "identifier": "ANY freetext",
+    "notes": "address 2"
+  },
+  {
+    "identifier": "ANY freetext",
+    "notes": "Suburb"
+  },
+  {
+    "identifier": "ADDRESS POSTCODE",
+    "notes": "postcode"
+  },
+  {
+    "identifier": "ANY freetext",
+    "notes": "state"
+  },
+  {
+    "identifier": "DOB DD",
+    "notes": "date of birth"
+  },
+  {
+    "identifier": "DOB DD",
+    "notes": "Age"
+  },
+  {
+    "identifier": "ANY freetext",
+    "notes": "phone"
+  },
+  {
+    "identifier": "INDEX",
+    "notes": "social security id"
+  },
+  {
+    "identifier": "INDEX",
+    "notes": "blocking number"
+  }
+]

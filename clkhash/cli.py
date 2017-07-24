@@ -68,7 +68,7 @@ def hash(input, output, schema, keys=None):
     """
     clk_data = []
 
-    schema = load_schema(schema)
+    schema_types = get_schema_types(load_schema(schema))
 
     log("Hashing data")
     reader = csv.reader(input)
@@ -76,10 +76,11 @@ def hash(input, output, schema, keys=None):
     header = input.readline()
     log("Header Row: {}".format(header))
 
-    for clk in bloomfilter.stream_bloom_filters(reader, schema, keys):
+    for clk in bloomfilter.stream_bloom_filters(reader, schema_types, keys):
         clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
     json.dump({'clks': clk_data}, output)
     log("CLK data written to {}".format(output.name))
+
 
 @cli.command('status', short_help='Get status of entity service')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
@@ -300,8 +301,10 @@ def load_schema(schema_file):
             schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
         log("{}".format(schema))
 
-    schema_types = [identifier_type_from_description(column) for column in schema]
+    return schema
 
+def get_schema_types(schema):
+    schema_types = [identifier_type_from_description(column) for column in schema]
     return schema_types
 
 

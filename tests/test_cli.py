@@ -287,7 +287,6 @@ class TestHasherGivenSchema(CLITestHelper):
             output.seek(0)
             json.loads(output.read().decode('utf-8'))
 
-
     def test_hashing_given_yaml_schema(self):
         runner = CliRunner()
 
@@ -295,6 +294,51 @@ class TestHasherGivenSchema(CLITestHelper):
             cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         '-s', self.yaml_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+    def test_hashing_default_yaml_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', 'testdata/default-schema.yaml',
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+    def test_hashing_default_json_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', 'testdata/default-schema.json',
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            output.seek(0)
+            json.loads(output.read().decode('utf-8'))
+
+    def test_hashing_weighted_json_schema(self):
+        runner = CliRunner()
+
+        with NamedTemporaryFile() as output:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', 'testdata/weighted-schema.json',
                                         self.pii_file.name,
                                         'secretkey1',
                                         'secretkey2',
@@ -323,7 +367,6 @@ class TestCliInteractionWithService(CLITestHelper):
                                     self.clk_file.name])
         assert cli_result.exit_code == 0
 
-
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                     '-s', self.text_schema_file.name,
@@ -341,6 +384,19 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def test_create(self):
         out = self.run_command_capture_json_output(['create'])
+
+        self.assertIn('resource_id', out)
+        self.assertIn('result_token', out)
+        self.assertIn('update_tokens', out)
+
+        self.assertGreaterEqual(len(out['resource_id']), 16)
+        self.assertGreaterEqual(len(out['result_token']), 16)
+        self.assertGreaterEqual(len(out['update_tokens']), 2)
+
+    def test_create_with_custom_schema(self):
+        schema_file_name = 'testdata/febrl-schema.json'
+
+        out = self.run_command_capture_json_output(['create', '--schema', schema_file_name])
 
         self.assertIn('resource_id', out)
         self.assertIn('result_token', out)
