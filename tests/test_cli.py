@@ -204,7 +204,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_cli_includes_help(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['--help'])
-        assert result.exit_code == 0
+        self.assertEqual(result.exit_code, 0, result.output)
 
         assert 'Usage' in result.output
         assert 'Options' in result.output
@@ -223,6 +223,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
                                            'generate',
                                            '50',
                                            output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
             output.seek(0)
             out = output.read().decode('utf-8')
         assert len(out) > 50
@@ -248,6 +249,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
                                         self.pii_file.name,
                                         'key1', 'key2',
                                         output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
             output.seek(0)
             json.loads(output.read().decode('utf-8'))
 

@@ -1,0 +1,13 @@
+[
+  {
+    "identifier": "INDEX"
+  },
+  {
+    "identifier": "NAME freetext",
+    "weight": 10
+  },
+  {
+    "identifier": "DOB YYYY/MM/DD",
+    "weight": 0
+  }
+]

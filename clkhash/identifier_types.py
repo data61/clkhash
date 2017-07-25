@@ -87,10 +87,16 @@ def identifier_type_from_description(schema_object):
     id = schema_object['identifier']
 
     if id in basic_types:
-        return basic_types[id]
+        id_type = basic_types[id]
     elif id in weighted_types:
-        return weighted_types[id]
+        id_type = weighted_types[id]
     else:
-        return IdentifierType(
+        id_type = IdentifierType(
             weight=schema_object.get('weight', 1)
         )
+
+    # check if there was a custom weight
+    if 'weight' in schema_object:
+        id_type.weight = schema_object['weight']
+
+    return id_type
