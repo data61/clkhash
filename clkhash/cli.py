@@ -125,12 +125,13 @@ After both users have uploaded their data one can watch for and retrieve the res
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-t','--threshold', type=float, default=0.95)
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def create(type, schema, server, output, verbose):
+def create(type, schema, server, output, threshold, verbose):
     """Create a new mapping on an entity matching server.
 
-    See entity matching service documentation for details on type and
-    schema.
+    See entity matching service documentation for details on mapping type, threshold
+    and schema.
 
     Returns authentication details for the created mapping.
     """
@@ -155,7 +156,8 @@ def create(type, schema, server, output, verbose):
         "{}/api/v1/mappings".format(server),
         json={
             'schema': schema_json,
-            'result_type': type
+            'result_type': type,
+            'threshold': threshold
         }
     )
 
