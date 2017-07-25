@@ -420,6 +420,17 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
+    def test_create_with_threshold(self):
+        out = self.run_command_capture_json_output(['create', '--threshold', '0.50'])
+
+        self.assertIn('resource_id', out)
+        self.assertIn('result_token', out)
+        self.assertIn('update_tokens', out)
+
+        self.assertGreaterEqual(len(out['resource_id']), 16)
+        self.assertGreaterEqual(len(out['result_token']), 16)
+        self.assertGreaterEqual(len(out['update_tokens']), 2)
+
     def test_single_upload(self):
         mapping = self.run_command_capture_json_output(['create'])
 
