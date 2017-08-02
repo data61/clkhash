@@ -2,9 +2,11 @@ import csv
 import time
 from hashlib import sha1, md5
 import hmac
+import logging
+import concurrent.futures
+
 from bitarray import bitarray
 from clkhash import bloomfilter
-import logging
 
 log = logging.getLogger('clkhash.bloomhash')
 
@@ -78,16 +80,43 @@ def positional_unigrams(instr):
     return ["{index} {value}".format(index=i, value=c) for i, c in enumerate(instr, start=1)]
 
 
-def hash_csv(input, keys, schema_types, no_header=False):
+def hash_and_serialize_chunk(chunk_pii_data, schema_types, keys):
     clk_data = []
+    for clk in bloomfilter.stream_bloom_filters(chunk_pii_data, schema_types, keys):
+        clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
+
+    return clk_data
+
+
+def hash_csv(input, keys, schema_types, no_header=False, chunk_size=10000):
     log.info("Hashing data")
     reader = csv.reader(input)
     if not no_header:
         header = input.readline()
         log.info("Header Row: {}".format(header))
-    start_time = time.time()
-    for clk in bloomfilter.stream_bloom_filters(reader, schema_types, keys):
-        clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
-    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
 
-    return clk_data
+    start_time = time.time()
+    pii_data = [line for line in reader]
+    log.info("Hashing {} entities".format(len(pii_data)))
+
+    results = []
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+
+        for i, chunk in enumerate(chunks(pii_data, chunk_size)):
+            future = executor.submit(hash_and_serialize_chunk,
+                                     chunk, schema_types, keys)
+            futures.append(future)
+
+        for future in futures:
+            results.extend(future.result())
+
+    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+    return results
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
