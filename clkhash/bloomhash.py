@@ -88,7 +88,7 @@ def hash_and_serialize_chunk(chunk_pii_data, schema_types, keys):
     return clk_data
 
 
-def hash_csv(input, keys, schema_types, no_header=False, chunk_size=10000):
+def hash_csv(input, keys, schema_types, no_header=False):
     log.info("Hashing data")
     reader = csv.reader(input)
     if not no_header:
@@ -99,6 +99,7 @@ def hash_csv(input, keys, schema_types, no_header=False, chunk_size=10000):
     pii_data = [line for line in reader]
     log.info("Hashing {} entities".format(len(pii_data)))
 
+    chunk_size = 1000 if len(pii_data) <= 10000 else 10000
     results = []
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
