@@ -1,9 +1,12 @@
+import csv
+import time
 from hashlib import sha1, md5
 import hmac
 from bitarray import bitarray
-# from anonlink._entitymatcher import ffi, lib
+from clkhash import bloomfilter
+import logging
 
-__author__ = 'shardy'
+log = logging.getLogger('clkhash.bloomhash')
 
 
 def hbloom(mlist, l=1024, k=30, keysha1="secret1", keymd5="secret2"):
@@ -74,3 +77,17 @@ def positional_unigrams(instr):
     """
     return ["{index} {value}".format(index=i, value=c) for i, c in enumerate(instr, start=1)]
 
+
+def hash_csv(input, keys, schema_types, no_header=False):
+    clk_data = []
+    log.info("Hashing data")
+    reader = csv.reader(input)
+    if not no_header:
+        header = input.readline()
+        log.info("Header Row: {}".format(header))
+    start_time = time.time()
+    for clk in bloomfilter.stream_bloom_filters(reader, schema_types, keys):
+        clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
+    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+
+    return clk_data
