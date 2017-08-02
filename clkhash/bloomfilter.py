@@ -4,7 +4,8 @@ import base64
 
 from clkhash import bloomhash
 import logging
-logging.basicConfig(level=logging.WARNING)
+
+log = logging.getLogger('clkhash.bloomfilter')
 
 
 def cryptoBloomFilter(record, tokenizers, key1="test1", key2="test2"):

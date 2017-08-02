@@ -1,19 +1,18 @@
 #!/usr/bin/env python3.4
 from __future__ import print_function
 
-import os
-
-import click
 import json
-import csv
-import requests
 import time
 
+import click
+import requests
+
 import clkhash
-from clkhash import bloomfilter
-from clkhash import randomnames
 from clkhash import benchmark as bench
+from clkhash import randomnames
+from clkhash import bloomhash
 from clkhash.schema import get_schema_types, load_schema
+
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -51,7 +50,8 @@ def cli(verbose=False):
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
 @click.option('--schema', '-s', type=click.File('r'), default=None)
 @click.argument('output', type=click.File('w'))
-def hash(input, output, schema, keys=None):
+@click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
+def hash(input, output, schema, keys, no_header):
     """Process data to create CLKs
 
     Given a file containing csv data as INPUT, and optionally a json
@@ -66,18 +66,10 @@ def hash(input, output, schema, keys=None):
 
     Use "-" to output to stdout.
     """
-    clk_data = []
 
     schema_types = get_schema_types(load_schema(schema))
 
-    log("Hashing data")
-    reader = csv.reader(input)
-
-    header = input.readline()
-    log("Header Row: {}".format(header))
-
-    for clk in bloomfilter.stream_bloom_filters(reader, schema_types, keys):
-        clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
+    clk_data = bloomhash.hash_csv(input, keys, schema_types, no_header)
     json.dump({'clks': clk_data}, output)
     log("CLK data written to {}".format(output.name))
 
