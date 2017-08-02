@@ -44,7 +44,7 @@ def compute_hash_speed(n):
         hash_csv(f, ('key1', 'key2'), schema)
         end = timer()
     elapsed_time = end - start
-    print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/1000*elapsed_time))
+    print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
     return n / elapsed_time
 
 
