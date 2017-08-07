@@ -12,5 +12,5 @@ class TestBenchmark(unittest.TestCase):
 
     def test_benchmarking_hash(self):
         speed = benchmark.compute_hash_speed(1000)
-        self.assertGreater(speed, 100, "Hashing at less than 1000 H/s")
+        self.assertGreater(speed, 100, "Hashing at less than 100 H/s")
 
