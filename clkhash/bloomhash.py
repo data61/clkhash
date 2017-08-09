@@ -96,7 +96,9 @@ def hash_csv(input, keys, schema_types, no_header=False):
         log.info("Header Row: {}".format(header))
 
     start_time = time.time()
-    pii_data = [line for line in reader]
+    pii_data = []
+    for line in reader:
+        pii_data.append([element.strip() for element in line])
     log.info("Hashing {} entities".format(len(pii_data)))
 
     chunk_size = 1000 if len(pii_data) <= 10000 else 10000

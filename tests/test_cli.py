@@ -187,6 +187,38 @@ class TestHashCommand(unittest.TestCase):
                                                       'a', 'b', '-'])
             self.assertIn('clks', result.output)
 
+    def test_hash_febrl_data(self):
+        runner = self.runner
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.json'
+        )
+        a_pii = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/dirty_1000_50_1.csv'
+        )
+
+        with runner.isolated_filesystem():
+
+            result = runner.invoke(clkhash.cli.cli, ['hash',
+                                                      '--schema',
+                                                      schema_file,
+                                                      a_pii,
+                                                      'a', 'b', '-'])
+            self.assertIn('clks', result.output)
+
+            result_2 = runner.invoke(clkhash.cli.cli, ['hash',
+                                                      '--schema',
+                                                      schema_file,
+                                                      a_pii,
+                                                      'a', 'b', '-'])
+
+        hasha = json.loads(result.output)['clks']
+        hashb = json.loads(result_2.output)['clks']
+
+        for i in range(1000):
+            self.assertEqual(hasha[i], hashb[i])
+
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
