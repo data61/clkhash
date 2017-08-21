@@ -60,9 +60,3 @@ the tests which interact with an entity service set the
 `TEST_ENTITY_SERVICE` environment variable to the target service's 
 address.
 
-
-Limitations
------------
-
-- Hashing doesn't utilize multiple CPUs.
-
