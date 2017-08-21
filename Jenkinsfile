@@ -5,7 +5,7 @@ void setBuildStatus(String message, String state) {
   ]);
 }
 
-node('GPU1') {
+node('GPU 1') {
 
     stage('Test') {
         try {
