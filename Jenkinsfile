@@ -5,7 +5,7 @@ void setBuildStatus(String message, String state) {
   ]);
 }
 
-node('linux') {
+node('GPU1') {
 
     stage('Test') {
         try {
@@ -33,10 +33,7 @@ node('linux') {
                         printenv
 
                         rm -fr build
-                        ${python_version} -m venv --clear ${VENV}
-                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip tox
-
-                        ${VENV}/bin/python ${VENV}/bin/tox
+                        tox
 
                        """
                 }
