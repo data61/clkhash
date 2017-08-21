@@ -25,6 +25,11 @@ node('GPU 1') {
 
                 def testsError = null
                 try {
+                    def tox_workdir = "${env.HOME}/.tox-${env.BUILD_TAG}"
+
+                    sh "rm -rf ${tox_workdir}"
+                    sh "tox"
+
                     sh """#!/usr/bin/env bash
                         set -xe
 
@@ -33,7 +38,7 @@ node('GPU 1') {
                         printenv
 
                         rm -fr build
-                        tox
+                        tox -e py35
 
                        """
                 }
