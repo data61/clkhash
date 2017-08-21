@@ -17,6 +17,8 @@ node('GPU 1') {
 
                 sh "test -d ${workspace}/env && rm -rf ${workspace}/env || echo 'no env, skipping cleanup'"
 
+                sh "rm -rf ${tox_workdir}"
+
                 // The stage below is attempting to get the latest version of our application code.
                 // Since this is a multi-branch project the 'checkout scm' command is used. If you're working with a standard
                 // pipeline project then you can replace this with the regular 'git url:' pipeline command.
@@ -33,6 +35,15 @@ node('GPU 1') {
                         printenv
 
                         rm -fr build
+
+                        python3.5 -m venv --clear ${VENV}
+                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel tox
+
+                        ${VENV}/bin/python ${VENV}/bin/pip install -r requirements.txt
+
+                        ${VENV}/bin/python setup.py bdist_wheel --universal
+                        ${VENV}/bin/python ${VENV}/bin/pip install -e .
+
                         tox -e py35
 
                        """
