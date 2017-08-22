@@ -17,8 +17,6 @@ node('GPU 1') {
 
                 sh "test -d ${workspace}/env && rm -rf ${workspace}/env || echo 'no env, skipping cleanup'"
 
-                sh "rm -rf ${tox_workdir}"
-
                 // The stage below is attempting to get the latest version of our application code.
                 // Since this is a multi-branch project the 'checkout scm' command is used. If you're working with a standard
                 // pipeline project then you can replace this with the regular 'git url:' pipeline command.
