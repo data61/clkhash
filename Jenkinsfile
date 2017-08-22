@@ -34,15 +34,17 @@ node('GPU 1') {
 
                         rm -fr build
 
+                        # Check tox's version
                         tox --version
 
+                        # List all available environments
+                        tox -a
+
+                        # Show configuration of all the environments
                         tox --showconfig
 
-                        tox -a -v
-
-                        tox -e py36 --develop -v
-
-                        cat ${PATH}/.tox/log/tox-0.log
+                        # Run tox with '--develop' flag
+                        tox --develop -v
 
                        """
                 }
