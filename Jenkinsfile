@@ -35,8 +35,9 @@ node('GPU 1') {
                         rm -fr build
 
                         tox --version
-                        tox -r -v
                         tox -e py35 -v
+
+                        cat ${PATH}/.tox/log/tox-0.log
 
                        """
                 }
