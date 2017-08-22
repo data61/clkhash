@@ -38,7 +38,9 @@ node('GPU 1') {
 
                         tox --showconfig
 
-                        tox -e py35 -v
+                        tox -a -v
+
+                        tox -e py36 --sdistonly -v
 
                         cat ${PATH}/.tox/log/tox-0.log
 
