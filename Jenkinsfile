@@ -46,7 +46,7 @@ node('GPU 1') {
                         # Show configuration of all the environments
                         tox --showconfig
 
-                        # Run tox with '--develop' flag
+                        # Run tox
                         tox
 
                        """
