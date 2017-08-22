@@ -40,7 +40,7 @@ node('GPU 1') {
 
                         tox -a -v
 
-                        tox -e py36 --sdistonly -v
+                        tox -e py36 --develop -v
 
                         cat ${PATH}/.tox/log/tox-0.log
 
