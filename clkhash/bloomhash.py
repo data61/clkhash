@@ -6,7 +6,6 @@ import logging
 import concurrent.futures
 
 from bitarray import bitarray
-from clkhash import bloomfilter
 
 log = logging.getLogger('clkhash.bloomhash')
 
@@ -82,6 +81,7 @@ def positional_unigrams(instr):
 
 def hash_and_serialize_chunk(chunk_pii_data, schema_types, keys):
     clk_data = []
+    from clkhash import bloomfilter
     for clk in bloomfilter.stream_bloom_filters(chunk_pii_data, schema_types, keys):
         clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
 
