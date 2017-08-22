@@ -36,15 +36,9 @@ node('GPU 1') {
 
                         rm -fr build
 
-                        python3.5 -m venv --clear ${VENV}
-                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel tox
-
-                        ${VENV}/bin/python ${VENV}/bin/pip install -r requirements.txt
-
-                        ${VENV}/bin/python setup.py bdist_wheel --universal
-                        ${VENV}/bin/python ${VENV}/bin/pip install -e .
-
-                        tox -e py35
+                        tox --version
+                        tox -r -v
+                        tox -e py35 -v
 
                        """
                 }
