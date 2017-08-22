@@ -49,8 +49,8 @@ node('GPU 1') {
                         # Show configuration of all the environments
                         tox --showconfig
 
-                        # Run tox
-                        tox
+                        # Run tox, for the time being install package in the venv using 'setup.py develop' via 'pip -e .'
+                        tox --develop
 
                        """
                 }
