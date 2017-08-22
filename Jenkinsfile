@@ -34,6 +34,9 @@ node('GPU 1') {
 
                         rm -fr build
 
+                        # List all the installed modules
+                        pip freeze
+
                         # Check tox's version
                         tox --version
 
@@ -44,7 +47,7 @@ node('GPU 1') {
                         tox --showconfig
 
                         # Run tox with '--develop' flag
-                        tox --develop -v
+                        tox --develop
 
                        """
                 }
