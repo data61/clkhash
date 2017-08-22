@@ -34,6 +34,9 @@ node('GPU 1') {
 
                         rm -fr build
 
+                        # Check python version
+                        python --version
+
                         # List all the installed modules
                         pip freeze
 
