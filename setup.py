@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 requirements = [
         "bitarray==0.8.1",
         "networkx==1.11",
-        "click==6.2",
-        "requests==2.12.4"
+        "click>=6.2",
+        "requests==2.18.1"
     ]
 
 setup(
