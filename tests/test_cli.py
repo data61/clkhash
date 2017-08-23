@@ -521,7 +521,7 @@ class TestCliInteractionWithService(CLITestHelper):
         )
 
         # Give the server a small amount of time to process
-        time.sleep(0.5)
+        time.sleep(5.0)
 
         res = json.loads(get_coord_results())
         self.assertIn('mask', res)

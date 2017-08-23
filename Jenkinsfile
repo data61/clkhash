@@ -37,20 +37,14 @@ node('GPU 1') {
                         # Check python version
                         python --version
 
-                        # List all the installed modules
-                        pip freeze
-
                         # Check tox's version
                         tox --version
 
                         # List all available environments
                         tox -a
 
-                        # Show configuration of all the environments
-                        tox --showconfig
-
-                        # Run tox, for the time being install package in the venv using 'setup.py develop' via 'pip -e .'
-                        tox --develop
+                        # Run tox. Perhaps add '--skip-missing-interpreters' so the tests won't fail due to missing interpreters?
+                        tox
 
                        """
                 }
