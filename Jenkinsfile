@@ -47,7 +47,7 @@ def build(label, release=false) {
 
                    """
 
-                if (release)
+                if (release) {
                     // Build a distribution wheel
                     sh "python setup.py bdist_wheel"
 
