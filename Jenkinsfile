@@ -5,11 +5,6 @@ void setBuildStatus(String message, String state) {
   ]);
 }
 
-def configs = [
-    [label: 'GPU 1'],
-    [label: 'McNode']
-]
-
 def build(label, release=false) {
     try {
         def workspace = pwd();
@@ -41,7 +36,7 @@ def build(label, release=false) {
                     # Check python version
                     python --version
 
-                    # Check tox's version
+                    # Check tox version
                     tox --version
 
                     # List all available environments
@@ -51,8 +46,16 @@ def build(label, release=false) {
                     tox
 
                    """
+
+                if (release)
+                    // Build a distribution wheel
+                    sh "python setup.py bdist_wheel"
+
+                    // This will be the official release
+                    archiveArtifacts artifacts: "dist/clkhash-*.whl"
+                }
             }
-            catch(err) {
+            catch (err) {
                 testsError = err
                 currentBuild.result = 'FAILURE'
                 setBuildStatus("Build failed", "FAILURE");
@@ -70,17 +73,12 @@ def build(label, release=false) {
     setBuildStatus("Tests Passed", "SUCCESS");
 }
 
-/*
-for (config in configs) {
-    def label = config["label"]
-    stage(label) {
-        build(label, false)
-    }
-}
-*/
-
 node('GPU 1') {
     stage('GPU 1') {
-        build('GPU 1', false)
+        if (env.BRANCH_NAME == 'master') {
+            build('GPU 1', true)
+        } else {
+            build('GPU 1', false)
+        }
     }
 }
