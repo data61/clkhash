@@ -1,6 +1,5 @@
 import pkg_resources
 
-from . import bloomhash
 from . import bloomfilter
 from . import identifier_types
 from . import randomnames

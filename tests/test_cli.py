@@ -136,11 +136,8 @@ class BasicCLITests(unittest.TestCase):
 
     def test_bench(self):
         runner = CliRunner()
-        # result = runner.invoke(anonlink.cli.cli, ['benchmark',
-        #                                           '--size', '20'])
         result = runner.invoke(clkhash.cli.cli, ['benchmark'])
-        assert 'Popcount speed:' in result.output
-        # assert 'Comparisons per second' in result.output
+        assert 'hashes in' in result.output
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,

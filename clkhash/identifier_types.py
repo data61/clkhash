@@ -1,9 +1,8 @@
-
+"""
+Convert PII to tokens
 """
 
-
-"""
-from . import bloomhash as bh
+from clkhash.tokenizer import unigramlist, bigramlist
 
 
 class IdentifierType:
@@ -22,7 +21,7 @@ class IdentifierType:
         Can be set to zero to skip
         """
         self.weight = int(weight)
-        self.tokenizer = bh.unigramlist if unigram else bh.bigramlist
+        self.tokenizer = unigramlist if unigram else bigramlist
         self.kwargs = kwargs
 
     def __call__(self, entry):
@@ -100,3 +99,5 @@ def identifier_type_from_description(schema_object):
         id_type.weight = schema_object['weight']
 
     return id_type
+
+

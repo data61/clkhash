@@ -1,7 +1,35 @@
 #!/usr/bin/env python3
 
+"""
+Generate a Bloom filter
+"""
 import base64
-from clkhash import bloomhash
+import hmac
+from hashlib import sha1, md5
+
+from bitarray import bitarray
+
+
+def hbloom(mlist, l=1024, k=30, keysha1="secret1", keymd5="secret2"):
+    """
+    Cryptographic bloom filter for list of strings
+
+    :param mlist: list of strings to be hashed and encoded in filter
+    :param l: length of filter
+    :param k: number of hash functions to use per element
+    :param keysha1: hmac secret key for sha1
+    :param keymd5: hmac secret key for md5
+    :return: bitarray with bloom filter
+    """
+    bf = bitarray(l)
+    bf[:] = 0
+    for m in mlist:
+        sha1hm = int(hmac.new(keysha1.encode(), m.encode(), sha1).hexdigest(), 16) % l
+        md5hm = int(hmac.new(keymd5.encode(), m.encode(), md5).hexdigest(), 16) % l
+        for i in range(k):
+            gi = (sha1hm + i * md5hm) % l
+            bf[gi] = 1
+    return bf
 
 
 def cryptoBloomFilter(record, tokenizers, key1="test1", key2="test2"):
@@ -24,20 +52,9 @@ def cryptoBloomFilter(record, tokenizers, key1="test1", key2="test2"):
         for token in tokenizer(entry):
             mlist.append(token)
 
-    bf = bloomhash.hbloom(mlist, keysha1=key1, keymd5=key2)
+    bf = hbloom(mlist, keysha1=key1, keymd5=key2)
 
     return bf, record[0], bf.count()
-
-
-def calculate_bloom_filters(dataset, schema, keys):
-    """
-    :param dataset: A list of indexable records.
-    :param schema: An iterable of identifier type names.
-    :param keys: A tuple of two secret keys used in the HMAC.
-    :return: List of bloom filters as 3-tuples, each containing
-             bloom filter (bitarray), index (int), bitcount (int)
-    """
-    return list(stream_bloom_filters(dataset, schema, keys))
 
 
 def stream_bloom_filters(dataset, schema_types, keys):
@@ -49,9 +66,19 @@ def stream_bloom_filters(dataset, schema_types, keys):
     :param keys: A tuple of two secret keys used in the HMAC.
     :return: Yields bloom filters as 3-tuples
     """
-
     for s in dataset:
         yield cryptoBloomFilter(s, schema_types, key1=keys[0], key2=keys[1])
+
+
+def calculate_bloom_filters(dataset, schema, keys):
+    """
+    :param dataset: A list of indexable records.
+    :param schema: An iterable of identifier type names.
+    :param keys: A tuple of two secret keys used in the HMAC.
+    :return: List of bloom filters as 3-tuples, each containing
+             bloom filter (bitarray), index (int), bitcount (int)
+    """
+    return list(stream_bloom_filters(dataset, schema, keys))
 
 
 def serialize_bitarray(ba):
