@@ -43,7 +43,7 @@ def build(label, release=false) {
                     tox -a
 
                     # Run tox. Perhaps add '--skip-missing-interpreters' so the tests won't fail due to missing interpreters?
-                    tox --skip-missing-interpreters
+                    tox -e py27,py33,py34,py35,py36
 
                    """
 
