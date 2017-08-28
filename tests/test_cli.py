@@ -27,13 +27,13 @@ class CLITestHelper(unittest.TestCase):
 
     def setUp(self):
         super(CLITestHelper, self).setUp()
-        self.pii_file = NamedTemporaryFile('w', encoding='utf8')
-        self.pii_file_2 = NamedTemporaryFile('w', encoding='utf8')
-        self.text_schema_file = NamedTemporaryFile('w', encoding='utf8')
-        self.json_schema_file = NamedTemporaryFile('w', encoding='utf8')
-        self.yaml_schema_file = NamedTemporaryFile('w', encoding='utf8')
-        self.clk_file = NamedTemporaryFile('w', encoding='utf8')
-        self.clk_file_2 = NamedTemporaryFile('w', encoding='utf8')
+        self.pii_file = NamedTemporaryFile('w')
+        self.pii_file_2 = NamedTemporaryFile('w')
+        self.text_schema_file = NamedTemporaryFile('w')
+        self.json_schema_file = NamedTemporaryFile('w')
+        self.yaml_schema_file = NamedTemporaryFile('w')
+        self.clk_file = NamedTemporaryFile('w')
+        self.clk_file_2 = NamedTemporaryFile('w')
 
         pii_data = randomnames.NameList(self.samples)
         data = [(p[1], p[2]) for p in pii_data.names]
@@ -104,8 +104,7 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, [])
-        for expected_command in {'hash', 'upload', 'create', 'results', 'generate', 'benchmark'}:
-        # for expected_command in set(['hash', 'upload', 'create', 'results', 'generate']):
+        for expected_command in set(['hash', 'upload', 'create', 'results', 'generate', 'benchmark']):
             assert expected_command in result.output
 
     def test_version(self):
@@ -224,7 +223,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     samples = 100
 
     def setUp(self):
-        self.pii_file = NamedTemporaryFile('w', encoding='utf8')
+        self.pii_file = NamedTemporaryFile('w')
 
         pii_data = randomnames.NameList(TestHasherDefaultSchema.samples)
         randomnames.save_csv(pii_data.names, pii_data.schema, self.pii_file)

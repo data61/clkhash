@@ -1,12 +1,16 @@
 """
 Generate CLK from CSV file
 """
-import concurrent.futures
 import csv
 import logging
 import time
 
-from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
+import sys
+
+if sys.version_info[0] >= 3:
+    import concurrent.futures
+
+from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
 
 log = logging.getLogger('clkhash.clk')
 
@@ -49,21 +53,27 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 1000 if len(pii_data) <= 10000 else 10000
+
     results = []
+    # If running Python3 serialise hashing.
+    if sys.version_info[0] >= 3:
+        # Compute Bloom filter from the chunks and then serialise it
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = []
 
-    # Compute Bloom filter from the chunks and then serialise it
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = []
+            for i, chunk in enumerate(chunks(pii_data, chunk_size)):
+                future = executor.submit(hash_and_serialize_chunk,
+                                         chunk, schema_types, keys)
+                futures.append(future)
 
-        for i, chunk in enumerate(chunks(pii_data, chunk_size)):
-            future = executor.submit(hash_and_serialize_chunk,
-                                     chunk, schema_types, keys)
-            futures.append(future)
+            for future in futures:
+                results.extend(future.result())
 
-        for future in futures:
-            results.extend(future.result())
+        log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+    else:
+        results = hash_and_serialize_chunk(pii_data, schema_types, keys)
 
-    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+        log.info("Serial hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
 
 

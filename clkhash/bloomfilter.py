@@ -9,6 +9,7 @@ from hashlib import sha1, md5
 
 from bitarray import bitarray
 
+import sys
 
 def hbloom(mlist, l=1024, k=30, keysha1="secret1", keymd5="secret2"):
     """
@@ -85,4 +86,8 @@ def serialize_bitarray(ba):
     """Serialize a bitarray (bloomfilter)
 
     """
-    return base64.encodebytes(ba.tobytes()).decode('utf8')
+    # Encode bitarray according to the Python version
+    if sys.version_info[0] >= 3:
+        return base64.encodebytes(ba.tobytes()).decode('utf8')
+    else:
+        return base64.b64encode(ba.tobytes()).decode('utf8')

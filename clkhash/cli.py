@@ -254,7 +254,6 @@ def results(mapping, apikey, watch, server, output):
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
 def benchmark():
-    # bench.compute_popcount_speed(100000)
     bench.compute_hash_speed(10000)
 
 

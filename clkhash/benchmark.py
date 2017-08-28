@@ -1,3 +1,4 @@
+from __future__ import print_function
 from timeit import default_timer as timer
 import tempfile
 from clkhash.randomnames import NameList
