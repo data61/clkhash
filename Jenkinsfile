@@ -5,15 +5,7 @@ void setBuildStatus(String message, String state) {
   ]);
 }
 
-def isMaster = env.BRANCH_NAME == 'master'
-def isDevelop = env.BRANCH_NAME == 'develop'
-
-def configs = [
-    [label: 'GPU 1', pythons: ['python3.4', 'python3.5', 'python3.6'], compilers: ['clang', 'gcc']],
-    [label: 'McNode', pythons: ['python3.5'], compilers: ['clang', 'gcc']]
-]
-
-def build(python_version, compiler, label, release=false) {
+def build(label, release=false) {
     try {
         def workspace = pwd();
         echo "${label}"
@@ -21,8 +13,6 @@ def build(python_version, compiler, label, release=false) {
         env.PATH = "${workspace}/env/bin:/usr/bin:${env.PATH}"
 
         withEnv(["VENV=${workspace}/env"]) {
-        // ${workspace} contains an absolute path to job workspace (not available within a stage)
-
 
             sh "test -d ${workspace}/env && rm -rf ${workspace}/env || echo 'no env, skipping cleanup'"
 
@@ -42,38 +32,41 @@ def build(python_version, compiler, label, release=false) {
                     printenv
 
                     rm -fr build
-                    ${python_version} -m venv --clear ${VENV}
-                    ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel
 
-                    ${VENV}/bin/python ${VENV}/bin/pip install -r requirements.txt
+                    # Check python version
+                    python --version
 
-                    CC=${compiler} ${VENV}/bin/python setup.py bdist_wheel
-                    ${VENV}/bin/python ${VENV}/bin/pip install -e .
-                    ${VENV}/bin/python ${VENV}/bin/nosetests \
-                        --with-xunit --with-coverage --cover-inclusive \
-                        --cover-package=anonlink
+                    # Check tox version
+                    tox --version
+
+                    # List all available environments
+                    tox -a
+
+                    # Run tox. Perhaps add '--skip-missing-interpreters' so the tests won't fail due to missing interpreters?
+                    tox -e py27,py33,py34,py35,py36
 
                    """
 
-                if(release) {
+                if (release) {
+                    // Build a distribution wheel on a virtual environment based on python 3.5
+                    sh """
+                        python3.5 -m venv --clear ${VENV}
+
+                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip setuptools wheel
+
+                        ${VENV}/bin/python setup.py bdist_wheel
+                    """
+
                     // This will be the official release
-                    archiveArtifacts artifacts: "dist/anonlink-*.whl"
+                    archiveArtifacts artifacts: "dist/clkhash-*.whl"
                 }
             }
-            catch(err) {
+            catch (err) {
                 testsError = err
                 currentBuild.result = 'FAILURE'
                 setBuildStatus("Build failed", "FAILURE");
             }
             finally {
-                sh '''
-                ${VENV}/bin/python ${VENV}/bin/coverage html --omit="*/cpp_code/*" --omit="*build_matcher.py*"
-                '''
-
-                if (!release) {
-                    junit 'nosetests.xml'
-                }
-
                 if (testsError) {
                     throw testsError
                 }
@@ -83,45 +76,15 @@ def build(python_version, compiler, label, release=false) {
     } finally {
         deleteDir()
     }
+    setBuildStatus("Tests Passed", "SUCCESS");
 }
 
-
-def builders = [:]
-for (config in configs) {
-    def label = config["label"]
-    def pythons = config["pythons"]
-    def compilers = config["compilers"]
-
-    for (_py_version in pythons) {
-        for (_compiler in compilers) {
-
-            def py_version = _py_version
-            def compiler = _compiler
-
-            def combinedName = "${label}-${py_version}-${compiler}"
-
-            builders[combinedName] = {
-                node(label) {
-                    stage(combinedName) {
-                        build(py_version, compiler, label, false)
-                    }
-                }
-            }
+node('GPU 1') {
+    stage('Build') {
+        if (env.BRANCH_NAME == 'master') {
+            build('GPU 1', true)
+        } else {
+            build('GPU 1', false)
         }
-    }
-}
-
-node {
-    checkout scm
-    setBuildStatus("Build in progress", "PENDING");
-}
-
-parallel builders
-
-node('linux') {
-
-    stage('Release') {
-        build('python3.5', 'gcc', 'GPU 1', true)
-        setBuildStatus("Tests Passed", "SUCCESS");
     }
 }

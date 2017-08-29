@@ -27,7 +27,7 @@ def load_csv_data(resource_name):
     data = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name)).decode('utf8')
     reader = csv.reader(data.splitlines())
     next(reader, None)  # skip the headers
-    return list({row[0] for row in reader})
+    return [row[0] for row in reader]
 
 
 def save_csv(data, schema, file):

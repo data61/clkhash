@@ -8,9 +8,9 @@ import click
 import requests
 
 import clkhash
+from clkhash import clk
 from clkhash import benchmark as bench
 from clkhash import randomnames
-from clkhash import bloomhash
 from clkhash.schema import get_schema_types, load_schema
 
 
@@ -69,7 +69,7 @@ def hash(input, output, schema, keys, no_header):
 
     schema_types = get_schema_types(load_schema(schema))
 
-    clk_data = bloomhash.hash_csv(input, keys, schema_types, no_header)
+    clk_data = clk.generate_clk_from_csv(input, keys, schema_types, no_header)
     json.dump({'clks': clk_data}, output)
     log("CLK data written to {}".format(output.name))
 
@@ -254,7 +254,6 @@ def results(mapping, apikey, watch, server, output):
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
 def benchmark():
-    bench.compute_popcount_speed(100000)
     bench.compute_hash_speed(10000)
 
 
