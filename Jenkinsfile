@@ -52,13 +52,18 @@ def build(label, release=false) {
                     sh """
                         python3.5 -m venv --clear ${VENV}
 
-                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel nose
+                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel
+
+                        ${VENV}/bin/python ${VENV}/bin/pip install -r requirements.
 
                         ${VENV}/bin/python setup.py bdist_wheel
+                        
+                        ${VENV}/bin/python ${VENV}/bin/pip install -e .
 
                         ${VENV}/bin/python ${VENV}/bin/nosetests \
                             --with-xunit --with-coverage --cover-inclusive \
                             --cover-package=clkhash
+
                         ${VENV}/bin/python ${VENV}/bin/coverage html
                     """
 
