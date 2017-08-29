@@ -86,6 +86,7 @@ def serialize_bitarray(ba):
     """Serialize a bitarray (bloomfilter)
 
     """
+
     # Encode bitarray according to the Python version
     if sys.version_info[0] >= 3:
         return base64.encodebytes(ba.tobytes()).decode('utf8')

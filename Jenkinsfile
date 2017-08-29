@@ -74,11 +74,12 @@ def build(label, release=false) {
 }
 
 node('GPU 1') {
-    stage('GPU 1') {
-        if (env.BRANCH_NAME == 'master') {
-            build('GPU 1', true)
-        } else {
-            build('GPU 1', false)
-        }
+    stage('Build') {
+//        if (env.BRANCH_NAME == 'master') {
+//            build('GPU 1', true)
+//        } else {
+//            build('GPU 1', false)
+//        }
+        build('GPU 1', true)
     }
 }

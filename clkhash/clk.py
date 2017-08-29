@@ -55,7 +55,7 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
     chunk_size = 1000 if len(pii_data) <= 10000 else 10000
 
     results = []
-    # If running Python3 serialise hashing.
+    # If running Python3 parallelise hashing.
     if sys.version_info[0] >= 3:
         # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -69,11 +69,12 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
             for future in futures:
                 results.extend(future.result())
 
-        log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     else:
+        log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
+
         results = hash_and_serialize_chunk(pii_data, schema_types, keys)
 
-        log.info("Serial hashing took {:.2f} seconds".format(time.time() - start_time))
+    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
 
 
