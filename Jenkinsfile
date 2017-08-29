@@ -49,7 +49,12 @@ def build(label, release=false) {
 
                 if (release) {
                     // Build a distribution wheel
-                    sh "python setup.py bdist_wheel"
+                    sh """
+                        # Build a distribution wheel on a virtual environment based on python 3.5
+                        python3.5 -m venv --clear ${VENV}
+                        ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel
+                        ${VENV}/bin/python setup.py bdist_wheel
+                    """
 
                     // This will be the official release
                     archiveArtifacts artifacts: "dist/clkhash-*.whl"
