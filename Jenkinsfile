@@ -48,12 +48,18 @@ def build(label, release=false) {
                    """
 
                 if (release) {
-                    // Build a distribution wheel
+                    // Build a distribution wheel and run coverage on a virtual environment based on python 3.5
                     sh """
-                        # Build a distribution wheel on a virtual environment based on python 3.5
                         python3.5 -m venv --clear ${VENV}
+
                         ${VENV}/bin/python ${VENV}/bin/pip install --upgrade pip coverage setuptools wheel
+
                         ${VENV}/bin/python setup.py bdist_wheel
+
+                        ${VENV}/bin/python ${VENV}/bin/nosetests \
+                            --with-xunit --with-coverage --cover-inclusive \
+                            --cover-package=anonlink
+                        ${VENV}/bin/python ${VENV}/bin/coverage html
                     """
 
                     // This will be the official release
