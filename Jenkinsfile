@@ -23,7 +23,10 @@ def build(label, release=false) {
             checkout scm
 
             def testsError = null
+
             try {
+              stage('Test') {
+
                 sh """#!/usr/bin/env bash
                     set -xe
 
@@ -46,7 +49,9 @@ def build(label, release=false) {
                     tox -e py27,py33,py34,py35,py36
 
                    """
+              }
 
+              stage('Release') {
                 if (release) {
                     // Build a distribution wheel on a virtual environment based on python 3.5
                     sh """
@@ -57,9 +62,10 @@ def build(label, release=false) {
                         ${VENV}/bin/python setup.py bdist_wheel
                     """
 
-                    // This will be the official release
+                    // archive the released wheel
                     archiveArtifacts artifacts: "dist/clkhash-*.whl"
                 }
+              }
             }
             catch (err) {
                 testsError = err
@@ -80,11 +86,11 @@ def build(label, release=false) {
 }
 
 node('GPU 1') {
-    stage('Build') {
-        if (env.BRANCH_NAME == 'master') {
-            build('GPU 1', true)
-        } else {
-            build('GPU 1', false)
-        }
+
+    if (env.BRANCH_NAME == 'master') {
+        build('GPU 1', true)
+    } else {
+        // We now release from every branch
+        build('GPU 1', true)
     }
 }
