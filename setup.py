@@ -10,7 +10,7 @@ requirements = [
 
 setup(
     name="clkhash",
-    version='0.7.2',
+    version='0.7.3',
     description='Hash utility to create Cryptographic Linkage Keys',
     url='https://github.com/n1analytics/clkhash',
     license='Apache',
