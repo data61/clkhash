@@ -2,14 +2,22 @@
 
 Python implementation of cryptographic linkage key hashing.
 
-This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
+This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
+[A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
 
 
 # Installation
 
 Install the dependencies with:
 
-    pip install -f requirements.txt
+    pip install -r requirements.txt
+
+
+Test and install with:
+
+    python setup.py test
+    pip install -e .
+
 
 # CLI Tool
 
@@ -40,6 +48,17 @@ To use the clkutil without installation (after installing the dependencies) just
 
     python -m clkhash.cli
 
+## Benchmark
+
+```
+$ python -m clkhash.cli benchmark
+100000 x 1024 bit popcounts in 0.018481 seconds
+Popcount speed: 660.52 MiB/s
+ 10000 hashes in 1.767731 seconds. 5.66 KH/s
+```
+
+As a rule of thumb a single modern core will hash around 1M entities in about 20 minutes.
+
 
 # Tests
 
@@ -49,7 +68,7 @@ Run unit tests with nose
 $ python -m nose
 ......................SS..............................
 ----------------------------------------------------------------------
-Ran 54 tests in 6.615s
+Ran 51 tests in 0.915s
 
 OK (SKIP=2)
 ```
@@ -59,4 +78,3 @@ line tests set the  `INCLUDE_CLI` environment variable. To enable
 the tests which interact with an entity service set the
 `TEST_ENTITY_SERVICE` environment variable to the target service's 
 address.
-
