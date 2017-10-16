@@ -39,11 +39,11 @@ class CLITestHelper(unittest.TestCase):
         data = [(p[1], p[2]) for p in pii_data.names]
 
         randomnames.save_csv(data,
-                             ('NAME freetext', 'DOB YYYY/MM/DD'),
+                             [{"identifier": 'NAME freetext'}, {'identifier': 'DOB YYYY/MM/DD'}],
                              self.pii_file)
         random.shuffle(data)
         randomnames.save_csv(data[:self.samples//2],
-                             ('NAME freetext', 'DOB YYYY/MM/DD'),
+                             [{"identifier": 'NAME freetext'}, {'identifier': 'DOB YYYY/MM/DD'}],
                              self.pii_file_2)
 
         print('NAME freetext,DOB YYYY/MM/DD', file=self.text_schema_file)

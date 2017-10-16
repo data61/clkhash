@@ -35,11 +35,11 @@ def save_csv(data, schema, file):
     Output generated data as csv with header.
 
     :param data: An iterable of tuples containing raw data.
-    :param schema: Tuple of column names as defined in anonlink.identifier_types
+    :param schema: Iterable of schema definition dicts
     :param file: A writeable stream in which to write the csv
     """
 
-    print(','.join(schema), file=file)
+    print(','.join(col['identifier'] for col in schema), file=file)
     writer = csv.writer(file)
     writer.writerows(data)
 
@@ -61,7 +61,13 @@ def random_date(start, end):
 class NameList:
     """List of randomly generated names"""
 
-    schema = ('INDEX', 'NAME freetext', 'DOB YYYY/MM/DD', 'GENDER M or F')
+    schema = [
+            {"identifier": "INDEX"},
+            {"identifier": "NAME freetext"},
+            {"identifier": "DOB YYYY/MM/DD"},
+            {"identifier": "GENDER M or F"}
+        ]
+
 
     def __init__(self, n):
         self.load_names()
