@@ -74,7 +74,7 @@ def stream_bloom_filters(dataset, schema_types, keys):
 def calculate_bloom_filters(dataset, schema, keys):
     """
     :param dataset: A list of indexable records.
-    :param schema: An iterable of identifier type names.
+    :param schema: An iterable of identifier types.
     :param keys: A tuple of two secret keys used in the HMAC.
     :return: List of bloom filters as 3-tuples, each containing
              bloom filter (bitarray), index (int), bitcount (int)
