@@ -51,6 +51,27 @@ def build(label, release=false) {
                     tox -e py27,py33,py34,py35,py36
 
                    """
+
+                   junit 'nosetests.xml'
+              }
+
+              stage('Coverage'){
+                // Code coverage only needs to be done once
+                sh '''#!/usr/bin/env bash
+                    set -xe
+
+                    coverage html
+
+                '''
+
+                publishHTML (target: [
+                  allowMissing: false,
+                  alwaysLinkToLastBuild: false,
+                  keepAll: true,
+                  reportDir: 'htmlcov',
+                  reportFiles: 'index.html',
+                  reportName: "Code Coverage"
+                ])
               }
 
               stage('Release') {

@@ -26,3 +26,7 @@ var/
 
 # tox
 .tox
+
+# Test output files
+.coverage
+nosetests.xml
