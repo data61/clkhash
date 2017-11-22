@@ -60,10 +60,10 @@ def build(label, release=false) {
                 sh """#!/usr/bin/env bash
                     set -xe
                     export PATH="/usr/local/bin:\${PATH}"
-                    ls ${VENV}/bin
+                    ls ${VENV}
 
                     pip install -U coverage
-                    ${VENV}/bin/pip install -U coverage
+                    ${VENV}/pip install -U coverage
                     coverage html
 
                 """
