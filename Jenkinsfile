@@ -59,23 +59,12 @@ def build(label, release=false) {
                 // Code coverage only needs to be done once
                 sh """#!/usr/bin/env bash
                     set -xe
-                    export PATH="/usr/local/bin:\${PATH}"
-                    ls ${VENV}
 
-                    pip install -U coverage
-                    ${VENV}/pip install -U coverage
-                    coverage html
-
+                    .tox/py35/bin/python .tox/py35/bin/coverage xml
                 """
 
-                publishHTML (target: [
-                  allowMissing: false,
-                  alwaysLinkToLastBuild: false,
-                  keepAll: true,
-                  reportDir: 'htmlcov',
-                  reportFiles: 'index.html',
-                  reportName: "Code Coverage"
-                ])
+                step([$class: 'CoberturaPublisher', coberturaReportFile: 'coverage.xml'])
+
               }
 
               stage('Release') {
