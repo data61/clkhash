@@ -51,6 +51,20 @@ def build(label, release=false) {
                     tox -e py27,py33,py34,py35,py36
 
                    """
+
+                   junit 'nosetests.xml'
+              }
+
+              stage('Coverage'){
+                // Code coverage only needs to be done once
+                sh """#!/usr/bin/env bash
+                    set -xe
+
+                    .tox/py35/bin/python .tox/py35/bin/coverage xml
+                """
+
+                step([$class: 'CoberturaPublisher', coberturaReportFile: 'coverage.xml'])
+
               }
 
               stage('Release') {
