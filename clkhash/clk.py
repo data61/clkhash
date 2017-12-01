@@ -11,6 +11,7 @@ if sys.version_info[0] >= 3:
     import concurrent.futures
 
 from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
+from clkhash.key_derivation import generate_key_lists
 
 log = logging.getLogger('clkhash.clk')
 
@@ -22,7 +23,7 @@ def hash_and_serialize_chunk(chunk_pii_data, schema_types, keys):
 
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
-    :param keys: A tuple of two secret keys used in the HMAC.
+    :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: A list of serialized Bloom filters
     """
     clk_data = []
@@ -54,6 +55,9 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 1000 if len(pii_data) <= 10000 else 10000
 
+    # generate two keys for each identifier
+    key_lists = generate_key_lists(keys, len(schema_types))
+
     results = []
     # If running Python3 parallelise hashing.
     if sys.version_info[0] >= 3:
@@ -63,7 +67,7 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
 
             for i, chunk in enumerate(chunks(pii_data, chunk_size)):
                 future = executor.submit(hash_and_serialize_chunk,
-                                         chunk, schema_types, keys)
+                                         chunk, schema_types, key_lists)
                 futures.append(future)
 
             for future in futures:
@@ -72,7 +76,7 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
     else:
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
 
-        results = hash_and_serialize_chunk(pii_data, schema_types, keys)
+        results = hash_and_serialize_chunk(pii_data, schema_types, key_lists)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
