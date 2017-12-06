@@ -42,8 +42,8 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2):
 
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
     :param tokenizers: A list of IdentifierType tokenizers (one for each record element)
-    :param keys1: list of keys for first hash function
-    :param keys2: list of keys for second hash function
+    :param keys1: list of keys for first hash function as list of bytes
+    :param keys2: list of keys for second hash function as list of bytes
 
     :return: 3-tuple - bitarray with bloom filter for record, index of record, bitcount
     """
