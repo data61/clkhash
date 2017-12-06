@@ -15,14 +15,14 @@ def hkdf(master_secret, num_keys, key_size=DEFAULT_KEY_SIZE, salt=None, info=Non
 
     :param master_secret: the source of entropy for the kdf
     :param num_keys: the number of keys the kdf should produce
-    :param key_size: the size of the produces keys
-    :param salt: the salt for the kdf as bytestring.
-    :param info: optional context and application specific information
-    :return: a list of keys as a list of bytestrings.
+    :param key_size: the size of the produced keys
+    :param salt: the salt for the kdf as bytes
+    :param info: optional context and application specific information as bytes
+    :return: keys as a tuple of bytes
     """
     hkdf = HKDF(algorithm=hashes.SHA256(), length=num_keys * key_size, salt=salt, info=info, backend=default_backend())
     keybytes = hkdf.derive(master_secret)
-    keys = [keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys)]
+    keys = tuple([keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys)])
     return keys
 
 
@@ -37,11 +37,11 @@ def generate_key_lists(master_secrets, num_identifier, key_size=DEFAULT_KEY_SIZE
     :param master_secrets: a list of master secrets (either as bytes or strings)
     :param num_identifier: the number of identifier
     :param key_size: the size of the derived keys
-    :param salt: salt for the KDF
-    :param info: optional context and application specific information
+    :param salt: salt for the KDF as bytes
+    :param info: optional context and application specific information as bytes
     :param algo: the algorithm to derive the keys
-    :reb = bturn: a list of lists of keys. First dimension is the same as master_secrets, second dimension is of size
-    num_identifer. A key is represented as a bytestring.
+    :return: a list of lists of keys. First dimension is the same as master_secrets, second dimension is of size
+    num_identifer. A key is represented as a bytes.
     """
     keys = []
     try:
@@ -50,8 +50,8 @@ def generate_key_lists(master_secrets, num_identifier, key_size=DEFAULT_KEY_SIZE
                 keys.append(key)
             else:
                 keys.append(key.encode('UTF-8'))
-    except SyntaxError:
-        raise ValueError("provided 'master_secrets' have to be either of type bytes or strings.")
+    except AttributeError:
+        raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
     if algo is 'HKDF':
         return [hkdf(key, num_identifier, key_size, salt, info) for key in keys]
     if algo is 'legacy':
