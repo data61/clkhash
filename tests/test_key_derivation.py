@@ -25,6 +25,10 @@ class TestKeyDerivation(unittest.TestCase):
             for key in key_lists[0]:
                 self.assertEqual(len(key), DEFAULT_KEY_SIZE, msg='key should be of size "default_key_size"')
 
+    def test_fail_generate_key_lists(self):
+        with self.assertRaises(TypeError):
+            generate_key_lists([True, False], 10)
+
     def test_nacl(self):
         master_secret = 'No, I am your father'.encode()
         keys_1 = hkdf(master_secret, 5, salt=b'and pepper')
