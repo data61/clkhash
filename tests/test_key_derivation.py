@@ -1,7 +1,7 @@
 import unittest
-from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE
+from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE, HKDFconfig
 from clkhash.identifier_types import IdentifierType
-from clkhash.bloomfilter import hbloom
+from clkhash.bloomfilter import crypto_bloom_filter
 
 
 class TestKeyDerivation(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestKeyDerivation(unittest.TestCase):
         master_secret = 'No, I am your father'.encode()
         for num_keys in (1, 10, 50):
             for key_length in (2, 20):
-                keys = hkdf(master_secret, num_keys, key_length)
+                keys = hkdf(HKDFconfig(master_secret), num_keys, key_length)
                 self.assertEqual(len(keys), num_keys)
                 for key in keys:
                     self.assertEqual(len(key), key_length)
@@ -31,22 +31,26 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_nacl(self):
         master_secret = 'No, I am your father'.encode()
-        keys_1 = hkdf(master_secret, 5, salt=b'and pepper')
-        keys_2 = hkdf(master_secret, 5, salt=b'and vinegar')
+        keys_1 = hkdf(HKDFconfig(master_secret, salt=b'and pepper'), 5)
+        keys_2 = hkdf(HKDFconfig(master_secret, salt=b'and vinegar'), 5)
         for k1, k2 in zip(keys_1, keys_2):
             self.assertNotEqual(k1, k2, msg='using different salts should result in different keys')
 
-    def test_compate_to_legacy(self):
+    def test_compare_to_legacy(self):
         # Identifier: 'ANY freetext'
         schema = [IdentifierType()] * 4
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
         master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
-        keys_hkdf = generate_key_lists(master_secrets, len(row), algo='HKDF')
-        keys_legacy = generate_key_lists(master_secrets, len(row), algo='legacy')
-        bloom_hkdf = hbloom(row, keys_hkdf[0], keys_hkdf[1])
-        bloom_legacy = hbloom(row, keys_legacy[0], keys_legacy[1])
-        print('hkdf: {}, legacy: {}'.format(bloom_hkdf.count(), bloom_legacy.count()))
+        keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
+        keys_legacy = generate_key_lists(master_secrets, len(row), kdf='legacy')
+        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf[0], keys_hkdf[1])
+        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy[0], keys_legacy[1])
+        hkdf_count = bloom_hkdf[0].count()
+        legacy_count = bloom_legacy[0].count()
+        # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
+        self.assertLess(legacy_count, hkdf_count)
+        self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 
-    def test_wrong_algo(self):
+    def test_wrong_kdf(self):
         with self.assertRaises(ValueError):
-            generate_key_lists([b'0'], 1, algo='breakMe')
+            generate_key_lists([b'0'], 1, kdf='breakMe')
