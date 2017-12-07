@@ -11,31 +11,29 @@ from hashlib import sha1, md5
 from bitarray import bitarray
 
 
-def hbloom(mlist, keys_sha1, keys_md5, l=1024, k=30):
+def update_bloom_filter(bloomfilter, ngrams, key_sha1, key_md5, k):
     """
-    Cryptographic bloom filter for list of strings
+    adds the encodings of the given n-grams to the provided Bloom filter.
+    Note that this function modifies the provided Bloom filter in memory and thus has no return value.
 
-    :param mlist: list of strings to be hashed and encoded in filter
-    :param keys_sha1: list of hmac secret keys for sha1, one for each element in mList
-    :param keys_md5: list of hmac secret keys for md5, one for each element in mList
-    :param l: length of filter
+    :param bloomfilter: a bitarray describing the Bloom filter to be updated
+    :param ngrams: list of n-grams to be hashed and encoded in filter
+    :param key_sha1: hmac secret keys for sha1 as bytes
+    :param key_md5: hmac secret keys for md5 as bytes
     :param k: number of hash functions to use per element
-    :return: bitarray with bloom filter
     """
-    bf = bitarray(l)
-    bf[:] = 0
-    for m, key_sha, key_md5 in zip(mlist, keys_sha1, keys_md5):
-        sha1hm = int(hmac.new(key_sha, m.encode(), sha1).hexdigest(), 16) % l
+    l = bloomfilter.length()
+    for m in ngrams:
+        sha1hm = int(hmac.new(key_sha1, m.encode(), sha1).hexdigest(), 16) % l
         md5hm = int(hmac.new(key_md5, m.encode(), md5).hexdigest(), 16) % l
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
-            bf[gi] = 1
-    return bf
+            bloomfilter[gi] = 1
 
 
-def crypto_bloom_filter(record, tokenizers, keys1, keys2):
+def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
     """
-    Make a bloom filter from a record with given tokenizers
+    Make a bloom filter from a record with given tokenizers and lists of keys.
 
     Using the method from
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
@@ -47,15 +45,14 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2):
 
     :return: 3-tuple - bitarray with bloom filter for record, index of record, bitcount
     """
+    bloomfilter = bitarray(l)
+    bloomfilter.setall(False)
 
-    mlist = []
-    for (entry, tokenizer) in zip(record, tokenizers):
-        for token in tokenizer(entry):
-            mlist.append(token)
+    for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
+        ngrams = [ngram for ngram in tokenizer(entry)]
+        update_bloom_filter(bloomfilter, ngrams, key1, key2, k)
 
-    bf = hbloom(mlist, keys_sha1=keys1, keys_md5=keys2)
-
-    return bf, record[0], bf.count()
+    return bloomfilter, record[0], bloomfilter.count()
 
 
 def stream_bloom_filters(dataset, schema_types, keys):
