@@ -1,6 +1,6 @@
 # CLK Hash
 
-Python implementation of cryptographic linkage key hashing. Supports Python versions 2.7+, 3.3+
+Python implementation of cryptographic linkage key hashing. Supports Python versions 2.7+, 3.4+
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
