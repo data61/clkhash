@@ -41,13 +41,15 @@ class TestKeyDerivation(unittest.TestCase):
         schema = [IdentifierType()] * 4
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
         master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
+        k = 10
         keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
         keys_legacy = generate_key_lists(master_secrets, len(row), kdf='legacy')
-        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf[0], keys_hkdf[1])
-        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy[0], keys_legacy[1])
+        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf[0], keys_hkdf[1], k=k)
+        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy[0], keys_legacy[1], k=k)
         hkdf_count = bloom_hkdf[0].count()
         legacy_count = bloom_legacy[0].count()
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
+        self.assertLessEqual(legacy_count, k * 6) # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 
