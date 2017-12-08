@@ -1,12 +1,9 @@
-
-
 import unittest
-import math
-from clkhash import clk, randomnames, bloomfilter, schema
+from clkhash import randomnames, bloomfilter
+from clkhash.key_derivation import generate_key_lists
 
 
 class TestNamelistHashable(unittest.TestCase):
-
     def test_namelist_hashable(self):
         namelist = randomnames.NameList(1000)
         s1, s2 = namelist.generate_subsets(100, 0.8)
@@ -14,8 +11,10 @@ class TestNamelistHashable(unittest.TestCase):
         self.assertEqual(len(s1), 100)
         self.assertEqual(len(s2), 100)
 
-        bf1 = bloomfilter.calculate_bloom_filters(s1, namelist.schema_types, ('secret', 'sshh'))
-        bf2 = bloomfilter.calculate_bloom_filters(s2, namelist.schema_types, ('secret', 'sshh'))
+        bf1 = bloomfilter.calculate_bloom_filters(s1, namelist.schema_types,
+                                                  generate_key_lists(('secret', 'sshh'), len(namelist.schema_types)))
+        bf2 = bloomfilter.calculate_bloom_filters(s2, namelist.schema_types,
+                                                  generate_key_lists(('secret', 'sshh'), len(namelist.schema_types)))
 
         self.assertEqual(len(bf1), 100)
         self.assertEqual(len(bf2), 100)
