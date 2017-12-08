@@ -18,6 +18,7 @@ class HKDFconfig:
 
         master_secret
             input keying material
+
         salt
             HKDF is defined to operate with and without random salt.  This is
             done to accommodate applications where a salt value is not available.
@@ -101,6 +102,8 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
         raise TypeError('provided config has to be of type "HKDFconfig"')
     hkdf = HKDF(algorithm=hash_dict[hkdf_config.hash_algo](), length=num_keys * key_size, salt=hkdf_config.salt,
                 info=hkdf_config.info, backend=default_backend())
+    # hkdf.derive returns a block of num_keys * key_size bytes which we divide up into num_keys chunks,
+    # each of size key_size
     keybytes = hkdf.derive(hkdf_config.master_secret)
     keys = tuple([keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys)])
     return keys
@@ -109,14 +112,12 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
 def generate_key_lists(master_secrets, num_identifier, key_size=DEFAULT_KEY_SIZE, salt=None, info=None, kdf='HKDF'):
     """
     Generates a derived key for each identifier for each master secret using a key derivation function (KDF).
-    A KDF is a basic and essential component of cryptographic systems. Its goal is to take some source of initial
-    keying material (the master_secret) and derive from it one or more cryptographically strong secret keys.
 
     The only supported key derivation function for now is 'HKDF'.
 
     The previous key usage can be reproduced by setting kdf to 'legacy'.
     This is highly discouraged, as this strategy will map the same n-grams in different identifier to the same bits in
-    the Boom filter and thus does not lead to good results.
+    the Bloom filter and thus does not lead to good results.
 
     :param master_secrets: a list of master secrets (either as bytes or strings)
     :param num_identifier: the number of identifier
