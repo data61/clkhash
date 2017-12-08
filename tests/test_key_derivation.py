@@ -56,3 +56,15 @@ class TestKeyDerivation(unittest.TestCase):
     def test_wrong_kdf(self):
         with self.assertRaises(ValueError):
             generate_key_lists([b'0'], 1, kdf='breakMe')
+
+    def test_HKDFconfig_wrong_hash(self):
+        with self.assertRaises(ValueError):
+            HKDFconfig(b'', hash_algo='SHA0815')
+
+    def test_HKDFconfig_wrong_type(self):
+        with self.assertRaises(TypeError):
+            HKDFconfig(42)
+
+    def test_hkdf_wrong_config_type(self):
+        with self.assertRaises(TypeError):
+            hkdf('not your type', 1)
