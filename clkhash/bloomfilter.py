@@ -11,29 +11,34 @@ from hashlib import sha1, md5
 from bitarray import bitarray
 
 
-def update_bloom_filter(bloomfilter, ngrams, key_sha1, key_md5, k):
+def double_hash_encode_ngrams(ngrams, key_sha1, key_md5, k, l):
     """
-    adds the encodings of the given n-grams to the provided Bloom filter.
-    Note that this function modifies the provided Bloom filter in memory and thus has no return value.
+    computes the double hash encoding of the provided ngrams with the given keys.
 
-    :param bloomfilter: a bitarray describing the Bloom filter to be updated
-    :param ngrams: list of n-grams to be hashed and encoded in filter
+    Using the method from
+    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+
+    :param ngrams: list of n-grams to be encoded
     :param key_sha1: hmac secret keys for sha1 as bytes
     :param key_md5: hmac secret keys for md5 as bytes
-    :param k: number of hash functions to use per element
+    :param k: number of hash functions to use per element of the ngrams
+    :param l: length of the output bitarray
+    :return bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
-    l = bloomfilter.length()
+    bf = bitarray(l)
+    bf.setall(False)
     for m in ngrams:
         sha1hm = int(hmac.new(key_sha1, m.encode(), sha1).hexdigest(), 16) % l
         md5hm = int(hmac.new(key_md5, m.encode(), md5).hexdigest(), 16) % l
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
-            bloomfilter[gi] = 1
+            bf[gi] = 1
+    return bf
 
 
 def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
     """
-    Make a bloom filter from a record with given tokenizers and lists of keys.
+    Makes a Bloom filter from a record with given tokenizers and lists of keys.
 
     Using the method from
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
@@ -42,6 +47,8 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
     :param tokenizers: A list of IdentifierType tokenizers (one for each record element)
     :param keys1: list of keys for first hash function as list of bytes
     :param keys2: list of keys for second hash function as list of bytes
+    :param l: length of the Bloom filter in number of bits
+    :param k: number of hash functions to use per element
 
     :return: 3-tuple - bitarray with bloom filter for record, index of record, bitcount
     """
@@ -50,7 +57,7 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
 
     for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
         ngrams = [ngram for ngram in tokenizer(entry)]
-        update_bloom_filter(bloomfilter, ngrams, key1, key2, k)
+        bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, k, l)
 
     return bloomfilter, record[0], bloomfilter.count()
 
