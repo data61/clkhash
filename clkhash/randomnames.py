@@ -20,6 +20,8 @@ import math
 
 import pkgutil
 
+from clkhash.schema import get_schema_types
+
 
 def load_csv_data(resource_name):
     """Loads a specified data file as csv and returns the first column as a Python list
@@ -68,7 +70,6 @@ class NameList:
             {"identifier": "GENDER M or F"}
         ]
 
-
     def __init__(self, n):
         self.load_names()
 
@@ -76,6 +77,10 @@ class NameList:
         self.latest_birthday = datetime(year=2016, month=1, day=1)
 
         self.names = [person for person in self.generate_random_person(n)]
+
+    @property
+    def schema_types(self):
+        return get_schema_types(self.schema)
 
     def generate_random_person(self, n):
         """
