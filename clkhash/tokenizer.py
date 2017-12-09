@@ -1,8 +1,11 @@
 """
 Functions to tokenize words (PII)
 """
+from typing import Optional, List
+
 
 def unigramlist(instr, toremove=None, positional=False):
+    # type: (str, Optional[List[str]], bool) -> List[str]
     """
     Make 1-grams (unigrams) from a word, possibly excluding particular substrings
 
@@ -21,6 +24,7 @@ def unigramlist(instr, toremove=None, positional=False):
 
 
 def bigramlist(word, toremove=None):
+    # type: (str, Optional[List[str]]) -> List[str]
     """
     Make bigrams from word with pre- and ap-pended spaces
 
@@ -38,6 +42,7 @@ def bigramlist(word, toremove=None):
 
 
 def positional_unigrams(instr):
+    # type: (str) -> List[str]
     """
     Make positional unigrams from a word.
 

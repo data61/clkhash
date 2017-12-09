@@ -1,3 +1,5 @@
+from typing import Tuple, List, Union, Optional
+
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
@@ -71,6 +73,7 @@ class HKDFconfig:
 
     @staticmethod
     def check_is_bytes(value):
+        # type: (Union[str, bytes]) -> bytes
         if isinstance(value, bytes):
             return value
         else:
@@ -85,14 +88,15 @@ class HKDFconfig:
 
 
 def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
+    # type: (HKDFconfig, int, int) -> Tuple[bytes, ...]
     """
-    Executes the HKDF key derivation function as described in rfc5869 to derive `num_keys` keys of size `key_size` from
-    the master_secret.
+    Executes the HKDF key derivation function as described in rfc5869 to derive
+    `num_keys` keys of size `key_size` from the master_secret.
 
     :param hkdf_config: an HKDFconfig object containing the configuration for the HKDF.
     :param num_keys: the number of keys the kdf should produce
     :param key_size: the size of the produced keys
-    :return: keys as a tuple of bytes
+    :return: Derived keys
     """
     hash_dict = {
         'SHA256': hashes.SHA256,
@@ -109,24 +113,32 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
     return keys
 
 
-def generate_key_lists(master_secrets, num_identifier, key_size=DEFAULT_KEY_SIZE, salt=None, info=None, kdf='HKDF'):
+def generate_key_lists(master_secrets,              # type: List[Union[bytes, str]]
+                       num_identifier,              # type: int
+                       key_size=DEFAULT_KEY_SIZE,   # type: int
+                       salt=None,                   # type: Optional[bytes]
+                       info=None,                   # type: Optional[bytes]
+                       kdf='HKDF'                   # type: str
+                       ):
+    # type: (...) -> Tuple[Tuple[bytes, ...], ...]
     """
     Generates a derived key for each identifier for each master secret using a key derivation function (KDF).
 
     The only supported key derivation function for now is 'HKDF'.
 
     The previous key usage can be reproduced by setting kdf to 'legacy'.
-    This is highly discouraged, as this strategy will map the same n-grams in different identifier to the same bits in
-    the Bloom filter and thus does not lead to good results.
+    This is highly discouraged, as this strategy will map the same n-grams in different identifier
+    to the same bits in the Bloom filter and thus does not lead to good results.
 
     :param master_secrets: a list of master secrets (either as bytes or strings)
-    :param num_identifier: the number of identifier
+    :param num_identifier: the number of identifiers
     :param key_size: the size of the derived keys
     :param salt: salt for the KDF as bytes
     :param info: optional context and application specific information as bytes
-    :param algo: the algorithm to derive the keys
-    :return: a list of lists of keys. First dimension is the same as master_secrets, second dimension is of size
-    num_identifer. A key is represented as bytes.
+    :param kdf: the key derivation function algorithm to use
+    :return: The derived keys.
+             First dimension is the same as master_secrets, second dimension is of size
+             num_identifier. A key is represented as bytes.
     """
     keys = []
     try:
@@ -138,7 +150,7 @@ def generate_key_lists(master_secrets, num_identifier, key_size=DEFAULT_KEY_SIZE
     except AttributeError:
         raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
     if kdf is 'HKDF':
-        return [hkdf(HKDFconfig(key, salt, info), num_identifier, key_size) for key in keys]
+        return tuple([hkdf(HKDFconfig(key, salt, info), num_identifier, key_size) for key in keys])
     if kdf is 'legacy':
-        return [[key] * num_identifier for key in keys]
+        return tuple([tuple([key] * num_identifier) for key in keys])
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))
