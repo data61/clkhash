@@ -8,7 +8,7 @@ import logging
 import time
 
 import sys
-from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union
+from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence
 
 if sys.version_info[0] >= 3:
     import concurrent.futures
@@ -20,7 +20,7 @@ from clkhash.identifier_types import IdentifierType
 log = logging.getLogger('clkhash.clk')
 
 
-def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[List[Any]]
+def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
                              schema_types,      # type: Iterable[IdentifierType]
                              keys               # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
                              ):
@@ -42,7 +42,7 @@ def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[List[Any]]
 
 
 def generate_clk_from_csv(input,            # type: TextIO
-                          keys,             # type: List[Union[bytes, str]]
+                          keys,             # type: Tuple[Union[bytes, str], Union[bytes, str]]
                           schema_types,     # type: List[IdentifierType]
                           no_header=False,  # type: bool
                           progress_bar=True # type: bool
@@ -63,7 +63,7 @@ def generate_clk_from_csv(input,            # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        pii_data.append([element.strip() for element in line])
+        pii_data.append(tuple([element.strip() for element in line]))
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema_types))
@@ -114,7 +114,7 @@ T = TypeVar('T')      # Declare generic type variable
 
 
 def chunks(l, n):
-    # type: (List[T], int) -> Iterable[List[T]]
+    # type: (Sequence[T], int) -> Iterable[Sequence[T]]
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]

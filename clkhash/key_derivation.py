@@ -1,4 +1,4 @@
-from typing import Tuple, List, Union, Optional
+from typing import Tuple, List, Union, Optional, Sequence
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -14,7 +14,11 @@ DEFAULT_KEY_SIZE = 64
 class HKDFconfig:
     supported_hash_algos = 'SHA256', 'SHA512'
 
-    def __init__(self, master_secret, salt=None, info=None, hash_algo='SHA256'):
+    def __init__(self, master_secret,   # type: bytes
+                 salt=None,             # type: Optional[bytes]
+                 info=None,             # type: Optional[bytes]
+                 hash_algo='SHA256'     # type: str
+                 ):                     # type: (...) -> None
         """
         The parameters for the HDKF are defined as follows:
 
@@ -81,6 +85,7 @@ class HKDFconfig:
 
     @staticmethod
     def check_is_bytes_or_none(value):
+        # type: (Optional[bytes]) -> Optional[bytes]
         if value is None:
             return value
         else:
@@ -113,7 +118,7 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
     return keys
 
 
-def generate_key_lists(master_secrets,              # type: List[Union[bytes, str]]
+def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes, str]]
                        num_identifier,              # type: int
                        key_size=DEFAULT_KEY_SIZE,   # type: int
                        salt=None,                   # type: Optional[bytes]

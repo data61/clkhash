@@ -1,7 +1,7 @@
 """
 Convert PII to tokens
 """
-from typing import Dict, List
+from typing import Dict, List, NoReturn, Any, Callable, Union, Optional
 
 from clkhash.tokenizer import unigramlist, bigramlist
 
@@ -15,9 +15,11 @@ class IdentifierType:
     """
 
     def __init__(self, unigram=False, weight=1, **kwargs):
+        # type: (bool, int, Any) -> None
         """
         :param unigram: Use uni-gram instead of using bi-grams
         :param int weight: How many times to include this identifier.
+        :param kwargs: Extra keyword arguments passed to the tokenizer
         Can be set to zero to skip
         """
         self.weight = int(weight)
@@ -28,7 +30,7 @@ class IdentifierType:
         # type: (str) -> List[str]
         result = []
         for i in range(self.weight):
-            for token in self.tokenizer(entry, **self.kwargs):
+            for token in self.tokenizer(entry, **self.kwargs):      # type: ignore
                 result.append(token)
 
         return result
@@ -78,7 +80,7 @@ weighted_types = {
 
 
 def identifier_type_from_description(schema_object):
-    # type: (Dict[str, str]) -> IdentifierType
+    # type: (Dict[str, Any]) -> IdentifierType
     """
     Convert a dictionary describing a feature into an IdentifierType
 

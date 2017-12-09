@@ -7,6 +7,7 @@ from clkhash.clk import generate_clk_from_csv
 
 
 def compute_hash_speed(n, quiet=False):
+    # type: (int, bool) -> float
     """
     Hash time.
     """
