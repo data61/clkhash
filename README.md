@@ -26,14 +26,15 @@ After installation of the clkhash library you should have a `clkutil` program in
 This can be used to process PII data into Cryptographic Longterm Keys.
 The tool also has an option for generating fake pii data, and commands to upload hashes to an entity matching service.
 
-
-    $ clkutil generate 1000 fake-pii-out.csv
-    $ head -n 4  fake-pii-out.csv
-    INDEX,NAME freetext,DOB YYYY/MM/DD,GENDER M or F
-    0,Libby Slemmer,1933/09/13,F
-    1,Garold Staten,1928/11/23,M
-    2,Yaritza Edman,1972/11/30,F
-    
+```
+$ clkutil generate 1000 fake-pii-out.csv
+$ head -n 4  fake-pii-out.csv
+INDEX,NAME freetext,DOB YYYY/MM/DD,GENDER M or F
+0,Libby Slemmer,1933/09/13,F
+1,Garold Staten,1928/11/23,M
+2,Yaritza Edman,1972/11/30,F
+```
+ 
 To hash this data using the default schema, with the shared secret keys `horse staple`:
 
     $ clkutil hash fake-pii-out.csv horse staple /tmp/fake-clk.json
@@ -51,7 +52,7 @@ To use the clkutil without installation (after installing the dependencies) just
 
 To hash a csv file of entities using the default schema:
 
-```.python
+```python
 from clkhash import clk, schema
 default_schema = schema.get_schema_types(schema.load_schema(None))
 clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), default_schema)
