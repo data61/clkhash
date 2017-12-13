@@ -58,19 +58,22 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False, progress_b
 
     if progress_bar:
         with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
-            results = generate_clk(pii_data, schema_types, key_lists, pbar)
+            progress_bar_callback = lambda update: pbar.update(update)
+            results = generate_clks(pii_data, schema_types, key_lists, progress_bar_callback)
     else:
-        results = generate_clk(pii_data, schema_types, key_lists)
+        results = generate_clks(pii_data, schema_types, key_lists)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
 
 
-def generate_clk(pii_data, schema_types, key_lists, progress_bar=None):
+def generate_clks(pii_data, schema_types, key_lists, callback=None):
     results = []
+
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
+
     # If running Python3 parallelise hashing.
     if sys.version_info[0] >= 3:
         # Compute Bloom filter from the chunks and then serialise it
@@ -79,8 +82,8 @@ def generate_clk(pii_data, schema_types, key_lists, progress_bar=None):
             for chunk in chunks(pii_data, chunk_size):
                 future = executor.submit(hash_and_serialize_chunk,
                                          chunk, schema_types, key_lists)
-                if progress_bar is not None:
-                    future.add_done_callback(lambda f: progress_bar.update(len(f.result())))
+                if callback is not None:
+                    future.add_done_callback(lambda f: callback(len(f.result())))
                 futures.append(future)
 
             for future in futures:
@@ -90,8 +93,8 @@ def generate_clk(pii_data, schema_types, key_lists, progress_bar=None):
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
         for chunk in chunks(pii_data, chunk_size):
             results.extend(hash_and_serialize_chunk(chunk, schema_types, key_lists))
-            if progress_bar is not None:
-                progress_bar.update(len(chunk))
+            if callback is not None:
+                callback(len(chunk))
     return results
 
 
