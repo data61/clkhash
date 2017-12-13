@@ -72,11 +72,23 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False, progress_b
                                          chunk, schema_types, key_lists)
                 futures.append(future)
 
-            for future in tqdm(concurrent.futures.as_completed(futures),
-                               desc="Hashing",
-                               total=len(pii_data)//chunk_size,
-                               unit='KH',
-                               disable=not progress_bar):
+            if progress_bar:
+                future_iterator = tqdm(concurrent.futures.as_completed(futures),
+                                       desc="Hashing",
+                                       total=len(pii_data) // chunk_size,
+                                       unit='KH',
+                                       leave=False,
+                                       )
+            else:
+                future_iterator = concurrent.futures.as_completed(futures)
+
+            for f in future_iterator:
+                # Note these are not in order of submission - but completion!
+                # We do this noop loop inorder to deal with progress as the futures
+                # complete
+                pass
+
+            for future in futures:
                 results.extend(future.result())
 
     else:
