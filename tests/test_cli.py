@@ -20,7 +20,6 @@ import yaml
 from click.testing import CliRunner
 
 
-
 class CLITestHelper(unittest.TestCase):
 
     samples = 100
@@ -197,18 +196,18 @@ class TestHashCommand(unittest.TestCase):
         with runner.isolated_filesystem():
 
             result = runner.invoke(clkhash.cli.cli, ['hash',
-                                                      '--schema',
-                                                      schema_file,
-                                                      a_pii,
-                                                      'a', 'b', '-'])
-            self.assertIn('clks', result.output)
+                                                     '--quiet',
+                                                     '--schema',
+                                                     schema_file,
+                                                     a_pii,
+                                                     'a', 'b', '-'])
 
             result_2 = runner.invoke(clkhash.cli.cli, ['hash',
-                                                      '--schema',
-                                                      schema_file,
-                                                      a_pii,
-                                                      'a', 'b', '-'])
-
+                                                       '--quiet',
+                                                       '--schema',
+                                                       schema_file,
+                                                       a_pii,
+                                                       'a', 'b', '-'])
         hasha = json.loads(result.output)['clks']
         hashb = json.loads(result_2.output)['clks']
 
