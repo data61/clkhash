@@ -1,6 +1,8 @@
 """
 Generate CLK from CSV file
 """
+from tqdm import tqdm
+
 import csv
 import logging
 import time
@@ -33,7 +35,7 @@ def hash_and_serialize_chunk(chunk_pii_data, schema_types, keys):
     return clk_data
 
 
-def generate_clk_from_csv(input, keys, schema_types, no_header=False):
+def generate_clk_from_csv(input, keys, schema_types, no_header=False, progress_bar=True):
     log.info("Hashing data")
 
     # Read from CSV file
@@ -53,7 +55,7 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
 
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
-    chunk_size = 1000 if len(pii_data) <= 10000 else 10000
+    chunk_size = 200 if len(pii_data) <= 10000 else 1000
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema_types))
@@ -70,7 +72,11 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False):
                                          chunk, schema_types, key_lists)
                 futures.append(future)
 
-            for future in futures:
+            for future in tqdm(concurrent.futures.as_completed(futures),
+                               desc="Hashing",
+                               total=len(pii_data)//chunk_size,
+                               unit='KH',
+                               disable=not progress_bar):
                 results.extend(future.result())
 
     else:
