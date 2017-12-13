@@ -53,50 +53,45 @@ def generate_clk_from_csv(input, keys, schema_types, no_header=False, progress_b
     for line in reader:
         pii_data.append([element.strip() for element in line])
 
-    # Chunks PII
-    log.info("Hashing {} entities".format(len(pii_data)))
-    chunk_size = 200 if len(pii_data) <= 10000 else 1000
-
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema_types))
 
+    if progress_bar:
+        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
+            results = generate_clk(pii_data, schema_types, key_lists, pbar)
+    else:
+        results = generate_clk(pii_data, schema_types, key_lists)
+
+    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+    return results
+
+
+def generate_clk(pii_data, schema_types, key_lists, progress_bar=None):
     results = []
+    # Chunks PII
+    log.info("Hashing {} entities".format(len(pii_data)))
+    chunk_size = 200 if len(pii_data) <= 10000 else 1000
     # If running Python3 parallelise hashing.
     if sys.version_info[0] >= 3:
         # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = []
-
-            for i, chunk in enumerate(chunks(pii_data, chunk_size)):
+            for chunk in chunks(pii_data, chunk_size):
                 future = executor.submit(hash_and_serialize_chunk,
                                          chunk, schema_types, key_lists)
+                if progress_bar is not None:
+                    future.add_done_callback(lambda f: progress_bar.update(len(f.result())))
                 futures.append(future)
-
-            if progress_bar:
-                future_iterator = tqdm(concurrent.futures.as_completed(futures),
-                                       desc="Hashing",
-                                       total=len(pii_data) // chunk_size,
-                                       unit='KH',
-                                       leave=False,
-                                       )
-            else:
-                future_iterator = concurrent.futures.as_completed(futures)
-
-            for f in future_iterator:
-                # Note these are not in order of submission - but completion!
-                # We do this noop loop inorder to deal with progress as the futures
-                # complete
-                pass
 
             for future in futures:
                 results.extend(future.result())
 
     else:
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
-
-        results = hash_and_serialize_chunk(pii_data, schema_types, key_lists)
-
-    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+        for chunk in chunks(pii_data, chunk_size):
+            results.extend(hash_and_serialize_chunk(chunk, schema_types, key_lists))
+            if progress_bar is not None:
+                progress_bar.update(len(chunk))
     return results
 
 
