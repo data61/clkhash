@@ -6,7 +6,8 @@ requirements = [
         "requests==2.18.1",
         "futures==3.1.1",
         "cryptography==2.1.3",
-        "tqdm==4.19.4"
+        "tqdm==4.19.4",
+        "typing"
     ]
 
 setup(
