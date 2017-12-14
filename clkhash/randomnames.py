@@ -14,7 +14,7 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 from __future__ import print_function
 
 import csv
-from typing import NoReturn, List, Tuple, Iterable
+from typing import List, Tuple, Iterable, TextIO, Union, Dict
 
 import random
 from datetime import datetime, timedelta
@@ -39,7 +39,11 @@ def load_csv_data(resource_name):
         return [row[0] for row in reader]
 
 
-def save_csv(data, schema, file):
+def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
+             schema,    # type: Iterable[Dict[str, str]]
+             file       # type: TextIO
+             ):
+    # type: (...) -> None
     """
     Output generated data as csv with header.
 

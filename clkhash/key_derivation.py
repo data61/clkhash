@@ -1,4 +1,4 @@
-from typing import Tuple, List, Union, Optional, Sequence
+from typing import Tuple, Union, Optional, Sequence, Any
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -77,7 +77,7 @@ class HKDFconfig:
 
     @staticmethod
     def check_is_bytes(value):
-        # type: (Union[str, bytes]) -> bytes
+        # type: (Any) -> bytes
         if isinstance(value, bytes):
             return value
         else:
@@ -85,7 +85,7 @@ class HKDFconfig:
 
     @staticmethod
     def check_is_bytes_or_none(value):
-        # type: (Optional[bytes]) -> Optional[bytes]
+        # type: (Any) -> Optional[bytes]
         if value is None:
             return value
         else:
