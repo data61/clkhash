@@ -33,7 +33,7 @@ def build(label, release=false) {
                     export PATH="/usr/local/bin:\${PATH}"
 
                     pip install mypy
-                    mypy clkhash --ignore-missing-imports --strict-optional
+                    mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
                 """
               }
 

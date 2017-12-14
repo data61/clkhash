@@ -8,7 +8,8 @@ import logging
 import time
 
 import sys
-from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence
+from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
+    Callable, Optional
 
 if sys.version_info[0] >= 3:
     import concurrent.futures
@@ -79,8 +80,12 @@ def generate_clk_from_csv(input,            # type: TextIO
     return results
 
 
-def generate_clks(pii_data, schema_types, key_lists, callback=None):
-    # TODO type annotation
+def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
+                  schema_types,     # type: List[IdentifierType]
+                  key_lists,        # type: Tuple[Tuple[bytes, ...], ...]
+                  callback=None     # type: Optional[Callable[[int], None]]
+                  ):
+    # type: (...) -> List[Any]
     results = []
 
     # Chunks PII
