@@ -8,6 +8,6 @@ from clkhash import benchmark
 class TestBenchmark(unittest.TestCase):
 
     def test_benchmarking_hash(self):
-        speed = benchmark.compute_hash_speed(1000)
+        speed = benchmark.compute_hash_speed(1000, quiet=True)
         self.assertGreater(speed, 100, "Hashing at less than 100 H/s")
 

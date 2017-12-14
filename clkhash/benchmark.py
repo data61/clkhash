@@ -6,7 +6,7 @@ from clkhash.schema import load_schema, get_schema_types
 from clkhash.clk import generate_clk_from_csv
 
 
-def compute_hash_speed(n):
+def compute_hash_speed(n, quiet=False):
     """
     Hash time.
     """
@@ -23,7 +23,7 @@ def compute_hash_speed(n):
 
     with open(tmpfile.name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, ('key1', 'key2'), schema)
+        generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=not quiet)
         end = timer()
     elapsed_time = end - start
     print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
