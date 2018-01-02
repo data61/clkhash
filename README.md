@@ -85,3 +85,10 @@ address.
 ```
 $ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m nose
 ```
+
+
+# Static Typechecking
+
+```
+$ mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
+```

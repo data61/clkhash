@@ -14,6 +14,8 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 from __future__ import print_function
 
 import csv
+from typing import List, Tuple, Iterable, TextIO, Union, Dict
+
 import random
 from datetime import datetime, timedelta
 import math
@@ -24,15 +26,24 @@ from clkhash.schema import get_schema_types
 
 
 def load_csv_data(resource_name):
+    # type: (str) -> List[str]
     """Loads a specified data file as csv and returns the first column as a Python list
     """
-    data = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name)).decode('utf8')
-    reader = csv.reader(data.splitlines())
-    next(reader, None)  # skip the headers
-    return [row[0] for row in reader]
+    data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
+    if data_bytes is None:
+        raise ValueError("No data resource found with name {}".format(resource_name))
+    else:
+        data = data_bytes.decode('utf8')
+        reader = csv.reader(data.splitlines())
+        next(reader, None)  # skip the headers
+        return [row[0] for row in reader]
 
 
-def save_csv(data, schema, file):
+def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
+             schema,    # type: Iterable[Dict[str, str]]
+             file       # type: TextIO
+             ):
+    # type: (...) -> None
     """
     Output generated data as csv with header.
 
@@ -47,6 +58,7 @@ def save_csv(data, schema, file):
 
 
 def random_date(start, end):
+    # type: (datetime, datetime) -> datetime
     """
     This function will return a random datetime between two datetime objects.
 
@@ -71,6 +83,7 @@ class NameList:
         ]
 
     def __init__(self, n):
+        # type: (int) -> None
         self.load_names()
 
         self.earliest_birthday = datetime(year=1916, month=1, day=1)
@@ -83,6 +96,7 @@ class NameList:
         return get_schema_types(self.schema)
 
     def generate_random_person(self, n):
+        # type: (int) -> Iterable[Tuple[int, str, str, str]]
         """
         Generator that yields details on a person with plausible name, sex and age.
 
@@ -103,6 +117,7 @@ class NameList:
             )
 
     def load_names(self):
+        # type: () -> None
         """
         This function loads a name database into globals firstNames and lastNames
 

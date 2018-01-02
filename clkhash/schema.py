@@ -1,11 +1,12 @@
+from typing import List, Dict, Optional, TextIO
 
 import os
-from clkhash.identifier_types import identifier_type_from_description
+from clkhash.identifier_types import IdentifierType, identifier_type_from_description
 
 
 def load_schema(schema_file):
+    # type: (Optional[TextIO]) -> List[Dict[str, str]]
     if schema_file is None:
-        #log("Assuming default schema")
         schema = [
             {"identifier": 'INDEX'},
             {"identifier": 'NAME freetext'},
@@ -14,7 +15,6 @@ def load_schema(schema_file):
         ]
     else:
         filename, extension = os.path.splitext(schema_file.name)
-        #log("Loading schema from {} file".format(extension))
 
         if extension == '.json':
             import json
@@ -25,11 +25,12 @@ def load_schema(schema_file):
         else:
             schema_line = schema_file.read().strip()
             schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
-        #log("{}".format(schema))
 
     return schema
 
+
 def get_schema_types(schema):
+    # type: (List[Dict[str, str]]) -> List[IdentifierType]
     schema_types = [identifier_type_from_description(column) for column in schema]
     return schema_types
 

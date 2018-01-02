@@ -3,15 +3,25 @@
 """
 Generate a Bloom filter
 """
+from typing import Tuple, Any, Iterable, List
+
 import base64
 import hmac
 import sys
+
+from clkhash.identifier_types import IdentifierType
 from hashlib import sha1, md5
 
 from bitarray import bitarray
 
 
-def double_hash_encode_ngrams(ngrams, key_sha1, key_md5, k, l):
+def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
+                              key_sha1,        # type: bytes
+                              key_md5,         # type: bytes
+                              k,               # type: int
+                              l                # type: int
+                              ):
+    # type: (...) -> bitarray.bitarray
     """
     computes the double hash encoding of the provided ngrams with the given keys.
 
@@ -36,7 +46,14 @@ def double_hash_encode_ngrams(ngrams, key_sha1, key_md5, k, l):
     return bf
 
 
-def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
+def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
+                        tokenizers,     # type: Iterable[IdentifierType]
+                        keys1,          # type: Tuple[bytes, ...]
+                        keys2,          # type: Tuple[bytes, ...]
+                        l=1024,         # type: int
+                        k=30            # type: int
+                        ):
+    # type: (...) -> Tuple[bitarray, int, int]
     """
     Makes a Bloom filter from a record with given tokenizers and lists of keys.
 
@@ -50,7 +67,10 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
     :param l: length of the Bloom filter in number of bits
     :param k: number of hash functions to use per element
 
-    :return: 3-tuple - bitarray with bloom filter for record, index of record, bitcount
+    :return: 3-tuple:
+            - bloom filter for record as a bitarray
+            - first element of record (usually an index)
+            - number of bits set in the bloomfilter
     """
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
@@ -62,12 +82,16 @@ def crypto_bloom_filter(record, tokenizers, keys1, keys2, l=1024, k=30):
     return bloomfilter, record[0], bloomfilter.count()
 
 
-def stream_bloom_filters(dataset, schema_types, keys):
+def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
+                         schema_types,  # type: Iterable[IdentifierType]
+                         keys           # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         ):
+    # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
     Yield bloom filters
 
     :param dataset: An iterable of indexable records.
-    :param schema: An iterable of identifier type names.
+    :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: Yields bloom filters as 3-tuples
     """
@@ -75,18 +99,23 @@ def stream_bloom_filters(dataset, schema_types, keys):
         yield crypto_bloom_filter(s, schema_types, keys1=keys[0], keys2=keys[1])
 
 
-def calculate_bloom_filters(dataset, schema, keys):
+def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]
+                            schema,     # type: Iterable[IdentifierType]
+                            keys        # type: Tuple[Tuple[bytes], Tuple[bytes]]
+                            ):
+    # type: (...) -> List[Tuple[bitarray, Any, int]]
     """
     :param dataset: A list of indexable records.
     :param schema: An iterable of identifier types.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: List of bloom filters as 3-tuples, each containing
-             bloom filter (bitarray), index (int), bitcount (int)
+             bloom filter (bitarray), record first element - usually index, bitcount (int)
     """
     return list(stream_bloom_filters(dataset, schema, keys))
 
 
 def serialize_bitarray(ba):
+    # type: (bitarray) -> str
     """Serialize a bitarray (bloomfilter)
 
     """

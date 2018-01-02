@@ -27,6 +27,16 @@ def build(label, release=false) {
             def testsError = null
 
             try {
+              stage('Type') {
+              sh """#!/usr/bin/env bash
+                    set -xe
+                    export PATH="/usr/local/bin:\${PATH}"
+
+                    pip install mypy
+                    mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+                """
+              }
+
               stage('Test') {
 
                 sh """#!/usr/bin/env bash
