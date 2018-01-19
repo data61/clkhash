@@ -8,7 +8,7 @@ import logging
 import time
 
 import sys
-from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
+from typing import List, Any, Dict, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
     Callable, Optional
 
 if sys.version_info[0] >= 3:
@@ -17,8 +17,33 @@ if sys.version_info[0] >= 3:
 from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.identifier_types import IdentifierType
+from clkhash.schema import get_schema_types
 
 log = logging.getLogger('clkhash.clk')
+
+
+def hash_pii(pii_data,                  # type: Iterable[Tuple[Any]]
+             schema,                    # type: List[Dict[str, str]]
+             keys                       # type: Tuple[Union[bytes, str], Union[bytes, str]]
+             ):
+    """
+    Generate bloom filters from pii data
+
+        >>> hash_pii(
+            [('Brian', 'Australia')],
+            [{"identifier": 'NAME freetext'},{"identifier": 'NAME freetext'}]
+            ['key 1', 'key 2']
+        )
+
+    :param pii_data: An iterable of indexable records.
+    :param schema: An dict describing each feature.
+    :param keys: Two secret keys used (after a KDF) in the HMAC.
+    :return: A list of serialized Bloom filters
+    """
+
+    schema_types = get_schema_types(schema)
+    key_lists = generate_key_lists(keys, len(schema_types))
+    return hash_and_serialize_chunk(pii_data, schema_types, key_lists)
 
 
 def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
