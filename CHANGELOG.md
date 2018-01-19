@@ -1,3 +1,13 @@
+## 0.8.1
+
+* Adds a simple progress bar for the command line utility.
+* Added type checking with MyPy for both Python 2 and 3.
+
+Try run the type checker yourself with:
+
+    pip install mypy
+    mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
+
 ## 0.8.0
 
 Each identifier is hashed using different keys derived with a HKDF.
