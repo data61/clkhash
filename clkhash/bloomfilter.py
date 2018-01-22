@@ -77,7 +77,11 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
 
     for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
         ngrams = [ngram for ngram in tokenizer(entry)]
-        bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, k, l)
+        if tokenizer.weight >= 0:
+            adjusted_k = int(round(tokenizer.weight * k))
+        else:
+            adjusted_k = k
+        bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
 
     return bloomfilter, record[0], bloomfilter.count()
 
