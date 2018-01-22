@@ -1,6 +1,7 @@
 import unittest
 from clkhash import randomnames, bloomfilter
 from clkhash.key_derivation import generate_key_lists
+from clkhash.identifier_types import IdentifierType
 
 
 class TestNamelistHashable(unittest.TestCase):
@@ -25,3 +26,27 @@ class TestNamelistHashable(unittest.TestCase):
 
         self.assertGreaterEqual(len(set1.intersection(set2)), 80,
                                 "Expected at least 80 hashes to be exactly the same")
+
+
+class TestHashingWithDifferentWeights(unittest.TestCase):
+    def test_different_weights(self):
+        pii = [['Deckard']]
+        keys = generate_key_lists(('secret', 'sauce'), 1)
+        it = [IdentifierType(weight=0)]
+        bf0 = bloomfilter.calculate_bloom_filters(pii, it, keys)[0]
+        it = [IdentifierType(weight=1)]
+        bf1 = bloomfilter.calculate_bloom_filters(pii, it, keys)[0]
+        it = [IdentifierType(weight=2)]
+        bf2 = bloomfilter.calculate_bloom_filters(pii, it, keys)[0]
+        it = [IdentifierType(weight=1.5)]
+        bf15 = bloomfilter.calculate_bloom_filters(pii, it, keys)[0]
+
+        self.assertEqual(bf0[0].count(), 0)
+        n1 = bf1[0].count()
+        n2 = bf2[0].count()
+        n15 = bf15[0].count()
+        self.assertGreater(n1, 0)
+        self.assertGreater(n15, n1)
+        self.assertGreater(n2, n15)
+        self.assertLessEqual(n15, round(n1*1.5))
+        self.assertLessEqual(n2, n1*2)
