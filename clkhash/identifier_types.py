@@ -15,25 +15,21 @@ class IdentifierType:
     """
 
     def __init__(self, unigram=False, weight=1, **kwargs):
-        # type: (bool, int, Any) -> None
+        # type: (bool, float, Any) -> None
         """
         :param unigram: Use uni-gram instead of using bi-grams
-        :param int weight: How many times to include this identifier.
+        :param float weight: adjusts at how many indices an n-gram of this identifier will appear in the Bloomfilter.
         :param kwargs: Extra keyword arguments passed to the tokenizer
         Can be set to zero to skip
         """
-        self.weight = int(weight)
+        self.weight = weight
         self.tokenizer = unigramlist if unigram else bigramlist
         self.kwargs = kwargs
 
     def __call__(self, entry):
         # type: (str) -> List[str]
-        result = []
-        for i in range(self.weight):
-            for token in self.tokenizer(entry, **self.kwargs):      # type: ignore
-                result.append(token)
+        return self.tokenizer(entry, **self.kwargs)
 
-        return result
 
 basic_types = {
     'INDEX': IdentifierType(weight=0),
