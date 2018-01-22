@@ -18,9 +18,20 @@ class IdentifierType:
         # type: (bool, float, Any) -> None
         """
         :param unigram: Use uni-gram instead of using bi-grams
-        :param float weight: adjusts at how many indices an n-gram of this identifier will appear in the Bloomfilter.
+        :param float weight: adjusts the "importance" of this identifier in the Bloom filter.
         :param kwargs: Extra keyword arguments passed to the tokenizer
         Can be set to zero to skip
+
+        Note on weight:
+        For each n-gram of an identifier, we compute k different indices in the Bloom filter which will be set to true.
+        There is a global default_k value, and the k value for each identifier is computed as k = weight * default_k.
+        Reasons why you might want to set weights:
+         - Long identifiers like street name will produce a lot more n-grams than small identifiers like zip code.
+           Thus street name will flip more bits in the Bloom filter and will have a bigger influence in the overall
+           matching score.
+         - The matching might produce better results if identifier that are stable and / or have low error rates are
+           given higher prominence in the Bloom filter.
+
         """
         self.weight = weight
         self.tokenizer = unigramlist if unigram else bigramlist
