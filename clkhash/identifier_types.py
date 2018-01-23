@@ -17,20 +17,27 @@ class IdentifierType:
     def __init__(self, unigram=False, weight=1, **kwargs):
         # type: (bool, float, Any) -> None
         """
-        :param unigram: Use uni-gram instead of using bi-grams
-        :param float weight: adjusts the "importance" of this identifier in the Bloom filter.
+        :param bool unigram: Use uni-gram instead of using bi-grams
+        :param float weight: adjusts the "importance" of this identifier in the Bloom filter. Can be set to zero to skip
         :param kwargs: Extra keyword arguments passed to the tokenizer
-        Can be set to zero to skip
 
-        Note on weight:
-        For each n-gram of an identifier, we compute k different indices in the Bloom filter which will be set to true.
-        There is a global default_k value, and the k value for each identifier is computed as k = weight * default_k.
-        Reasons why you might want to set weights:
-         - Long identifiers like street name will produce a lot more n-grams than small identifiers like zip code.
-           Thus street name will flip more bits in the Bloom filter and will have a bigger influence in the overall
-           matching score.
-         - The matching might produce better results if identifier that are stable and / or have low error rates are
-           given higher prominence in the Bloom filter.
+        .. Note::
+           For each n-gram of an identifier, we compute *k* different indices in the Bloom filter which will be set to
+           true. There is a global :math:`k_{default}` value, and the *k* value for each identifier is computed as
+
+           .. math::
+              k = weight * k_{default},
+
+           rounded to the nearest integer.
+
+           Reasons why you might want to set weights:
+
+             - Long identifiers like street name will produce a lot more n-grams than small identifiers like zip code.
+               Thus street name will flip more bits in the Bloom filter and will have a bigger influence in the overall
+               matching score.
+
+             - The matching might produce better results if identifiers that are stable and / or have low error rates
+               are given higher prominence in the Bloom filter.
 
         """
         self.weight = weight
