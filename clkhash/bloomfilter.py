@@ -77,7 +77,7 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
     bloomfilter.setall(False)
 
     for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
-        ngrams = [ngram for ngram in tokenizer(entry)]
+        ngrams = [ngram for ngram in tokenizer(str(entry))]
         if tokenizer.weight < 0:
             raise ValueError('weight must not be smaller than zero, but was: {}'.format(tokenizer.weight))
         adjusted_k = int(round(tokenizer.weight * k))
