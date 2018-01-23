@@ -4,6 +4,7 @@ Convert PII to tokens
 from typing import Dict, List, NoReturn, Any, Callable, Union, Optional
 
 from clkhash.tokenizer import unigramlist, bigramlist
+from copy import copy
 
 
 class IdentifierType:
@@ -115,6 +116,7 @@ def identifier_type_from_description(schema_object):
 
     # check if there was a custom weight
     if 'weight' in schema_object:
+        id_type = copy(id_type)  # we don't want to modify the original
         id_type.weight = schema_object['weight']
 
     return id_type
