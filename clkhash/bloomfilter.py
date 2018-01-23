@@ -33,7 +33,8 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     :param key_md5: hmac secret keys for md5 as bytes
     :param k: number of hash functions to use per element of the ngrams
     :param l: length of the output bitarray
-    :return bitarray of length l with the bits set which correspond to the encoding of the ngrams
+
+    :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
     bf = bitarray(l)
     bf.setall(False)
@@ -77,10 +78,9 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
 
     for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
         ngrams = [ngram for ngram in tokenizer(entry)]
-        if tokenizer.weight >= 0:
-            adjusted_k = int(round(tokenizer.weight * k))
-        else:
-            adjusted_k = k
+        if tokenizer.weight < 0:
+            raise ValueError('weight must not be smaller than zero, but was: {}'.format(tokenizer.weight))
+        adjusted_k = int(round(tokenizer.weight * k))
         bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
 
     return bloomfilter, record[0], bloomfilter.count()
