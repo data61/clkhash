@@ -46,7 +46,7 @@ class IdentifierType:
 
     def __call__(self, entry):
         # type: (str) -> List[str]
-        return self.tokenizer(entry, **self.kwargs)
+        return self.tokenizer(entry, **self.kwargs)  # type: ignore
 
 
 basic_types = {
