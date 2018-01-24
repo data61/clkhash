@@ -10,6 +10,15 @@ Bloom filter
     :show-inheritance:
 
 
+CLK
+---
+
+.. automodule:: clkhash.clk
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 identifier types
 ----------------
 
@@ -32,6 +41,33 @@ key derivation
 --------------
 
 .. automodule:: clkhash.key_derivation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+random names
+------------
+
+.. automodule:: clkhash.randomnames
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+schema
+------
+
+.. automodule:: clkhash.schema
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+tokenizer
+---------
+
+.. automodule:: clkhash.tokenizer
     :members:
     :undoc-members:
     :show-inheritance:
