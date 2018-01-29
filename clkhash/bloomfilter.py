@@ -7,10 +7,16 @@ from typing import Tuple, Any, Iterable, List
 
 import base64
 import hmac
+import math
+import struct
 import sys
 
 from clkhash.identifier_types import IdentifierType
 from hashlib import sha1, md5
+try:
+    from hashlib import blake2b
+except ImportError:
+    from pyblake2 import blake2b
 
 from bitarray import bitarray
 
@@ -44,6 +50,82 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
             bf[gi] = 1
+    return bf
+
+
+def blake_encode_ngrams(ngrams,          # type: Iterable[str]
+                       key,              # type: bytes
+                       k,                # type: int
+                       l                 # type: int
+                       ):
+    # type: (...) -> bitarray.bitarray
+    """
+    computes the encoding of the provided ngrams using the BLAKE2 hash function keyed with the given key.
+
+    We deliberately do not use the double hashing scheme as proposed in
+    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf, because this would introduce an exploitable structure
+    into the Bloom filter. For more details on the weakness, see [Kroll2015]_.
+    In short, the double hashing scheme only allows for :math:`l^2` different encodings for any possible n-gram,
+    whereas the use of :math:`k` different independent hash functions gives you :math:`\sum_{j=1}^k{\binom{l}{j}}`
+    combinations.
+
+    Our construction
+    ----------------
+    It is advantageous to construct Bloom filters using a family of hash functions with the property of
+    `k-independence <https://en.wikipedia.org/wiki/K-independent_hashing>`_ to compute the indices for an entry.
+    This approach minimises the change of collisions.
+
+    An informal definition of *k-independence* of a family of hash functions is, that if selecting a function at random
+    from the family, it guarantees that the hash codes of any designated k keys are independent random variables.
+
+    Our construction utilises the fact that the output bits of a cryptographic hash function are uniformly distributed,
+    independent, binary random variables (well, at least as close to as possible. See [Kaminsky2011]_ for an analysis).
+    Thus, slicing the output of a cryptographic hash function into k different slices gives you k independent random
+    variables.
+
+
+    .. warning::
+       Please be aware that, although this construction makes the attack of [Kroll2015]_ infeasible, it is most likely
+       not enough to ensure security. Or in their own words:
+
+       However, we think that using independent hash functions alone will not be sufficient to ensure security, since
+       in this case other approaches (maybe related to or at least inspired through work from the area of Frequent
+       Itemset Mining [19]) are promising to detect at least the most frequent atoms automatically.
+
+
+    .. [Kroll2015] Kroll, M., & Steinmetzer, S. (2015).
+       Who is 1011011111...1110110010? automated cryptanalysis of bloom filter encryptions of databases with several
+       personal identifiers.
+       In Communications in Computer and Information Science. https://doi.org/10.1007/978-3-319-27707-3_21
+
+    .. [Kaminsky2011] Kaminsky, A. (2011).
+       GPU Parallel Statistical and Cube Test Analysis of the SHA-3 Finalist Candidate Hash Functions.
+       https://www.cs.rit.edu/~ark/parallelcrypto/sha3test01/jce2011.pdf
+
+    :param ngrams: list of n-grams to be encoded
+    :param key: secret key for blake2 as bytes
+    :param k: number of hash functions to use per element of the ngrams
+    :param l: length of the output bitarray (has to be a power of 2)
+
+    :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
+    """
+    log_l = int(math.log(l, 2))
+    if not 2**log_l == l:
+        raise ValueError('parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(l))
+    bf = bitarray(l)
+    bf.setall(False)
+    if k < 1:
+        return bf
+    num_macs = (k+31) // 32
+
+    for m in ngrams:
+        random_shorts = []
+        for i in range(num_macs):
+            hash_bytes = blake2b(m.encode(), key=key, salt=str(i).encode()).digest()
+            random_shorts.extend(struct.unpack('32H', hash_bytes))  # interpret hash bytes as 32 unsigned shorts.
+        for i in range(k):
+            idx = random_shorts[i] % l
+            bf[idx] = 1
     return bf
 
 
