@@ -13,11 +13,10 @@ import sys
 
 from clkhash.identifier_types import IdentifierType
 from hashlib import sha1, md5
-try:
-    from hashlib import blake2b
-except ImportError:
+if sys.version_info < (3,6):
     from pyblake2 import blake2b
-
+else:
+    from hashlib import blake2b
 from bitarray import bitarray
 
 
@@ -119,7 +118,7 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     num_macs = (k+31) // 32
 
     for m in ngrams:
-        random_shorts = []
+        random_shorts = []  # type: List[int]
         for i in range(num_macs):
             hash_bytes = blake2b(m.encode(), key=key, salt=str(i).encode()).digest()
             random_shorts.extend(struct.unpack('32H', hash_bytes))  # interpret hash bytes as 32 unsigned shorts.
