@@ -1,6 +1,7 @@
 import unittest
 from clkhash.bloomfilter import double_hash_encode_ngrams, blake_encode_ngrams
 import random
+from copy import copy
 
 
 class TestEncoding(unittest.TestCase):
@@ -33,10 +34,10 @@ class TestEncoding(unittest.TestCase):
     def test_order_of_ngrams(self):
         self._test_order_of_ngrams(
             lambda ngrams: blake_encode_ngrams(ngrams, self.key_sha1, self.k, 1024),
-            self.ngrams.copy())
+            copy(self.ngrams))
         self._test_order_of_ngrams(
             lambda ngrams: double_hash_encode_ngrams(ngrams, self.key_sha1, self.key_md5, self.k, 1024),
-            self.ngrams.copy())
+            copy(self.ngrams))
 
     def _test_order_of_ngrams(self, enc_function, ngrams):
         bf1 = enc_function(ngrams)
