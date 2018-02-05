@@ -51,6 +51,7 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
                         tokenizers,     # type: Iterable[IdentifierType]
                         keys1,          # type: Tuple[bytes, ...]
                         keys2,          # type: Tuple[bytes, ...]
+                        xor_folds,      # type: int
                         l=1024,         # type: int
                         k=30            # type: int
                         ):
@@ -83,12 +84,16 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
         adjusted_k = int(round(tokenizer.weight * k))
         bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
 
+        for _ in range(xor_folds):
+            raise NotImplementedError()
+
     return bloomfilter, record[0], bloomfilter.count()
 
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
                          schema_types,  # type: Iterable[IdentifierType]
-                         keys           # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         keys,          # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         xor_folds      # type: int
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
@@ -100,7 +105,7 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :return: Yields bloom filters as 3-tuples
     """
     for s in dataset:
-        yield crypto_bloom_filter(s, schema_types, keys1=keys[0], keys2=keys[1])
+        yield crypto_bloom_filter(s, schema_types, keys[0], keys[1], xor_folds)
 
 
 def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]
