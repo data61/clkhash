@@ -1,7 +1,9 @@
 import unittest
+
+from bitarray import bitarray
+
 from clkhash import randomnames, bloomfilter
 from clkhash.key_derivation import generate_key_lists
-from clkhash.identifier_types import IdentifierType
 
 
 class TestNamelistHashableXorFolding(unittest.TestCase):
@@ -32,7 +34,6 @@ class TestNamelistHashableXorFolding(unittest.TestCase):
             set1 = {tuple(bf[0]) for bf in bf1}
             set2 = {tuple(bf[0]) for bf in bf2}
 
-            print('Size:', len(bf1[0][0]))
             if last_length is not None:
                 self.assertEqual(
                     len(bf1[0][0]), (last_length + 1) // 2,
@@ -46,3 +47,33 @@ class TestNamelistHashableXorFolding(unittest.TestCase):
 
             self.assertGreaterEqual(len(set1.intersection(set2)), 80,
                                     "Expected at least 80 hashes to be exactly the same")
+
+
+class TestXorFoldingBitwise(unittest.TestCase):
+    def test_xor_folding_bitwise(self):
+        namelist = randomnames.NameList(1)
+        key_lists = generate_key_lists(('secret', 'sshh'), len(namelist.schema_types))
+        (bf_original, _, _), = bloomfilter.calculate_bloom_filters(
+            namelist.names,
+            namelist.schema_types,
+            key_lists,
+            xor_folds=0)
+        (bf_folded, _, _), = bloomfilter.calculate_bloom_filters(
+            namelist.names,
+            namelist.schema_types,
+            key_lists,
+            xor_folds=1)
+
+        self.assertEqual(
+            len(bf_original) % 2, 0,
+            'Length of original Bloom filter is expected to be even.')
+        self.assertEqual(
+            len(bf_original), 2 * len(bf_folded),
+            'Length of the folded filter should be half of the original.')
+
+        for b_orig1, b_orig2, b_fold in zip(
+                bf_original[:len(bf_original) // 2],
+                bf_original[len(bf_original) // 2:],
+                bf_folded):
+            self.assertEqual((b_orig1 != b_orig2), b_fold,
+                             'The XOR in XOR folding is not XORing.')
