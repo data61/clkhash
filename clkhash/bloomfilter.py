@@ -84,16 +84,16 @@ def crypto_bloom_filter(record,       # type: Tuple[Any, ...]
         adjusted_k = int(round(tokenizer.weight * k))
         bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
 
-        for _ in range(xor_folds):
-            bf_even = len(bloomfilter) % 2 == 0
+    for _ in range(xor_folds):
+        bf_even = len(bloomfilter) % 2 == 0
 
-            bf1 = bloomfilter[:len(bloomfilter) // 2]
-            bf2 = bloomfilter[len(bloomfilter) // 2:]
+        bf1 = bloomfilter[:len(bloomfilter) // 2]
+        bf2 = bloomfilter[len(bloomfilter) // 2:]
 
-            if not bf_even:  # bf1 is shorter by one bit
-                bf1.append(bitarray('0'))
+        if not bf_even:  # bf1 is shorter by one bit
+            bf1.append(bitarray('0'))
 
-            bloomfilter = bf1 ^ bf2
+        bloomfilter = bf1 ^ bf2
 
     return bloomfilter, record[0], bloomfilter.count()
 
@@ -129,7 +129,7 @@ def calculate_bloom_filters(dataset,     # type: Iterable[Tuple[Any]]
     :return: List of bloom filters as 3-tuples, each containing
              bloom filter (bitarray), record first element - usually index, bitcount (int)
     """
-    return list(stream_bloom_filters(dataset, schema, keys))
+    return list(stream_bloom_filters(dataset, schema, keys, xor_folds=xor_folds))
 
 
 def serialize_bitarray(ba):
