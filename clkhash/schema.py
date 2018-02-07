@@ -1,36 +1,36 @@
-from typing import List, Dict, Optional, TextIO
+import json
 
-import os
-from clkhash.identifier_types import IdentifierType, identifier_type_from_description
+import jsonschema
+
+PARENT_SCHEMA_PATH = 'parent_schema.json'
+SUPPORTED_VERSIONS = {1}
+
+
+class UnsupportedSchemaVersionError(Exception):
+    pass
 
 
 def load_schema(schema_file):
-    # type: (Optional[TextIO]) -> List[Dict[str, str]]
-    if schema_file is None:
-        schema = [
-            {"identifier": 'INDEX'},
-            {"identifier": 'NAME freetext'},
-            {"identifier": 'DOB YYYY/MM/DD'},
-            {"identifier": 'GENDER M or F'}
-        ]
-    else:
-        filename, extension = os.path.splitext(schema_file.name)
+    schema = json.load(schema_file)
+    with open(PARENT_SCHEMA_PATH) as parent_schema_file:
+        parent_schema = json.load(parent_schema_file)
 
-        if extension == '.json':
-            import json
-            schema = json.load(schema_file)
-        elif extension == '.yaml':
-            import yaml
-            schema = yaml.load(schema_file)
-        else:
-            schema_line = schema_file.read().strip()
-            schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
+    # Make sure everything is sane.
+    # TODO: instead of raising exceptions, print a nice message to the
+    #       user. This will involve finding out which situations cause
+    #       jsonschema to raise ValidationError and which ones raise
+    #       SchemaError.
+    jsonschema.validate(schema, parent_schema)
+    version = schema['version']
+    if version not in SUPPORTED_VERSIONS:
+        msg =
+        raise UnsupportedSchemaVersionError(
+            'Schema version {} is not supported. Consider updating clkhash.'
+            .format(version))
 
-    return schema
+    # If we've got this far, then the schema is valid.
 
 
-def get_schema_types(schema):
-    # type: (List[Dict[str, str]]) -> List[IdentifierType]
-    schema_types = [identifier_type_from_description(column) for column in schema]
-    return schema_types
 
+
+    raise NotImplementedError('Schema loading not implemented.')

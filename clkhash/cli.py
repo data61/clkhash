@@ -48,7 +48,7 @@ def cli(verbose=False):
 @cli.command('hash', short_help="generate hashes from local PII data")
 @click.argument('input', type=click.File('r'))
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
-@click.option('--schema', '-s', type=click.File('r'), default=None)
+@click.option('schema', type=click.File('r'), lazy=True)
 @click.argument('output', type=click.File('w'))
 @click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
