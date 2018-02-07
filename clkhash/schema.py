@@ -1,36 +1,65 @@
 import json
 
+from future.utils import raise_from
 import jsonschema
 
-PARENT_SCHEMA_PATH = 'parent_schema.json'
-SUPPORTED_VERSIONS = {1}
+MASTER_SCHEMA_PATHS = {1: 'master-schema-v1.json'}
 
 
-class UnsupportedSchemaVersionError(Exception):
+class SchemaError(Exception):
     pass
 
 
-def load_schema(schema_file):
-    schema = json.load(schema_file)
-    with open(PARENT_SCHEMA_PATH) as parent_schema_file:
-        parent_schema = json.load(parent_schema_file)
+class MasterSchemaError(Exception):
+    pass
 
-    # Make sure everything is sane.
-    # TODO: instead of raising exceptions, print a nice message to the
-    #       user. This will involve finding out which situations cause
-    #       jsonschema to raise ValidationError and which ones raise
-    #       SchemaError.
-    jsonschema.validate(schema, parent_schema)
-    version = schema['version']
-    if version not in SUPPORTED_VERSIONS:
-        msg =
-        raise UnsupportedSchemaVersionError(
+
+def validate_schema(schema):
+    if type(schema) is not dict:
+        raise SchemaError('The top level of the schema file is a {}, '
+                          'whereas a dict is expected.'
+                          .format(type(schema).__name__))
+
+    if 'version' in schema:
+        version = schema['version']
+    else:
+        raise SchemaError('A format version is expected in the schema.')
+
+    if version in MASTER_SCHEMA_PATHS:
+        master_schema_path = MASTER_SCHEMA_PATHS[version]
+    else:
+        raise SchemaError(
             'Schema version {} is not supported. Consider updating clkhash.'
             .format(version))
 
-    # If we've got this far, then the schema is valid.
+    try:
+        with open(master_schema_path) as master_schema_file:
+            master_schema = json.load(master_schema_file)
+    except FileNotFoundError as e:
+        raise_from(MasterSchemaError('The master schema could not be found. '
+                                     'The schema cannot be validated. Please '
+                                     'file a bug report.'), e)
+    except json.decoder.JSONDecodeError as e:
+        raise_from(MasterSchemaError('The master schema is not a valid JSON '
+                                     'file. The schema cannot be validated. '
+                                     'Please file a bug report.'), e)
+
+    try:
+        jsonschema.validate(schema, master_schema)
+    except jsonschema.exceptions.ValidationError as e:
+        raise_from(SchemaError('The schema is not valid.'), e)
+    except jsonschema.exceptions.SchemaError as e:
+        raise_from(MasterSchemaError('The master schema is not valid. The '
+                                     'schema cannot be validated. Please file '
+                                     'a bug report.'), e)
 
 
+def load_schema(schema_file):
+    try:
+        schema = json.load(schema_file)
+    except json.decoder.JSONDecodeError as e:
+        raise_from(SchemaError('The schema is not a valid JSON file.'), e)
 
+    validate_schema(schema)  # This raises iff the schema is invalid.
 
     raise NotImplementedError('Schema loading not implemented.')
