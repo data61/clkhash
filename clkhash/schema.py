@@ -1,36 +1,73 @@
-from typing import List, Dict, Optional, TextIO
+import json
 
-import os
-from clkhash.identifier_types import IdentifierType, identifier_type_from_description
+from future.utils import raise_from
+import jsonschema
+
+# These are relative to this file.
+MASTER_SCHEMA_PATHS = {1: 'master-schema-v1.json'}
+
+
+def get_master_schema_path(version):
+    if version in MASTER_SCHEMA_PATHS:
+        directory = os.path.dirname(__file__)
+        return os.path.join(directory, MASTER_SCHEMA_PATHS[version])
+    else:
+        return None
+
+
+class SchemaError(Exception):
+    pass
+
+
+class MasterSchemaError(Exception):
+    pass
+
+
+def validate_schema(schema):
+    if type(schema) is not dict:
+        msg = ('The top level of the schema file is a {}, whereas a dict is '
+               'expected.'.format(type(schema).__name__))
+        raise SchemaError(msg)
+
+    if 'version' in schema:
+        version = schema['version']
+    else:
+        raise SchemaError('A format version is expected in the schema.')
+
+    master_schema_path = get_master_schema_path(version)
+    if master_schema_path is None:
+        raise SchemaError(
+            'Schema version {} is not supported. Consider updating clkhash.'
+            .format(version))
+
+    try:
+        with open(master_schema_path) as master_schema_file:
+            master_schema = json.load(master_schema_file)
+    except FileNotFoundError as e:
+        msg = ('The master schema could not be found. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
+    except json.decoder.JSONDecodeError as e:
+        msg = ('The master schema is not a valid JSON file. The schema cannot '
+               'be validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
+
+    try:
+        jsonschema.validate(schema, master_schema)
+    except jsonschema.exceptions.ValidationError as e:
+        raise_from(SchemaError('The schema is not valid.'), e)
+    except jsonschema.exceptions.SchemaError as e:
+        raise_from(MasterSchemaError('The master schema is not valid. The '
+                                     'schema cannot be validated. Please file '
+                                     'a bug report.'), e)
 
 
 def load_schema(schema_file):
-    # type: (Optional[TextIO]) -> List[Dict[str, str]]
-    if schema_file is None:
-        schema = [
-            {"identifier": 'INDEX'},
-            {"identifier": 'NAME freetext'},
-            {"identifier": 'DOB YYYY/MM/DD'},
-            {"identifier": 'GENDER M or F'}
-        ]
-    else:
-        filename, extension = os.path.splitext(schema_file.name)
+    try:
+        schema = json.load(schema_file)
+    except json.decoder.JSONDecodeError as e:
+        raise_from(SchemaError('The schema is not a valid JSON file.'), e)
 
-        if extension == '.json':
-            import json
-            schema = json.load(schema_file)
-        elif extension == '.yaml':
-            import yaml
-            schema = yaml.load(schema_file)
-        else:
-            schema_line = schema_file.read().strip()
-            schema = [{"identifier": s.strip()} for s in schema_line.split(",")]
+    validate_schema(schema)  # This raises iff the schema is invalid.
 
-    return schema
-
-
-def get_schema_types(schema):
-    # type: (List[Dict[str, str]]) -> List[IdentifierType]
-    schema_types = [identifier_type_from_description(column) for column in schema]
-    return schema_types
-
+    raise NotImplementedError('Schema loading not implemented.')
