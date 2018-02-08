@@ -9,7 +9,7 @@ def compile_full(pattern, flags=0):
     # In Python 3, we'd just use re.fullmatch. However, to support
     # Python 2, we have this.
     # Kudos: https://stackoverflow.com/a/30212799
-    return re.compile("(?:" + pattern + r")\Z", flags=flags)
+    return re.compile('(?:' + pattern + r')\Z', flags=flags)
 
 
 class InvalidEntryError(Exception):
@@ -56,7 +56,7 @@ class StringSpec(FieldSpec):
         if 'pattern' in properties:
             pattern = properties['pattern']
             try:
-                self.pattern = compile_full(pattern)
+                self.regex = compile_full(pattern)
             except (SyntaxError, sre_constants.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 raise_from(InvalidSchemaError(msg), e)
@@ -68,13 +68,12 @@ class StringSpec(FieldSpec):
     def validate(self, str_in):
         super(StringSpec, self).validate(str_in)
 
-        if hasattr(self, 'pattern'):
-            # TODO: Make this work in Python 2.
-            match = self.pattern.fullmatch(str_in)
+        if hasattr(self, 'regex'):
+            match = self.regex.match(str_in)
             if match is None:
                 raise InvalidEntryError(
                     'Expected entry that conforms to regular expression '
-                    "'{}'. Read '{}'.".format(c.pattern, str_in))
+                    "'{}'. Read '{}'.".format(self.regex.pattern, str_in))
         else:
             str_len = len(str_in)
             if self.minLength is not None and str_len < self.minLength:
@@ -115,16 +114,18 @@ class IntegerSpec(FieldSpec):
         try:
             value = int(str_in, base=10)
         except ValueError as e:
-            raise_from(InvalidEntryError('Invalid integer. Read {}.'
-                                         .format(str_in)), e)
+            msg = 'Invalid integer. Read {}.'.format(str_in)
+            raise_from(InvalidEntryError(msg), e)
 
         if self.minimum is not None and value < self.minimum:
-            raise InvalidEntryError('Expected integer value of at least {}.'
-                                    'Read {}.'.format(value))
+            msg = ('Expected integer value of at least {}. Read {}.'
+                   .format(value))
+            raise InvalidEntryError(msg)
 
         if self.maximum is not None and value > self.minimum:
-            raise InvalidEntryError('Expected integer value of at most {}.'
-                                    'Read {}.'.format(value))
+            msg = ('Expected integer value of at most {}. Read {}.'
+                   .format(value))
+            raise InvalidEntryError(msg)
 
 
 class DateSpec(FieldSpec):
@@ -139,17 +140,18 @@ class DateSpec(FieldSpec):
 
         if self.format == 'rfc3339':
             if DateValidator.RFC3339_REGEX.match(str_in) is None:
-                raise InvalidEntryError('Date expected to conform to '
-                                        'RFC3339. Read {}.'.format(str_in))
+                msg = ('Date expected to conform to RFC3339. Read {}.'
+                       .format(str_in))
+                raise InvalidEntryError(msg)
             try:
                 datetime.strptime(str_in, DateValidator.RFC3339_FORMAT)
             except ValueError as e:
-                raise_from(InvalidEntryError('Invalid date. Read {}.'
-                                             .format(str_in)), e)
+                msg = 'Invalid date. Read {}.'.format(str_in)
+                raise_from(InvalidEntryError(msg), e)
 
         else:
-            raise ValueError('Unrecognised date format: {}.'
-                             .format(self.format))
+            msg = 'Unrecognised date format: {}.'.format(self.format)
+            raise ValueError(msg)
 
 
 class EnumSpec(FieldSpec):
@@ -160,5 +162,5 @@ class EnumSpec(FieldSpec):
         super(EnumSpec, self).validate(str_in)
 
         if str_in not in self.values:
-            raise InvalidEntryError('Expected enum value is one of {}. Read '
-                                    '{}.'.format(str_in))
+            msg = 'Expected enum value is one of {}. Read {}.'.format(str_in)
+            raise InvalidEntryError(msg)
