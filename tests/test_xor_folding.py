@@ -8,6 +8,25 @@ from clkhash import randomnames, bloomfilter
 from clkhash.key_derivation import generate_key_lists
 
 
+try:
+    to_bytes = int.to_bytes
+except AttributeError:
+    # We are in Python 2.
+    def to_bytes(n, length, endianess):
+        # Kudos: https://stackoverflow.com/a/20793663
+        # With modifications for style.
+        hex_str = '{:X}'.format(n)
+        if len(hex_str) > length * 2:
+            raise OverflowError('int too big to convert')
+        b = hex_str.zfill(length * 2).decode('hex')
+        if endianess == 'big':
+            return b
+        elif endianess == 'little':
+            return b[::-1]
+        else:
+            raise ValueError("byteorder must be either 'little' or 'big'")
+
+
 def random_bitarray(length,    # type: int
                     seed=None  # type: int
                     ):
@@ -16,7 +35,7 @@ def random_bitarray(length,    # type: int
     random_bits = random.getrandbits(length)
 
     ba = bitarray()
-    ba.frombytes(random_bits.to_bytes((length + 7) // 8, 'big'))
+    ba.frombytes(to_bytes(random_bits, (length + 7) // 8, 'big'))
     return ba[-length:]
 
 
