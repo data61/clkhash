@@ -1,6 +1,7 @@
 import abc
 import re
 import sre_constants
+from typing import Any, cast, Dict, Iterable, Optional
 
 from future.utils import raise_from, with_metaclass
 
@@ -26,18 +27,24 @@ class HashingProperties(object):
     DEFAULT_WEIGHT = 1
 
     def __init__(self, hash_properties):
+        # type: (Dict[str, Any]) -> None
         self.encoding = DEFAULT_ENCODING
-        self.ngram = hash_properties['ngram']
-        self.positional = hash_properties.get('positional', DEFAULT_POSITIONAL)
-        self.weight = hash_properties.get('weight', DEFAULT_WEIGHT)
+        self.ngram = cast(str, hash_properties['ngram'])
+        self.positional = cast(str, hash_properties.get('positional',
+                                                        DEFAULT_POSITIONAL))
+        self.weight = cast(float, hash_properties.get('weight',
+                                                      DEFAULT_WEIGHT))
 
 
 class FieldSpec(with_metaclass(abc.ABCMeta, object)):
     def __init__(self, properties):
-        self.hashing_properties = HashingProperties(properties['hashing'])
+        # type: (Dict[str, Any]) -> None
+        self.hashing_properties = HashingProperties(
+            cast(Dict[str, Any], properties['hashing']))
 
     @abc.abstractmethod
     def validate(self, str_in):
+        # type: (str) -> None
         try:
             str_in.encode(encoding=self.hashing_properties.encoding)
         except UnicodeEncodeError:
@@ -50,22 +57,24 @@ class StringSpec(FieldSpec):
     DEFAULT_CASE = 'mixed'
 
     def __init__(self, properties):
+        # type: (Dict[str, Any]) -> None
         super(StringSpec, self).__init__(properties)
-        self.hashing_properties.encoding = properties['encoding']
+        self.hashing_properties.encoding = cast(str, properties['encoding'])
 
         if 'pattern' in properties:
-            pattern = properties['pattern']
+            pattern = cast(str, properties['pattern'])
             try:
                 self.regex = compile_full(pattern)
             except (SyntaxError, sre_constants.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 raise_from(InvalidSchemaError(msg), e)
         else:
-            self.case = properties.get('case', DEFAULT_CASE)
-            self.minLength = properties.get('minLength')
-            self.maxLength = properties.get('maxLength')
+            self.case = cast(str, properties.get('case', DEFAULT_CASE))
+            self.minLength = cast(Optional[int], properties.get('minLength'))
+            self.maxLength = cast(Optional[int], properties.get('maxLength'))
 
     def validate(self, str_in):
+        # type: (str) -> None
         super(StringSpec, self).validate(str_in)
 
         if hasattr(self, 'regex'):
@@ -103,12 +112,14 @@ class StringSpec(FieldSpec):
 
 class IntegerSpec(FieldSpec):
     def __init__(self, properties):
+        # type: (Dict[str, Any]) -> None
         # TODO: Should we permit negative integers?
         # Uncomment below if no.
         self.minimum = properties.get('minimum')  #, 0)
         self.maximum = properties.get('maximum')
 
     def validate(self, str_in):
+        # type: (str) -> None
         super(IntegerSpec, self).validate(str_in)
 
         try:
@@ -133,9 +144,11 @@ class DateSpec(FieldSpec):
     RFC3339_FORMAT = '%Y-%m-%d'
 
     def __init__(self, properties):
-        self.format = properties['format']
+        # type: (Dict[str, Any]) -> None
+        self.format = cast(str, properties['format'])
 
     def validate(self, str_in):
+        # type: (str) -> None
         super(DateSpec, self).validate(str_in)
 
         if self.format == 'rfc3339':
@@ -156,9 +169,11 @@ class DateSpec(FieldSpec):
 
 class EnumSpec(FieldSpec):
     def __init__(self, properties):
-        self.values = set(properties['enum'])
+        # type: (Dict[str, Any]) -> None
+        self.values = set(cast[Iterable, properties['enum']])
 
     def validate(self, str_in):
+        # type: (str) -> None
         super(EnumSpec, self).validate(str_in)
 
         if str_in not in self.values:
