@@ -110,4 +110,6 @@ def load_schema(schema_file):
 
     validate_schema(schema)  # This raises iff the schema is invalid.
 
-    raise NotImplementedError('Schema loading not implemented.')
+    features = schema[features]
+    for feature in features:
+        
