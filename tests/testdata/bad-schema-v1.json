@@ -1,0 +1,29 @@
+
+{
+  "version": 1,
+  "hash": {
+    "type": "double hash",
+    "config": {
+      "kdf": {
+        "type": "HKDF",
+        "hash": "SHA256",
+        "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+        "info": "c2NoZW1hX2V4YW1wbGU=",
+        "keySize": 64
+      }
+    }
+  },
+  "features": [
+    {
+      "identifier": "firstName",
+      "format": {
+        "type": "string",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    }
+  ]
+}

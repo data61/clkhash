@@ -22,7 +22,7 @@ import math
 
 import pkgutil
 
-from clkhash.schema import get_schema_types
+# from clkhash.schema import get_schema_types
 
 
 def load_csv_data(resource_name):

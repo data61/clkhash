@@ -1,0 +1,146 @@
+{
+  "id": "https://schema.n1analytics.com/entityservice/hashing-schema.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "hashing-schema",
+  "type": "object",
+  "required": ["version", "hash", "features"],
+  "properties": {
+    "version": {"type": "number"},
+    "hash": {"$ref": "#/definitions/hashConfig"},
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+          "oneOf": [
+            { "$ref": "#/definitions/featureConfig"}
+          ]
+      }
+    }
+  },
+  "definitions": {
+    "hashConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "enum": ["double hash", "single hash"]},
+        "config": {
+          "type": "object",
+          "oneOf": [
+            { "$ref": "#/definitions/doubleHashConfig"},
+            { "$ref": "#/definitions/singleHashConfig"}
+          ]
+        }
+      }
+    },
+    "doubleHashConfig": {
+      "type": "object",
+      "required": ["kdf"],
+      "properties": {
+        "kdf": {
+          "type": "object",
+          "oneOf": [
+            { "$ref": "#/definitions/hkdf"}
+          ]
+        }
+      }
+    },
+    "singleHashConfig": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["undefined"]}
+      }
+    },
+    "hkdf": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "value": "HKDF"},
+        "hash": {"enum": ["SHA256", "SHA512"], "default": "SHA256"},
+        "salt": {"type": "string", "description": "base64 encoded bytes"},
+        "info": {"type": "string", "description": "base64 encoded bytes"},
+        "keySize": {"type": "integer", "minimum": 1}
+      }
+    },
+    "featureConfig": {
+      "type": "object",
+      "required": ["identifier", "format", "hashing"],
+      "properties": {
+        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "description": {"type": "string"},
+        "format": {"oneOf": [
+            {"$ref": "#definitions/textFormat"},
+            {"$ref": "#definitions/textPatternFormat"},
+            {"$ref": "#definitions/numberFormat"},
+            {"$ref": "#definitions/dateFormat"},
+            {"$ref": "#definitions/enumFormat"}
+          ]},
+        "hashing": {"$ref": "#definitions/hashingConfig"}
+      }
+    },
+    "textFormat": {
+      "type": "object",
+      "required": ["type", "encoding"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"value": "string"},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "case": {"enum": ["upper", "lower", "mixed"]},
+        "minLength": {"type": "integer", "minimum": 0},
+        "maxLength": {"type": "integer", "minimum": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "textPatternFormat": {
+      "type": "object",
+      "required": ["type", "encoding", "pattern"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"value": "string"},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "pattern": {"type": "string", "description": "asRegEx"},
+        "description": {"type": "string"}
+      }
+    },
+    "numberFormat": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"value": "integer"},
+        "minimum": {"type": "integer", "minimum": 0},
+        "maximum": {"type": "integer", "minimum": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "dateFormat": {
+      "type": "object",
+      "required": ["type", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"value": "date"},
+        "format": {"enum": ["rfc3339"], "description": "standard internet format: yyyy-mm-dd"},
+        "description": {"type": "string"}
+      }
+    },
+    "enumFormat": {
+      "type": "object",
+      "required": ["type", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"value": "enum"},
+        "values": {"type": "array", "items": {"type": "string"}},
+        "description": {"type": "string"}
+      }
+    },
+    "hashingConfig": {
+      "type": "object",
+      "required": ["ngram"],
+      "properties": {
+        "ngram": {"type": "integer", "minimum": 0, "default": 2},
+        "positional": {"type": "boolean", "default": false},
+        "weight": {"type": "number", "minimum": 0, "default": 1}
+      }
+    }
+  }
+}

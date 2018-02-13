@@ -115,7 +115,7 @@ class FieldSpec(with_metaclass(abc.ABCMeta, object)):
                 means is decided by the subclasses.
         """
         self.identifier = properties['identifier']
-        self.description = properties['format']['description']
+        self.description = properties['format'].get('description')
         self.hashing_properties = HashingProperties(properties['hashing'])
 
     @abc.abstractmethod
@@ -424,6 +424,13 @@ FIELD_TYPE_MAP = {
 
 
 def get_spec(field_properties):
+    # type: (Dict[str, Any]) -> FieldSpec
+    """ Turns a dictionary into the appropriate object.
+
+        :param field_properties: A dictionary with properties.
+        :returns: An initialised instance of the appropriate FieldSpec
+            subclass.
+    """
     type_str = field_properties['format']['type']
     spec_type = FIELD_TYPE_MAP[type_str]
     return spec_type(field_properties)
