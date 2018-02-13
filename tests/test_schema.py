@@ -1,65 +1,34 @@
-
-import unittest
 import os
+import unittest
+
 from clkhash import schema
 
+TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
 
-class TestSchemaLoading(unittest.TestCase):
 
-    def test_loading_default_yaml_schema(self):
-        fn = os.path.join(
-            os.path.dirname(__file__),
-            'testdata/default-schema.yaml'
-        )
-
-        with open(fn) as schema_file:
-            res = schema.load_schema(schema_file)
-
-        self.assertGreater(len(res), 0)
-        self.assertIn('identifier', res[0])
-
-    def test_loading_weighted_json_schema(self):
-        fn = os.path.join(
-            os.path.dirname(__file__),
-            'testdata/weighted-schema.json'
-        )
-
-        with open(fn) as schema_file:
-            res = schema.load_schema(schema_file)
-
-        self.assertEqual(len(res), 3)
-        self.assertIn('identifier', res[0])
-        self.assertEqual(res[0]['identifier'], 'INDEX')
-
-        self.assertEqual(res[1]['weight'], 10)
-        self.assertEqual(res[2]['weight'], 0)
+def test_data_file_path(file_name):
+    return os.path.join(TEST_DATA_DIRECTORY, file_name)
 
 
 class TestSchema(unittest.TestCase):
+    def test_schema_validation(self):
+        # This is a perfectly fine schema.
+        with open(test_data_file_path('good-schema-v1.json')) as f:
+            schema.load_schema_from_json_file(f)
 
-    def test_loading_default_yaml_schema(self):
-        fn = os.path.join(
-            os.path.dirname(__file__),
-            'testdata/default-schema.yaml'
-        )
+        # This schema is not valid (missing encoding in its feature).
+        with open(test_data_file_path('bad-schema-v1.json')) as f:
+            with self.assertRaises(schema.SchemaError):
+                schema.load_schema_from_json_file(f)
 
-        with open(fn) as schema_file:
-            res = schema.load_schema(schema_file)
-            schema_identifier_types = schema.get_schema_types(res)
-        self.assertGreater(len(schema_identifier_types), 2)
+        # This schema has an unsupported version.
+        with open(test_data_file_path(
+                'good-but-unsupported-schema.json')) as f:
+            with self.assertRaises(schema.SchemaError):
+                schema.load_schema_from_json_file(f)
 
 
+    def test_schema_loading(self):
 
-    def test_loading_weighted_json_schema(self):
-        fn = os.path.join(
-            os.path.dirname(__file__),
-            'testdata/weighted-schema.json'
-        )
 
-        with open(fn) as schema_file:
-            res = schema.load_schema(schema_file)
-        schema_identifier_types = schema.get_schema_types(res)
-
-        self.assertEqual(schema_identifier_types[1].weight, 10)
-        self.assertEqual(schema_identifier_types[2].weight, 0)
-
+        raise NotImplementedError()

@@ -232,6 +232,8 @@ class TestFieldFormats(unittest.TestCase):
             spec.validate('')
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('asdfghjkl')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('20-03-2006')
 
         # These are valid dates.
         spec.validate('2017-12-31')
