@@ -30,3 +30,9 @@ var/
 # Test output files
 .coverage
 nosetests.xml
+
+# Mypy
+.mypy_cache
+
+# Operating system stuff
+.DS_Store
