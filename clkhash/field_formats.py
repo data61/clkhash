@@ -5,10 +5,13 @@
     perform the hashing.
 """
 
+from __future__ import unicode_literals
+
 import abc
+from datetime import datetime
 import re
 import sre_constants
-from typing import Any, cast, Dict, Iterable, Pattern, Optional
+from typing import Any, Dict, Iterable, Pattern, Optional
 
 from future.utils import raise_from, with_metaclass
 
@@ -43,6 +46,8 @@ class InvalidSchemaError(Exception):
         This exception is raised if, for example, a regular expression
         included in the schema is not syntactically correct.
     """
+    # TODO: Consider getting rid of this and just using ValueError
+    # instead.
     pass
 
 
@@ -58,7 +63,7 @@ class HashingProperties(object):
         :ivar weight: Controls the weight of the field in the Bloom
             filter.
     """
-    __slots__ = ('encoding', 'gram', 'positional', 'weight')
+    __slots__ = ('encoding', 'ngram', 'positional', 'weight')
 
     DEFAULT_ENCODING = 'utf-8'
     DEFAULT_POSITIONAL = False
@@ -75,12 +80,13 @@ class HashingProperties(object):
 
             :param hash_properties: The dictionary to use.
         """
-        self.encoding = DEFAULT_ENCODING
-        self.ngram = cast(str, hash_properties['ngram'])
-        self.positional = cast(str, hash_properties.get('positional',
-                                                        DEFAULT_POSITIONAL))
-        self.weight = cast(float, hash_properties.get('weight',
-                                                      DEFAULT_WEIGHT))
+        self.encoding = HashingProperties.DEFAULT_ENCODING
+        self.ngram = hash_properties['ngram']
+        self.positional = hash_properties.get(
+            'positional',
+            HashingProperties.DEFAULT_POSITIONAL)
+        self.weight = hash_properties.get('weight',
+                                          HashingProperties.DEFAULT_WEIGHT)
 
 
 class FieldSpec(with_metaclass(abc.ABCMeta, object)):
@@ -108,8 +114,9 @@ class FieldSpec(with_metaclass(abc.ABCMeta, object)):
                 dictionary contains invalid values. Exacly what that
                 means is decided by the subclasses.
         """
-        self.hashing_properties = HashingProperties(
-            cast(Dict[str, Any], properties['hashing']))
+        self.identifier = properties['identifier']
+        self.description = properties['format']['description']
+        self.hashing_properties = HashingProperties(properties['hashing'])
 
     @abc.abstractmethod
     def validate(self, str_in):
@@ -129,7 +136,7 @@ class FieldSpec(with_metaclass(abc.ABCMeta, object)):
             str_in.encode(encoding=self.hashing_properties.encoding)
         except UnicodeEncodeError as e:
             msg = ("Expected entry that can be encoded in {}. Read '{}'."
-                   .format(str_in))
+                   .format(self.hashing_properties.encoding, str_in))
             raise_from(InvalidEntryError(msg), e)
 
 
@@ -177,10 +184,12 @@ class StringSpec(FieldSpec):
                 provided but is not a valid pattern.
         """
         super(StringSpec, self).__init__(properties)
-        self.hashing_properties.encoding = cast(str, properties['encoding'])
 
-        if 'pattern' in properties:
-            pattern = cast(str, properties['pattern'])
+        format_ = properties['format']
+        self.hashing_properties.encoding = format_['encoding']
+
+        if 'pattern' in format_:
+            pattern = format_['pattern']
             try:
                 self.regex = compile_full(pattern)
             except (SyntaxError, sre_constants.error) as e:
@@ -188,9 +197,9 @@ class StringSpec(FieldSpec):
                 raise_from(InvalidSchemaError(msg), e)
 
         else:
-            self.case = cast(str, properties.get('case', DEFAULT_CASE))
-            self.min_length = cast(Optional[int], properties.get('minLength'))
-            self.max_length = cast(Optional[int], properties.get('maxLength'))
+            self.case = format_.get('case', StringSpec.DEFAULT_CASE)
+            self.min_length = format_.get('minLength')
+            self.max_length = format_.get('maxLength')
 
     def validate(self, str_in):
         # type: (str) -> None
@@ -223,12 +232,12 @@ class StringSpec(FieldSpec):
             if self.min_length is not None and str_len < self.min_length:
                 raise InvalidEntryError(
                     'Expected string length of at least {}. Read string of '
-                    'length {}.'.format(self.minLength, str_len))
+                    'length {}.'.format(self.min_length, str_len))
 
             if self.max_length is not None and str_len > self.max_length:
                 raise InvalidEntryError(
                     'Expected string length of at most {}. Read string of '
-                    'length {}.'.format(self.maxLength, str_len))
+                    'length {}.'.format(self.max_length, str_len))
 
             if self.case == 'upper':
                 if str_in.upper() != str_in:
@@ -264,11 +273,12 @@ class IntegerSpec(FieldSpec):
 
             :param properties: The properties dictionary.
         """
+        super(IntegerSpec, self).__init__(properties)
+        format_ = properties['format']
 
         # Don't permit negative integers.
-        self.minimum = properties.get('minimum', 0)
-
-        self.maximum = properties.get('maximum')
+        self.minimum = format_.get('minimum', 0)
+        self.maximum = format_.get('maximum')
 
     def validate(self, str_in):
         # type: (str) -> None
@@ -294,12 +304,12 @@ class IntegerSpec(FieldSpec):
 
         if value < self.minimum:
             msg = ('Expected integer value of at least {}. Read {}.'
-                   .format(value))
+                   .format(self.minimum, value))
             raise InvalidEntryError(msg)
 
-        if self.maximum is not None and value > self.minimum:
+        if self.maximum is not None and value > self.maximum:
             msg = ('Expected integer value of at most {}. Read {}.'
-                   .format(value))
+                   .format(self.maximum, value))
             raise InvalidEntryError(msg)
 
 
@@ -325,7 +335,9 @@ class DateSpec(FieldSpec):
 
             :param properties: The properties dictionary.
         """
-        self.format = cast(str, properties['format'])
+        super(DateSpec, self).__init__(properties)
+        format_ = properties['format']
+        self.format = format_['format']
 
     def validate(self, str_in):
         # type: (str) -> None
@@ -344,12 +356,12 @@ class DateSpec(FieldSpec):
         super(DateSpec, self).validate(str_in)
 
         if self.format == 'rfc3339':
-            if DateValidator.RFC3339_REGEX.match(str_in) is None:
+            if DateSpec.RFC3339_REGEX.match(str_in) is None:
                 msg = ('Date expected to conform to RFC3339. Read {}.'
                        .format(str_in))
                 raise InvalidEntryError(msg)
             try:
-                datetime.strptime(str_in, DateValidator.RFC3339_FORMAT)
+                datetime.strptime(str_in, DateSpec.RFC3339_FORMAT)
             except ValueError as e:
                 msg = 'Invalid date. Read {}.'.format(str_in)
                 raise_from(InvalidEntryError(msg), e)
@@ -378,7 +390,9 @@ class EnumSpec(FieldSpec):
 
             :param properties: The properties dictionary.
         """
-        self.values = set(cast[Iterable, properties['enum']])
+        super(EnumSpec, self).__init__(properties)
+        format_ = properties['format']
+        self.values = set(format_['values'])
 
     def validate(self, str_in):
         # type: (str) -> None
@@ -395,5 +409,21 @@ class EnumSpec(FieldSpec):
         super(EnumSpec, self).validate(str_in)
 
         if str_in not in self.values:
-            msg = 'Expected enum value is one of {}. Read {}.'.format(str_in)
+            msg = ('Expected enum value is one of {}. Read {}.'
+                   .format(self.values, str_in))
             raise InvalidEntryError(msg)
+
+
+# Map type string (as defined in master schema) to
+FIELD_TYPE_MAP = {
+    'string': StringSpec,
+    'integer': IntegerSpec,
+    'date': DateSpec,
+    'enum': EnumSpec,
+}
+
+
+def get_spec(field_properties):
+    type_str = field_properties['format']['type']
+    spec_type = FIELD_TYPE_MAP[type_str]
+    return spec_type(field_properties)
