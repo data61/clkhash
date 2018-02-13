@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import math
 import unittest
 
@@ -43,7 +41,7 @@ class TestFieldFormats(unittest.TestCase):
         # This should raise since 'ø' can't be represented by our
         # encoding (ASCII).
         with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('dogødog')
+            spec.validate(u'dogødog')
 
         # Check random metadata.
         self.assertEqual(spec.identifier, 'regex')
@@ -98,7 +96,7 @@ class TestFieldFormats(unittest.TestCase):
         spec.validate('doggies!')
 
         # This should be fine since we specified utf-8 as the encoding.
-        spec.validate('doggøs')
+        spec.validate(u'doggøs')
 
         # Check random metadata.
         self.assertEqual(spec.identifier, 'noRegex')
@@ -266,7 +264,7 @@ class TestFieldFormats(unittest.TestCase):
             identifier='testingAllTheEnums',
             format=dict(
                 type='enum',
-                values=['dogs', 'cats', 'fërrets'],
+                values=['dogs', 'cats', u'fërrets'],
                 description='fizz'),
             hashing=dict(
                 ngram=2,
@@ -278,7 +276,7 @@ class TestFieldFormats(unittest.TestCase):
         # These are fine.
         spec.validate('dogs')
         spec.validate('cats')
-        spec.validate('fërrets')  # Test Unicode.
+        spec.validate(u'fërrets')  # Test Unicode.
 
         # These are not.
         with self.assertRaises(field_formats.InvalidEntryError):
