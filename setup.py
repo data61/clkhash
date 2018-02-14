@@ -7,7 +7,8 @@ requirements = [
         "futures==3.1.1",
         "cryptography==2.1.3",
         "tqdm==4.19.4",
-        "typing"
+        "typing",
+        "future==0.16.0"
     ]
 
 setup(
