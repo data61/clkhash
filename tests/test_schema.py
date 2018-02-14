@@ -22,7 +22,8 @@ class TestSchema(unittest.TestCase):
                 schema.load_schema_from_json_file(f)
 
         # This schema has an unsupported version.
-        with open(test_data_file_path('unsupported-schema.json')) as f:
+        with open(test_data_file_path(
+                'good-but-unsupported-schema.json')) as f:
             with self.assertRaises(schema.SchemaError):
                 schema.load_schema_from_json_file(f)
 

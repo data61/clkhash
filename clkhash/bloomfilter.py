@@ -3,25 +3,50 @@
 """
 Generate a Bloom filter
 """
-from typing import Tuple, Any, Iterable, List
-
 import base64
+import hashlib import sha1, md5
 import hmac
 import sys
-
-from clkhash.identifier_types import IdentifierType
-from hashlib import sha1, md5
+from typing import Tuple, Any, Iterable, List
 
 from bitarray import bitarray
+from future.builtins import map
+
+from clkhash.identifier_types import IdentifierType
+
+
+try:
+    from_bytes = int.from_bytes
+else:
+    import codecs
+    def from_bytes(bytes_, byteorder):
+        # type: (bytes, str) -> int
+        """ Emulate Python 3's int.from_bytes.
+
+            Kudos: https://stackoverflow.com/a/30403242 (with
+            modifications)
+
+            :param bytes_: The bytes to turn into an `int`.
+            :param byteorder: Either `'big'` or `'little'`.
+        """
+        if endianess == 'big':
+            pass
+        elif endianess == 'little':
+            bytes_ = bytes_[::-1]
+        else:
+            raise ValueError("byteorder must be either 'little' or 'big'")
+        hex_str = codecs.encode(bytes_, 'hex')
+        return int(hex_str, 16)
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
                               key_sha1,        # type: bytes
                               key_md5,         # type: bytes
                               k,               # type: int
-                              l                # type: int
+                              l,               # type: int
+                              encoding         # type: str
                               ):
-    # type: (...) -> bitarray.bitarray
+    # type: (...) -> bitarray
     """
     computes the double hash encoding of the provided ngrams with the given keys.
 
@@ -39,20 +64,25 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
-        sha1hm = int(hmac.new(key_sha1, m.encode(), sha1).hexdigest(), 16) % l
-        md5hm = int(hmac.new(key_md5, m.encode(), md5).hexdigest(), 16) % l
+        binary = m.encode(encoding=encoding)
+
+        sha1hm_bytes = hmac.new(key_sha1, binary, hashlib.sha1).digest()
+        md5hm_bytes = hmac.new(key_md5, binary, hashlib.md5).digest()
+
+        sha1hm = from_bytes(sha1hm_bytes, byteorder='big') % l
+        md5hm = from_bytes(md5hm_bytes, byteorder='big') % l
+
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
-            bf[gi] = 1
+            bf[gi] = True
     return bf
 
 
-def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
-                        tokenizers,     # type: Iterable[IdentifierType]
-                        keys1,          # type: Tuple[bytes, ...]
-                        keys2,          # type: Tuple[bytes, ...]
-                        l=1024,         # type: int
-                        k=30            # type: int
+def crypto_bloom_filter(record,            # type: Tuple[str]
+                        tokenizers,        # type: Iterable[IdentifierType]
+                        field_properties,
+                        keys,              # type: Tuple[Sequence[bytes, ...], Sequence[bytes, ...]]
+                        hash_properties
                         ):
     # type: (...) -> Tuple[bitarray, int, int]
     """
@@ -73,22 +103,29 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
             - first element of record (usually an index)
             - number of bits set in the bloomfilter
     """
+    keys1, keys2 = keys
+    l = hash_properties.l
+    k = hash_properties.k
+
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
 
-    for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
-        ngrams = [ngram for ngram in tokenizer(str(entry))]
-        if tokenizer.weight < 0:
-            raise ValueError('weight must not be smaller than zero, but was: {}'.format(tokenizer.weight))
-        adjusted_k = int(round(tokenizer.weight * k))
-        bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
+    for (entry, tokenizer, field, key1, key2) \
+            in zip(record, tokenizers, field_properties, keys1, keys2):
+        ngrams = tokenizer(entry)
+        adjusted_k = int(round(field.weight * k))
+
+        bloomfilter |= double_hash_encode_ngrams(
+            ngrams, key1, key2, adjusted_k, l)
 
     return bloomfilter, record[0], bloomfilter.count()
 
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
-                         schema_types,  # type: Iterable[IdentifierType]
-                         keys           # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         tokenizers,        # type: Iterable[IdentifierType]
+                         field_properties,
+                         keys,              # type: Tuple[Sequence[bytes, ...], Sequence[bytes, ...]]
+                         hash_properties
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
@@ -99,23 +136,9 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: Yields bloom filters as 3-tuples
     """
-    for s in dataset:
-        yield crypto_bloom_filter(s, schema_types, keys1=keys[0], keys2=keys[1])
-
-
-def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]
-                            schema,     # type: Iterable[IdentifierType]
-                            keys        # type: Tuple[Tuple[bytes], Tuple[bytes]]
-                            ):
-    # type: (...) -> List[Tuple[bitarray, Any, int]]
-    """
-    :param dataset: A list of indexable records.
-    :param schema: An iterable of identifier types.
-    :param keys: A tuple of two lists of secret keys used in the HMAC.
-    :return: List of bloom filters as 3-tuples, each containing
-             bloom filter (bitarray), record first element - usually index, bitcount (int)
-    """
-    return list(stream_bloom_filters(dataset, schema, keys))
+    return (crypto_bloom_filter(tokenizers, field_formats,
+                                keys, hash_properties)
+            for s in dataset)
 
 
 def serialize_bitarray(ba):
