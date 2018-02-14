@@ -3,11 +3,13 @@ from setuptools import setup, find_packages
 requirements = [
         "bitarray==0.8.1",
         "click==6.7",
-        "requests==2.18.1",
+        "requests==2.18.4",
         "futures==3.1.1",
         "cryptography==2.1.3",
         "tqdm==4.19.4",
-        "typing"
+        "typing",
+        "future==0.16.0",
+        "typing>=3.6.2"
     ]
 
 setup(

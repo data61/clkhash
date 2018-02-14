@@ -22,7 +22,8 @@ log = logging.getLogger('clkhash.clk')
 
 def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
                              schema_types,      # type: Iterable[identifier_types.IdentifierType]
-                             keys               # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                             keys,              # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                             hashing_properties
                              ):
     # type: (...) -> List[str]
     """
@@ -32,11 +33,13 @@ def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param xor_folds: Number of XOR folds to perform. Each fold halves
+        the hash length.
     :return: A list of serialized Bloom filters
     """
     clk_data = []
     for clk in bloomfilter.stream_bloom_filters(chunk_pii_data,
-                                                schema_types, keys):
+                                                schema_types, keys, hashing_properties):
         clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
 
     return clk_data
@@ -72,9 +75,10 @@ def generate_clk_from_csv(input,            # type: TextIO
     if progress_bar:
         with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
             progress_bar_callback = lambda update: pbar.update(update)
-            results = generate_clks(pii_data, schema_types, key_lists, progress_bar_callback)
+            results = generate_clks(pii_data, schema_types, key_lists,
+                                    xor_folds, progress_bar_callback)
     else:
-        results = generate_clks(pii_data, schema_types, key_lists)
+        results = generate_clks(pii_data, schema_types, key_lists, xor_folds)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
