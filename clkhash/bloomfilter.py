@@ -3,16 +3,17 @@
 """
 Generate a Bloom filter
 """
-from typing import Tuple, Any, Iterable, List
 
 import base64
+from hashlib import sha1, md5
 import hmac
 import sys
 
 from clkhash.identifier_types import IdentifierType
-from hashlib import sha1, md5
 
 from bitarray import bitarray
+from future.builtins import range
+from typing import Tuple, Any, Iterable, List
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
@@ -21,7 +22,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
                               k,               # type: int
                               l                # type: int
                               ):
-    # type: (...) -> bitarray.bitarray
+    # type: (...) -> bitarray
     """
     computes the double hash encoding of the provided ngrams with the given keys.
 
@@ -47,12 +48,44 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     return bf
 
 
-def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
-                        tokenizers,     # type: Iterable[IdentifierType]
-                        keys1,          # type: Tuple[bytes, ...]
-                        keys2,          # type: Tuple[bytes, ...]
-                        l=1024,         # type: int
-                        k=30            # type: int
+def fold_xor(bloomfilter,  # type: bitarray
+             folds         # type: int
+             ):
+    # type: (...) -> bitarray
+    """ Performs XOR folding on a Bloom filter.
+
+        If the length of the original Bloom filter is n and we perform
+        r folds, then the length of the resulting filter is n / 2 ** r.
+
+        :param bloomfilter: Bloom filter to fold
+        :param folds: number of folds
+
+        :return: folded bloom filter
+    """
+
+    if len(bloomfilter) % 2 ** folds != 0:
+        msg = ('The length of the bloom filter is {length}. It is not '
+               'divisible by 2 ** {folds}, so it cannot be folded {folds} '
+               'times.'
+               .format(length=len(bloomfilter), folds=folds))
+        raise ValueError(msg)
+
+    for _ in range(folds):
+        bf1 = bloomfilter[:len(bloomfilter) // 2]
+        bf2 = bloomfilter[len(bloomfilter) // 2:]
+
+        bloomfilter = bf1 ^ bf2
+
+    return bloomfilter
+
+
+def crypto_bloom_filter(record,       # type: Tuple[Any, ...]
+                        tokenizers,   # type: Iterable[IdentifierType]
+                        keys1,        # type: Tuple[bytes, ...]
+                        keys2,        # type: Tuple[bytes, ...]
+                        xor_folds=0,  # type: int
+                        l=1024,       # type: int
+                        k=30          # type: int
                         ):
     # type: (...) -> Tuple[bitarray, int, int]
     """
@@ -65,6 +98,7 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
     :param tokenizers: A list of IdentifierType tokenizers (one for each record element)
     :param keys1: list of keys for first hash function as list of bytes
     :param keys2: list of keys for second hash function as list of bytes
+    :param xor_folds: number of XOR folds to perform
     :param l: length of the Bloom filter in number of bits
     :param k: number of hash functions to use per element
 
@@ -83,12 +117,15 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
         adjusted_k = int(round(tokenizer.weight * k))
         bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
 
+    bloomfilter = fold_xor(bloomfilter, xor_folds)
+
     return bloomfilter, record[0], bloomfilter.count()
 
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
                          schema_types,  # type: Iterable[IdentifierType]
-                         keys           # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         keys,          # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         xor_folds=0    # type: int
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
@@ -97,25 +134,29 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :param dataset: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param xor_folds: number of XOR folds to perform
     :return: Yields bloom filters as 3-tuples
     """
     for s in dataset:
-        yield crypto_bloom_filter(s, schema_types, keys1=keys[0], keys2=keys[1])
+        yield crypto_bloom_filter(s, schema_types, keys[0], keys[1],
+                                  xor_folds=xor_folds)
 
 
-def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]
-                            schema,     # type: Iterable[IdentifierType]
-                            keys        # type: Tuple[Tuple[bytes], Tuple[bytes]]
+def calculate_bloom_filters(dataset,     # type: Iterable[Tuple[Any]]
+                            schema,      # type: Iterable[IdentifierType]
+                            keys,        # type: Tuple[Tuple[bytes], Tuple[bytes]]
+                            xor_folds=0  # type: int
                             ):
     # type: (...) -> List[Tuple[bitarray, Any, int]]
     """
     :param dataset: A list of indexable records.
     :param schema: An iterable of identifier types.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param xor_folds: number of XOR folds to perform
     :return: List of bloom filters as 3-tuples, each containing
              bloom filter (bitarray), record first element - usually index, bitcount (int)
     """
-    return list(stream_bloom_filters(dataset, schema, keys))
+    return list(stream_bloom_filters(dataset, schema, keys, xor_folds=xor_folds))
 
 
 def serialize_bitarray(ba):
