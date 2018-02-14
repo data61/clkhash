@@ -1,7 +1,7 @@
 """
 Convert PII to tokens
 """
-from typing import Dict, List, NoReturn, Any, Callable, Union, Optional
+from typing import Dict, List, Any
 
 from clkhash.tokenizer import unigramlist, bigramlist
 from copy import copy
