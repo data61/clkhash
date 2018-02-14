@@ -34,6 +34,8 @@ def hash_and_serialize_chunk(chunk_pii_data, # type: Iterable[Tuple[Any]]
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param xor_folds: Number of XOR folds to perform. Each fold halves
+        the hash length.
     :return: A list of serialized Bloom filters
     """
     clk_data = []
