@@ -20,7 +20,6 @@ matrix:
   include:
     - python: '3.6'
       env:
-        - USE_WHEEL=1
         - TEST_ENTITY_SERVICE=1
 
 install:
@@ -30,4 +29,3 @@ install:
 
 script:
   - INCLUDE_CLI= pytest --cov=clkhash
-  - if [ "${USE_WHEEL}" == "1" ]; then python setup.py bdist_wheel; fi
