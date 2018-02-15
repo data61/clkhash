@@ -8,7 +8,7 @@ import logging
 import time
 
 import sys
-from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
+from typing import List, Any, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
     Callable, Optional
 
 if sys.version_info[0] >= 3:
