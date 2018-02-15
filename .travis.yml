@@ -15,13 +15,13 @@ python:
 matrix:
   allow_failures:
     - python: 'nightly'
-    - python: 'pypy'
     - python: 'pypy3'
     - python: '2.6'
   include:
     - python: '3.6'
       env:
         - USE_WHEEL=1
+        - TEST_ENTITY_SERVICE=1
 
 install:
   - travis_retry pip install pytest pytest-cov
