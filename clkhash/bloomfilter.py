@@ -3,7 +3,7 @@
 """
 Generate a Bloom filter
 """
-from typing import Tuple, Any, Iterable, List
+from typing import Tuple, Any, Iterable, List, Callable
 from bitarray import bitarray
 from enum import Enum
 import base64
@@ -21,7 +21,7 @@ else:
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
-                              keys,            # type: Tuple[bytes]
+                              keys,            # type: Tuple[bytes, ...]
                               k,               # type: int
                               l                # type: int
                               ):
@@ -134,8 +134,8 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
 
 
 class NgramEncodings(Enum):
-    DOUBLE_HASH = double_hash_encode_ngrams
-    BLAKE_HASH = blake_encode_ngrams
+    DOUBLE_HASH = double_hash_encode_ngrams  # type: Callable[[Iterable[str], Tuple[bytes, ...], int, int], bitarray.bitarray]
+    BLAKE_HASH = blake_encode_ngrams         # type: Callable[[Iterable[str], bytes, int, int], bitarray.bitarray]
 
 
 def crypto_bloom_filter(record,                                     # type: Tuple[Any, ...]
@@ -143,7 +143,7 @@ def crypto_bloom_filter(record,                                     # type: Tupl
                         keys,                                       # type: Tuple[Tuple[bytes, ...]]
                         l=1024,                                     # type: int
                         k=30,                                       # type: int
-                        ngram_encoding=NgramEncodings.DOUBLE_HASH   # type: NgramEncodings
+                        ngram_encoding=NgramEncodings.DOUBLE_HASH
                         ):
     # type: (...) -> Tuple[bitarray, int, int]
     """
@@ -179,7 +179,7 @@ def crypto_bloom_filter(record,                                     # type: Tupl
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
                          schema_types,  # type: Iterable[IdentifierType]
-                         keys           # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         keys           # type: Tuple[Tuple[bytes, ...]]
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
@@ -196,7 +196,7 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
 
 def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]
                             schema,     # type: Iterable[IdentifierType]
-                            keys        # type: Tuple[Tuple[bytes], Tuple[bytes]]
+                            keys        # type: Tuple[Tuple[bytes, ...]]
                             ):
     # type: (...) -> List[Tuple[bitarray, Any, int]]
     """
