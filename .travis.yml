@@ -1,0 +1,31 @@
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
+language: python
+sudo: false
+
+python:
+  - '2.6'
+  - '2.7'
+  - '3.5'
+  - '3.6'
+  - 'nightly'
+  - 'pypy'
+  - 'pypy3'
+
+matrix:
+  allow_failures:
+    - python: 'nightly'
+    - python: 'pypy'
+    - python: '2.6'
+  include:
+    - python: '3.6'
+      env:
+        - USE_WHEEL=1
+
+install:
+  - travis_retry pip install pytest pytest-cov
+  - travis_retry pip install -e .
+
+script:
+  - pytest --cov=clkhash
+  - if [ "${USE_WHEEL}" == "1" ]; then python setup.py bdist_wheel; fi
