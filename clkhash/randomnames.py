@@ -13,16 +13,18 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 """
 from __future__ import print_function
 
+import base64
 import csv
-from typing import List, Tuple, Iterable, TextIO, Union, Dict
-
-import random
 from datetime import datetime, timedelta
 import math
-
 import pkgutil
+import random
+import re
+from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
-# from clkhash.schema import get_schema_types
+from clkhash.schema import GlobalHashingProperties, Schema
+from clkhash.field_formats import (FieldHashingProperties, StringSpec,
+                                   IntegerSpec, EnumSpec, FieldSpec)
 
 
 def load_csv_data(resource_name):
@@ -73,14 +75,72 @@ def random_date(start, end):
 
 
 class NameList:
-    """List of randomly generated names"""
+    """ List of randomly generated names.
+    """
 
-    schema = [
-            {"identifier": "INDEX"},
-            {"identifier": "NAME freetext"},
-            {"identifier": "DOB YYYY/MM/DD"},
-            {"identifier": "GENDER M or F"}
+    SCHEMA = Schema(
+        version=1,
+        hashing_globals=GlobalHashingProperties(
+            k=30,
+            kdf_hash='SHA256',
+            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+            kdf_key_size=64,
+            kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+            kdf_type='HKDF',
+            l=1024,
+            type='double hash',
+            xor_folds=0
+        ),
+        fields=[
+            IntegerSpec(
+                identifier='INDEX',
+                hashing_properties=FieldHashingProperties(
+                    encoding='ascii',
+                    ngram=1,
+                    positional=True,
+                    weight=1
+                ),
+                description=None,
+                minimum=0,
+                maximum=None
+            ),
+            StringSpec(
+                identifier='NAME freetext',
+                hashing_properties=FieldHashingProperties(
+                    encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                    ngram=2,
+                    positional=False,
+                    weight=.5
+                ),
+                description=None,
+                case=StringSpec.DEFAULT_CASE,
+                min_length=3,
+                max_length=None
+            ),
+            StringSpec(
+                identifier='DOB YYYY/MM/DD',
+                hashing_properties=FieldHashingProperties(
+                    encoding='ascii',
+                    ngram=1,
+                    positional=True,
+                    weight=1
+                ),
+                description=None,
+                regex=re.compile(r'(?:\d\d\d\d/\d\d/\d\d)\Z')
+            ),
+            EnumSpec(
+                identifier='GENDER M or F',
+                hashing_properties=FieldHashingProperties(
+                    encoding='ascii',
+                    ngram=1,
+                    positional=False,
+                    weight=2
+                ),
+                description=None,
+                values=['M', 'F']
+            )
         ]
+    )
 
     def __init__(self, n):
         # type: (int) -> None
@@ -93,7 +153,8 @@ class NameList:
 
     @property
     def schema_types(self):
-        return get_schema_types(self.schema)
+        # type: () -> Sequence[FieldSpec]
+        return self.SCHEMA.fields
 
     def generate_random_person(self, n):
         # type: (int) -> Iterable[Tuple[int, str, str, str]]
@@ -110,7 +171,7 @@ class NameList:
             last_name = random.choice(self.all_last_names)
 
             yield (
-                i,
+                str(i),
                 first_name + ' ' + last_name,
                 dob,
                 sex

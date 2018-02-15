@@ -1,3 +1,4 @@
+from copy import copy
 import random
 import unittest
 
@@ -6,14 +7,25 @@ from future.builtins import zip
 
 from clkhash import randomnames, bloomfilter
 from clkhash.key_derivation import generate_key_lists
+from clkhash.schema import Schema
 
 
 try:
     to_bytes = int.to_bytes
 except AttributeError:
     # We are in Python 2.
-    def to_bytes(n, length, endianess):
-        # Kudos: https://stackoverflow.com/a/20793663
+    def to_bytes(n,            # int
+                 length,       # int
+                 endianess,    # str
+                 signed=False  # DefaultNamedArg(bool, 'signed')
+                 ):
+        # type (...) -> bytes
+        if signed:
+            raise ValueError(
+                "This dirty backport of int.to_bytes doesn't support signed "
+                'integers. Implement it yourself, or better yet, switch to '
+                'Python 3.')
+            # Kudos: https://stackoverflow.com/a/20793663
         # With modifications for style.
         hex_str = '{:X}'.format(n)
         if len(hex_str) > length * 2:
@@ -112,18 +124,26 @@ class TestXorFolding(unittest.TestCase):
 
     def test_xor_folding_integration(self):
         namelist = randomnames.NameList(1)
+        schema_0 = namelist.SCHEMA
+        assert schema_0.hashing_globals.xor_folds == 0
+
+        schema_1 = Schema(
+            version=schema_0.version,
+            hashing_globals=copy(schema_0.hashing_globals),
+            fields=schema_0.fields
+        )
+        schema_1.hashing_globals.xor_folds = 1
+
         key_lists = generate_key_lists(('secret', 'sshh'),
                                        len(namelist.schema_types))
-        (bf_original, _, _), = bloomfilter.calculate_bloom_filters(
+        bf_original, _, _ = next(bloomfilter.stream_bloom_filters(
             namelist.names,
-            namelist.schema_types,
             key_lists,
-            xor_folds=0)
-        (bf_folded, _, _), = bloomfilter.calculate_bloom_filters(
+            schema_0))
+        bf_folded, _, _ = next(bloomfilter.stream_bloom_filters(
             namelist.names,
-            namelist.schema_types,
             key_lists,
-            xor_folds=1)
+            schema_1))
 
         self.assertEqual(
             bf_folded,

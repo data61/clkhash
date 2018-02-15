@@ -7,36 +7,14 @@ import base64
 import hashlib
 import hmac
 import sys
-from typing import Tuple, Any, Iterable, List
+from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
 from bitarray import bitarray
 from future.builtins import map
 
-from clkhash.identifier_types import IdentifierType
-
-
-try:
-    from_bytes = int.from_bytes
-else:
-    import codecs
-    def from_bytes(bytes_, byteorder):
-        # type: (bytes, str) -> int
-        """ Emulate Python 3's int.from_bytes.
-
-            Kudos: https://stackoverflow.com/a/30403242 (with
-            modifications)
-
-            :param bytes_: The bytes to turn into an `int`.
-            :param byteorder: Either `'big'` or `'little'`.
-        """
-        if endianess == 'big':
-            pass
-        elif endianess == 'little':
-            bytes_ = bytes_[::-1]
-        else:
-            raise ValueError("byteorder must be either 'little' or 'big'")
-        hex_str = codecs.encode(bytes_, 'hex')
-        return int(hex_str, 16)
+from clkhash import field_formats, tokenizer
+from clkhash.backports import int_from_bytes
+import clkhash.schema
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
@@ -58,19 +36,20 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     :param key_md5: hmac secret keys for md5 as bytes
     :param k: number of hash functions to use per element of the ngrams
     :param l: length of the output bitarray
+    :param encoding: the encoding to use when turning the ngrams to bytes
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
-        binary = m.encode(encoding=encoding)
+        m_bytes = m.encode(encoding=encoding)
 
-        sha1hm_bytes = hmac.new(key_sha1, binary, hashlib.sha1).digest()
-        md5hm_bytes = hmac.new(key_md5, binary, hashlib.md5).digest()
+        sha1hm_bytes = hmac.new(key_sha1, m_bytes, hashlib.sha1).digest()
+        md5hm_bytes = hmac.new(key_md5, m_bytes, hashlib.md5).digest()
 
-        sha1hm = from_bytes(sha1hm_bytes, byteorder='big') % l
-        md5hm = from_bytes(md5hm_bytes, byteorder='big') % l
+        sha1hm = int_from_bytes(sha1hm_bytes, 'big') % l
+        md5hm = int_from_bytes(md5hm_bytes, 'big') % l
 
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
@@ -108,9 +87,13 @@ def fold_xor(bloomfilter,  # type: bitarray
 
     return bloomfilter
 
-
+def crypto_bloom_filter(record,          # type: Sequence[Text]
+                        tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
+                        field_hashing,   # type: List[field_formats.FieldHashingProperties]
+                        keys,            # type: Tuple[Sequence[bytes], Sequence[bytes]]
+                        hash_properties  # type: clkhash.schema.GlobalHashingProperties
                         ):
-    # type: (...) -> Tuple[bitarray, int, int]
+    # type: (...) -> Tuple[bitarray, Text, int]
     """
     Makes a Bloom filter from a record with given tokenizers and lists of keys.
 
@@ -118,12 +101,11 @@ def fold_xor(bloomfilter,  # type: bitarray
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
-    :param tokenizers: A list of IdentifierType tokenizers (one for each record element)
-    :param keys1: list of keys for first hash function as list of bytes
-    :param keys2: list of keys for second hash function as list of bytes
-    :param xor_folds: number of XOR folds to perform
-    :param l: length of the Bloom filter in number of bits
-    :param k: number of hash functions to use per element
+    :param tokenizers: A tokenizers. A tokenizer is a function that
+        returns tokens from a string.
+    :param field_hashing: Hashing properties for each field.
+    :param keys: Keys for the hash functions as a tuple of lists of bytes.
+    :param hash_properties: Global hashing properties.
 
     :return: 3-tuple:
             - bloom filter for record as a bitarray
@@ -139,25 +121,23 @@ def fold_xor(bloomfilter,  # type: bitarray
     bloomfilter.setall(False)
 
     for (entry, tokenizer, field, key1, key2) \
-            in zip(record, tokenizers, field_properties, keys1, keys2):
+            in zip(record, tokenizers, field_hashing, keys1, keys2):
         ngrams = tokenizer(entry)
         adjusted_k = int(round(field.weight * k))
 
         bloomfilter |= double_hash_encode_ngrams(
-            ngrams, key1, key2, adjusted_k, l)
+            ngrams, key1, key2, adjusted_k, l, field.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)
 
     return bloomfilter, record[0], bloomfilter.count()
 
 
-def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
-                         tokenizers,        # type: Iterable[IdentifierType]
-                         field_properties,
-                         keys,              # type: Tuple[Sequence[bytes, ...], Sequence[bytes, ...]]
-                         hash_properties
+def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
+                         keys,     # type: Tuple[Sequence[bytes], Sequence[bytes]]
+                         schema    # type: clkhash.schema.Schema
                          ):
-    # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
+    # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
     """
     Yield bloom filters
 
@@ -167,7 +147,12 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :param xor_folds: number of XOR folds to perform
     :return: Yields bloom filters as 3-tuples
     """
-    return (crypto_bloom_filter(tokenizers, field_formats,
+    tokenizers = [tokenizer.get_tokenizer(field.hashing_properties)
+                  for field in schema.fields]
+    field_hashing = [field.hashing_properties for field in schema.fields]
+    hash_properties = schema.hashing_globals
+
+    return (crypto_bloom_filter(s, tokenizers, field_hashing,
                                 keys, hash_properties)
             for s in dataset)
 
