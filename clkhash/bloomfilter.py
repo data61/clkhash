@@ -6,6 +6,7 @@ Generate a Bloom filter
 from typing import Tuple, Any, Iterable, List, Callable
 from bitarray import bitarray
 from enum import Enum
+from functools import partial
 import base64
 import hmac
 import math
@@ -134,8 +135,11 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
 
 
 class NgramEncodings(Enum):
-    DOUBLE_HASH = double_hash_encode_ngrams  # type: Callable[[Iterable[str], Tuple[bytes, ...], int, int], bitarray.bitarray]
-    BLAKE_HASH = blake_encode_ngrams         # type: Callable[[Iterable[str], bytes, int, int], bitarray.bitarray]
+    DOUBLE_HASH = partial(double_hash_encode_ngrams)  # type: Callable[[Iterable[str], Tuple[bytes, ...], int, int], bitarray.bitarray]
+    BLAKE_HASH = partial(blake_encode_ngrams)         # type: Callable[[Iterable[str], bytes, int, int], bitarray.bitarray]
+
+    def __call__(self, *args):
+        return self.value(*args)
 
 
 def crypto_bloom_filter(record,                                     # type: Tuple[Any, ...]
