@@ -21,7 +21,7 @@ setup(
     install_requires=requirements,
     test_requires=['nose>=1.3'],
     packages=find_packages(exclude=['tests']),
-    package_data={'clkhash': ['data/*.csv']},
+    package_data={'clkhash': ['data/*.csv', 'master-schemas/*.json']},
     entry_points={
         'console_scripts': [
             'clkutil = clkhash.cli:cli'

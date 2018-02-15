@@ -3,6 +3,7 @@
 """ Schema loading and validation.
 """
 
+import base64
 import json
 import os
 from typing import Any, Dict, Hashable, List, TextIO
@@ -17,6 +18,52 @@ from clkhash import field_formats
 MASTER_SCHEMA_PATHS = {1: ('master-schemas', 'v1.json')}
 
 MASTER_SCHEMA_DIRECTORY = os.path.dirname(__file__)
+
+
+class GlobalHashingProperties(object):
+    def __init__(self, properties_dict=None):
+        if properties_dict is not None:
+            self.type = properties_dict['type']
+            self.kdf_type = properties_dict['config']['kdf']['type']
+            self.kdf_hash = properties_dict['config']['kdf']['hash']
+            self.kdf_key_size = properties_dict['config']['kdf']['keySize']
+
+            kdf_salt_b64 = properties_dict['config']['kdf']['salt']
+            self.kdf_salt = base64.b64decode(kdf_salt_b64)
+
+            kdf_info_b64 = properties_dict['config']['kdf']['type']
+            self.kdf_info = base64.b64decode(kdf_info_b64)
+
+            self.xor_folds = 0  # TODO: This will need to change.
+            self.l = 1024  # TODO: This will need to change.
+            self.k = 30  # TODO: This will need to change.
+
+
+class Schema(object):
+    __slots__ = ('version', 'hashing_globals', 'fields')
+
+    def __init__(self, schema_dict=None, schema_file=None):
+        if schema_dict is not None and schema_file is not None:
+            msg = ('The schema can be loaded from a dict or a file but not '
+                   'both.')
+            raise ValueError(msg)
+
+        if schema_file is not None:
+            try:
+                schema_dict = json.load(schema_file)
+            except json.decoder.JSONDecodeError as e:
+                raise_from(
+                    SchemaError('The schema is not a valid JSON file.'),
+                    e)
+
+        if schema_dict is not None:
+            # This raises iff the schema is invalid.
+            validate_schema_dict(schema_dict)
+
+            features = schema_dict['features']
+            self.fields = list(map(field_formats.get_spec, features))
+            self.version = schema_dict['version']
+            self.hashing_globals = GlobalHashingProperties(schema_dict['hash'])
 
 
 def get_master_schema_path(version):
@@ -47,7 +94,7 @@ class MasterSchemaError(Exception):
     pass
 
 
-def validate_schema(schema):
+def validate_schema_dict(schema):
     # type: (Dict[str, Any]) -> None
     """ Validate the schema.
 
@@ -94,37 +141,3 @@ def validate_schema(schema):
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)
-
-
-def load_schema_from_dict(schema_dict):
-    # type: (TextIO) -> List[field_formats.FieldSpec]
-    """ Loads and validates a schema dictionary.
-
-        The dictionary is converted to a list of `FieldSpec` objects.
-
-        :param schema_dict: The schema dictionary to load.
-        :returns: A list of `FieldSpec`s, one for each field.
-    """
-    # This raises iff the schema is invalid.
-    validate_schema(schema_dict)
-
-    features = schema_dict['features']
-    fields = list(map(field_formats.get_spec, features))
-    return fields
-
-
-def load_schema_from_json_file(schema_file):
-    # type: (TextIO) -> List[field_formats.FieldSpec]
-    """ Loads and validates a schema.
-
-        The schema file is loaded as a list of `FieldSpec` objects.
-
-        :param schema_file: The schema file to load.
-        :returns: A list of `FieldSpec`s, one for each field.
-    """
-    try:
-        schema_dict = json.load(schema_file)
-    except json.decoder.JSONDecodeError as e:
-        raise_from(SchemaError('The schema is not a valid JSON file.'), e)
-
-    return load_schema_from_dict(schema_dict)

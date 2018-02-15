@@ -1,10 +1,12 @@
-from __future__ import print_function
-from timeit import default_timer as timer
-import tempfile
-from clkhash.randomnames import NameList
-from clkhash.schema import load_schema, get_schema_types
-from clkhash.clk import generate_clk_from_csv
+# from __future__ import print_function
+# from timeit import default_timer as timer
+# import tempfile
+# from clkhash.randomnames import NameList
+# from clkhash.schema import load_schema, get_schema_types
+# from clkhash.clk import generate_clk_from_csv
 
+
+# TODO: This needs rewriting with schema stuff
 
 def compute_hash_speed(n, quiet=False):
     # type: (int, bool) -> float

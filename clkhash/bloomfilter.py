@@ -12,12 +12,12 @@ from typing import Tuple, Any, Iterable, List
 from bitarray import bitarray
 from future.builtins import map
 
-from clkhash.identifier_types import IdentifierType
+from clkhash import tokenizer
 
 
 try:
     from_bytes = int.from_bytes
-else:
+except AttributeError:
     import codecs
     def from_bytes(bytes_, byteorder):
         # type: (bytes, str) -> int
@@ -108,7 +108,11 @@ def fold_xor(bloomfilter,  # type: bitarray
 
     return bloomfilter
 
-
+def crypto_bloom_filter(record,       # type: Tuple[Any, ...]
+                        tokenizers,   # type: Iterable[IdentifierType]
+                        field_formats,
+                        keys,
+                        hash_properties
                         ):
     # type: (...) -> Tuple[bitarray, int, int]
     """
@@ -139,12 +143,12 @@ def fold_xor(bloomfilter,  # type: bitarray
     bloomfilter.setall(False)
 
     for (entry, tokenizer, field, key1, key2) \
-            in zip(record, tokenizers, field_properties, keys1, keys2):
+            in zip(record, tokenizers, field_formats, keys1, keys2):
         ngrams = tokenizer(entry)
         adjusted_k = int(round(field.weight * k))
 
         bloomfilter |= double_hash_encode_ngrams(
-            ngrams, key1, key2, adjusted_k, l)
+            ngrams, key1, key2, adjusted_k, l, field.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)
 
@@ -152,10 +156,8 @@ def fold_xor(bloomfilter,  # type: bitarray
 
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
-                         tokenizers,        # type: Iterable[IdentifierType]
-                         field_properties,
                          keys,              # type: Tuple[Sequence[bytes, ...], Sequence[bytes, ...]]
-                         hash_properties
+                         schema
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
     """
@@ -167,7 +169,11 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :param xor_folds: number of XOR folds to perform
     :return: Yields bloom filters as 3-tuples
     """
-    return (crypto_bloom_filter(tokenizers, field_formats,
+    tokenizers = [tokenizer.get_tokenizer(field) for field in schema.fields]
+    field_formats = [field.hashing_properties for field in schema.fields]
+    hash_properties = schema.hashing_globals
+
+    return (crypto_bloom_filter(s, tokenizers, field_formats,
                                 keys, hash_properties)
             for s in dataset)
 

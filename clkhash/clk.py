@@ -14,16 +14,14 @@ from typing import (Any, Callable, Generator, Iterable, List,
 
 from tqdm import tqdm
 
-from clkhash import (bloomfilter, identifier_types,
-                     key_derivation, validate_data)
+from clkhash import bloomfilter, key_derivation, validate_data
 
 log = logging.getLogger('clkhash.clk')
 
 
 def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
-                             schema_types,      # type: Iterable[identifier_types.IdentifierType]
                              keys,              # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
-                             hashing_properties
+                             schema
                              ):
     # type: (...) -> List[str]
     """
@@ -33,68 +31,73 @@ def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
-    :param xor_folds: Number of XOR folds to perform. Each fold halves
-        the hash length.
     :return: A list of serialized Bloom filters
     """
     clk_data = []
-    for clk in bloomfilter.stream_bloom_filters(chunk_pii_data,
-                                                schema_types, keys, hashing_properties):
+    for clk in bloomfilter.stream_bloom_filters(chunk_pii_data, keys, schema):
         clk_data.append(bloomfilter.serialize_bitarray(clk[0]).strip())
 
     return clk_data
 
 
-def generate_clk_from_csv(input,            # type: TextIO
+def generate_clk_from_csv(input_f,          # type: TextIO
                           keys,             # type: Tuple[Union[bytes, str], Union[bytes, str]]
                           schema,
-                          no_header=False,  # type: bool
+                          validate=True,    # type: bool
+                          header=True,      # type: bool
                           progress_bar=True # type: bool
                           ):
     # type: (...) -> List[str]
     log.info("Hashing data")
 
     # Read from CSV file
-    reader = csv.reader(input)
+    reader = csv.reader(input_f)
 
-    # Get the headers
-    if not no_header:
-        header = input.readline()
-        log.info("Header Row: {}".format(header))
+    if header:
+        column_names = next(reader)
+        if validate:
+            validate_data.validate_header(schema.fields, column_names)
 
     start_time = time.time()
 
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        pii_data.append(tuple([element.strip() for element in line]))
+        pii_data.append(line)
 
     # generate two keys for each identifier
-    key_lists = key_derivation.generate_key_lists(keys, len(schema_types))
+    key_lists = key_derivation.generate_key_lists(keys, len(schema.fields))
 
     if progress_bar:
-        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
+        with tqdm(desc="generating CLKs",
+                  total=len(pii_data),
+                  unit='clk',
+                  unit_scale=True) as pbar:
             progress_bar_callback = lambda update: pbar.update(update)
-            results = generate_clks(pii_data, schema_types, key_lists,
-                                    xor_folds, progress_bar_callback)
+            results = generate_clks(pii_data,
+                                    schema,
+                                    key_lists,
+                                    validate=validate,
+                                    callback=progress_bar_callback)
     else:
-        results = generate_clks(pii_data, schema_types, key_lists, xor_folds)
+        results = generate_clks(pii_data,
+                                schema,
+                                key_lists,
+                                validate=validate)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
 
 
-def generate_clks(pii_data,         # type: Sequence[Sequence[str, ...]]
+def generate_clks(pii_data,       # type: Sequence[Sequence[str, ...]]
                   schema,
-                  key_lists,        # type: Tuple[Tuple[bytes, ...], ...]
-                  validate=True,
-                  callback=None     # type: Optional[Callable[[int], None]]
+                  key_lists,      # type: Tuple[Tuple[bytes, ...], ...]
+                  validate=True,  # type: bool
+                  callback=None   # type: Optional[Callable[[int], None]]
                   ):
     # type: (...) -> List[Any]
-    hash_settings, fields = schema
-
     if validate:
-        validate_data.validate_data(fields, pii_data)
+        validate_data.validate_data(schema.fields, pii_data)
 
     results = []
 
@@ -107,7 +110,7 @@ def generate_clks(pii_data,         # type: Sequence[Sequence[str, ...]]
         futures = []
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(hash_and_serialize_chunk,
-                                     chunk, schema_types, key_lists)
+                                     chunk, key_lists, schema)
             if callback is not None:
                 future.add_done_callback(lambda f: callback(len(f.result())))
             futures.append(future)
@@ -126,4 +129,4 @@ def chunks(seq, chunk_size):
         :param seq: A sequence to chunk.
         :param chunk_size: The size of chunk.
     """
-    return (l[i:i + n] for i in range(0, len(seq), chunk_size))
+    return (seq[i:i + chunk_size] for i in range(0, len(seq), chunk_size))
