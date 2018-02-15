@@ -19,7 +19,8 @@ setup(
     url='https://github.com/n1analytics/clkhash',
     license='Apache',
     install_requires=requirements,
-    test_requires=['nose>=1.3'],
+    setup_requires=['pytest-runner'],
+    test_requires=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=['tests']),
     package_data={'clkhash': ['data/*.csv']},
     entry_points={

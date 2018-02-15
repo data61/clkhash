@@ -1,5 +1,4 @@
 bitarray==0.8.1
-nose==1.3.7
 click==6.7
 requests==2.18.4
 PyYAML==3.12
@@ -9,3 +8,4 @@ tqdm==4.19.1
 future==0.16.0
 typing>=3.6.2
 PyYAML==3.12
+pytest

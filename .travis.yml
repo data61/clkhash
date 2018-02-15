@@ -29,5 +29,5 @@ install:
   - travis_retry pip install -e .
 
 script:
-  - pytest --cov=clkhash
+  - INCLUDE_CLI= pytest --cov=clkhash
   - if [ "${USE_WHEEL}" == "1" ]; then python setup.py bdist_wheel; fi
