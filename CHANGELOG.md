@@ -1,9 +1,9 @@
 ## 0.9.0
 
-* Adds the option to perform XOR folding. See *XOR-Folding for hardening Bloom Filter based Encryptions for PPRL* by Schnell (2016).
+* Adds the option to perform XOR folding. Schnell (2016) claims that it improves privacy whilst having little effect on accuracy; see [*XOR-Folding for hardening Bloom Filter based Encryptions for PPRL*](http://soz-159.uni-duisburg.de/wp-content/uploads/2017/07/XOR-Folding-for-Bloom.pdf) for details.
 * Supports online documentation at http://clkhash.readthedocs.io/.
 * Fixes minor inconsistency between the treatment of base64 string in Python 2 and Python 3.
-* Permits changing of fields' weight in the hash.
+* Permits changing of fields' weight in the hash. For example, if the `surname` field has a weight of 2 and the `first name` field has a weight of 1, then the similarity score between two hashes is twice as dependent on the surname. We do this by permitting the surname to set twice as many bits in the hash.
 
 ## 0.8.1
 
