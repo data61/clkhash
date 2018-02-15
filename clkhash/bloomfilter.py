@@ -4,7 +4,8 @@
 Generate a Bloom filter
 """
 from typing import Tuple, Any, Iterable, List
-
+from bitarray import bitarray
+from enum import Enum
 import base64
 import hmac
 import math
@@ -17,12 +18,10 @@ if sys.version_info < (3,6):
     from pyblake2 import blake2b
 else:
     from hashlib import blake2b
-from bitarray import bitarray
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
-                              key_sha1,        # type: bytes
-                              key_md5,         # type: bytes
+                              keys,            # type: Tuple[bytes]
                               k,               # type: int
                               l                # type: int
                               ):
@@ -41,6 +40,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
+    key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
@@ -81,6 +81,11 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     independent, binary random variables (well, at least as close to as possible. See [Kaminsky2011]_ for an analysis).
     Thus, slicing the output of a cryptographic hash function into k different slices gives you k independent random
     variables.
+
+    We chose Blake2 as the cryptographic hash function mainly for two reasons:
+    - it is fast.
+    - in keyed hashing mode, Blake2 provides MACs with just one hash function call instead of the two calls in the HMAC
+      construction used in the double hashing scheme.
 
 
     .. warning::
@@ -128,12 +133,17 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     return bf
 
 
-def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
-                        tokenizers,     # type: Iterable[IdentifierType]
-                        keys1,          # type: Tuple[bytes, ...]
-                        keys2,          # type: Tuple[bytes, ...]
-                        l=1024,         # type: int
-                        k=30            # type: int
+class NgramEncodings(Enum):
+    DOUBLE_HASH = double_hash_encode_ngrams
+    BLAKE_HASH = blake_encode_ngrams
+
+
+def crypto_bloom_filter(record,                                     # type: Tuple[Any, ...]
+                        tokenizers,                                 # type: Iterable[IdentifierType]
+                        keys,                                       # type: Tuple[Tuple[bytes, ...]]
+                        l=1024,                                     # type: int
+                        k=30,                                       # type: int
+                        ngram_encoding=NgramEncodings.DOUBLE_HASH   # type: NgramEncodings
                         ):
     # type: (...) -> Tuple[bitarray, int, int]
     """
@@ -144,10 +154,10 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
 
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
     :param tokenizers: A list of IdentifierType tokenizers (one for each record element)
-    :param keys1: list of keys for first hash function as list of bytes
-    :param keys2: list of keys for second hash function as list of bytes
+    :param keys: tuple of tuple of keys for the hash functions as bytes
     :param l: length of the Bloom filter in number of bits
     :param k: number of hash functions to use per element
+    :param ngram_encoding:
 
     :return: 3-tuple:
             - bloom filter for record as a bitarray
@@ -157,12 +167,12 @@ def crypto_bloom_filter(record,         # type: Tuple[Any, ...]
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
 
-    for (entry, tokenizer, key1, key2) in zip(record, tokenizers, keys1, keys2):
+    for (entry, tokenizer, f_keys) in zip(record, tokenizers, keys):
         ngrams = [ngram for ngram in tokenizer(str(entry))]
         if tokenizer.weight < 0:
             raise ValueError('weight must not be smaller than zero, but was: {}'.format(tokenizer.weight))
         adjusted_k = int(round(tokenizer.weight * k))
-        bloomfilter |= double_hash_encode_ngrams(ngrams, key1, key2, adjusted_k, l)
+        bloomfilter |= ngram_encoding(ngrams, f_keys, adjusted_k, l)
 
     return bloomfilter, record[0], bloomfilter.count()
 
@@ -181,7 +191,7 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :return: Yields bloom filters as 3-tuples
     """
     for s in dataset:
-        yield crypto_bloom_filter(s, schema_types, keys1=keys[0], keys2=keys[1])
+        yield crypto_bloom_filter(s, schema_types, keys=keys)
 
 
 def calculate_bloom_filters(dataset,    # type: Iterable[Tuple[Any]]

@@ -14,7 +14,7 @@ class TestEncoding(unittest.TestCase):
         cls.k = 10
 
     def test_double_hash_encoding(self):
-        bf = double_hash_encode_ngrams(self.ngrams, self.key_sha1, self.key_md5, self.k, 1024)
+        bf = double_hash_encode_ngrams(self.ngrams, (self.key_sha1, self.key_md5), self.k, 1024)
         self._test_bit_range(bf.count(), self.k, len(self.ngrams))
 
     def test_blake_encoding(self):
@@ -36,7 +36,7 @@ class TestEncoding(unittest.TestCase):
             lambda ngrams: blake_encode_ngrams(ngrams, self.key_sha1, self.k, 1024),
             copy(self.ngrams))
         self._test_order_of_ngrams(
-            lambda ngrams: double_hash_encode_ngrams(ngrams, self.key_sha1, self.key_md5, self.k, 1024),
+            lambda ngrams: double_hash_encode_ngrams(ngrams, (self.key_sha1, self.key_md5), self.k, 1024),
             copy(self.ngrams))
 
     def _test_order_of_ngrams(self, enc_function, ngrams):
