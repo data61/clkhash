@@ -53,6 +53,65 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     return bf
 
 
+def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str]
+                              keys,            # type: Tuple[bytes, ...]
+                              k,               # type: int
+                              l                # type: int
+                              ):
+    # type: (...) -> bitarray.bitarray
+    """
+    computes the double hash encoding of the provided n-grams with the given keys.
+
+    The original construction of [Schnell2011]_ displays an abnormality for certain inputs:
+      An n-gram can be encoded into just one bit irrespective of the number of k.
+
+    Their construction goes as follows: the :math:`k` different indices :math:`g_i` of the Bloom filter for an n-gram
+    :math:`x` are defined as:
+
+    .. math::
+      g_{i}(x) = (h_1(x) + i h_2(x)) \mod l
+
+    with :math:`0 \leq i < k` and :math:`l` is the length of the Bloom filter. If the value of the hash of :math:`x` of
+    the second hash function is a multiple of :math:`l`, then
+
+    .. math::
+      h_2(x) = 0 \mod l
+
+    and thus
+
+    .. math::
+      g_i(x) = h_1(x) \mod l,
+
+    irrespective of the value :math:`i`. A discussion of this potential flaw can be found
+    `here <https://github.com/n1analytics/clkhash/issues/33>`_.
+
+    .. [Schnell2011] Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel Error-Tolerant Anonymous Linking Code.
+       http://soz-159.uni-duisburg.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
+
+    :param ngrams: list of n-grams to be encoded
+    :param key_sha1: hmac secret keys for sha1 as bytes
+    :param key_md5: hmac secret keys for md5 as bytes
+    :param k: number of hash functions to use per element of the ngrams
+    :param l: length of the output bitarray
+
+    :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
+    """
+    key_sha1, key_md5 = keys
+    bf = bitarray(l)
+    bf.setall(False)
+    for m in ngrams:
+        sha1hm = int(hmac.new(key_sha1, m.encode(), sha1).hexdigest(), 16) % l
+        md5hm = int(hmac.new(key_md5, m.encode(), md5).hexdigest(), 16) % l
+        i = 0
+        while md5hm == 0:
+            md5hm = int(hmac.new(key_md5, m.encode() + chr(i).encode(), md5).hexdigest(), 16) % l
+            i += 1
+        for i in range(k):
+            gi = (sha1hm + i * md5hm) % l
+            bf[gi] = 1
+    return bf
+
+
 def blake_encode_ngrams(ngrams,          # type: Iterable[str]
                        key,              # type: bytes
                        k,                # type: int
@@ -66,11 +125,12 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf, because this would introduce an exploitable structure
     into the Bloom filter. For more details on the weakness, see [Kroll2015]_.
     In short, the double hashing scheme only allows for :math:`l^2` different encodings for any possible n-gram,
-    whereas the use of :math:`k` different independent hash functions gives you :math:`\sum_{j=1}^k{\binom{l}{j}}`
+    whereas the use of :math:`k` different independent hash functions gives you :math:`\sum_{j=1}^{k}{\\binom{l}{j}}`
     combinations.
 
-    Our construction
-    ----------------
+
+    **Our construction**
+
     It is advantageous to construct Bloom filters using a family of hash functions with the property of
     `k-independence <https://en.wikipedia.org/wiki/K-independent_hashing>`_ to compute the indices for an entry.
     This approach minimises the change of collisions.
@@ -84,18 +144,19 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     variables.
 
     We chose Blake2 as the cryptographic hash function mainly for two reasons:
-    - it is fast.
-    - in keyed hashing mode, Blake2 provides MACs with just one hash function call instead of the two calls in the HMAC
-      construction used in the double hashing scheme.
+
+      - it is fast.
+      - in keyed hashing mode, Blake2 provides MACs with just one hash function call instead of the two calls in the HMAC
+        construction used in the double hashing scheme.
 
 
     .. warning::
        Please be aware that, although this construction makes the attack of [Kroll2015]_ infeasible, it is most likely
        not enough to ensure security. Or in their own words:
 
-       However, we think that using independent hash functions alone will not be sufficient to ensure security, since
-       in this case other approaches (maybe related to or at least inspired through work from the area of Frequent
-       Itemset Mining [19]) are promising to detect at least the most frequent atoms automatically.
+         | However, we think that using independent hash functions alone will not be sufficient to ensure security, since
+           in this case other approaches (maybe related to or at least inspired through work from the area of Frequent
+           Itemset Mining) are promising to detect at least the most frequent atoms automatically.
 
 
     .. [Kroll2015] Kroll, M., & Steinmetzer, S. (2015).
@@ -135,8 +196,23 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
 
 
 class NgramEncodings(Enum):
-    DOUBLE_HASH = partial(double_hash_encode_ngrams)  # type: Callable[[Iterable[str], Tuple[bytes, ...], int, int], bitarray.bitarray]
-    BLAKE_HASH = partial(blake_encode_ngrams)         # type: Callable[[Iterable[str], bytes, int, int], bitarray.bitarray]
+    """
+    Lists the available schemes for encoding n-grams.
+
+    .. note::
+      the slightly awkward looking construction with the calls to partial and the overwrite of __call__ are due to
+      compatibility issues with Python 2.7.
+    """
+    DOUBLE_HASH = partial(double_hash_encode_ngrams)
+    """ the initial encoding scheme as described in Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel 
+    Error-Tolerant Anonymous Linking Code. Also see :meth:`double_hash_encode_ngrams`"""
+    BLAKE_HASH = partial(blake_encode_ngrams)
+    """ uses the BLAKE2 hash function, which is one of the fastest modern hash functions, and does less hash function 
+    calls compared to the DOUBLE_HASH based schemes. It avoids one of the exploitable weaknesses of the DOUBLE_HASH 
+    scheme. Also see :meth:`blake_encode_ngrams`"""
+    DOUBLE_HASH_NON_SINGULAR = partial(double_hash_encode_ngrams_non_singular)
+    """ very similar to DOUBLE_HASH, but avoids singularities in the encoding. Also see 
+    :meth:`double_hash_encode_ngrams_non_singular`"""
 
     def __call__(self, *args):
         return self.value(*args)
