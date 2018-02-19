@@ -3,22 +3,24 @@
 """
 Generate a Bloom filter
 """
-from typing import Tuple, Any, Iterable, List, Callable
-from bitarray import bitarray
+import math
+import sys
 from enum import Enum
-from functools import partial
+from typing import Tuple, Any, Iterable, List, Callable
 import base64
 import hmac
-import math
 import struct
-import sys
-
-from clkhash.identifier_types import IdentifierType
+from functools import partial
 from hashlib import sha1, md5
+
 if sys.version_info < (3,6):
     from pyblake2 import blake2b
 else:
     from hashlib import blake2b
+
+from bitarray import bitarray
+
+from clkhash.identifier_types import IdentifierType
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
@@ -28,7 +30,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
                               ):
     # type: (...) -> bitarray.bitarray
     """
-    computes the double hash encoding of the provided ngrams with the given keys.
+    Computes the double hash encoding of the provided ngrams with the given keys.
 
     Using the method from
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
@@ -60,17 +62,18 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
                        ):
     # type: (...) -> bitarray.bitarray
     """
-    computes the encoding of the provided ngrams using the BLAKE2 hash function keyed with the given key.
+    Computes the encoding of the provided ngrams using the BLAKE2 hash function.
 
-    We deliberately do not use the double hashing scheme as proposed in
-    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf, because this would introduce an exploitable structure
-    into the Bloom filter. For more details on the weakness, see [Kroll2015]_.
+    We deliberately do not use the double hashing scheme as proposed in [Schnell2011]_, because this
+    would introduce an exploitable structure into the Bloom filter. For more details on the
+    weakness, see [Kroll2015]_.
+
     In short, the double hashing scheme only allows for :math:`l^2` different encodings for any possible n-gram,
-    whereas the use of :math:`k` different independent hash functions gives you :math:`\sum_{j=1}^k{\binom{l}{j}}`
-    combinations.
+    whereas the use of :math:`k` different independent hash functions gives you
+    :math:`\sum_{j=1}^k{\\binom{l}{j}}` combinations.
 
-    Our construction
-    ----------------
+    **Our construction**
+
     It is advantageous to construct Bloom filters using a family of hash functions with the property of
     `k-independence <https://en.wikipedia.org/wiki/K-independent_hashing>`_ to compute the indices for an entry.
     This approach minimises the change of collisions.
@@ -84,9 +87,10 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     variables.
 
     We chose Blake2 as the cryptographic hash function mainly for two reasons:
-    - it is fast.
-    - in keyed hashing mode, Blake2 provides MACs with just one hash function call instead of the two calls in the HMAC
-      construction used in the double hashing scheme.
+
+    * it is fast.
+    * in keyed hashing mode, Blake2 provides MACs with just one hash function call instead of the
+      two calls in the HMAC construction used in the double hashing scheme.
 
 
     .. warning::
@@ -97,6 +101,9 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
        in this case other approaches (maybe related to or at least inspired through work from the area of Frequent
        Itemset Mining [19]) are promising to detect at least the most frequent atoms automatically.
 
+    .. [Schnell2011] Schnell, R & Bachteler, T, and Reiher, J.
+       A Novel Error-Tolerant Anonymous Linking Code
+       http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
     .. [Kroll2015] Kroll, M., & Steinmetzer, S. (2015).
        Who is 1011011111...1110110010? automated cryptanalysis of bloom filter encryptions of databases with several
