@@ -23,7 +23,7 @@ log = logging.getLogger('clkhash.clk')
 
 def hash_and_serialize_chunk(chunk_pii_data, # type: Iterable[Tuple[Any]]
                              schema_types,   # type: Iterable[IdentifierType]
-                             keys,           # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                             keys,           # type: Tuple[Tuple[bytes, ...]]
                              xor_folds       # type: int
                              ):
     # type: (...) -> List[str]

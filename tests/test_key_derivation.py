@@ -19,9 +19,9 @@ class TestKeyDerivation(unittest.TestCase):
         master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
         for num_keys in (1, 10):
             key_lists = generate_key_lists(master_secrets, num_keys)
-            self.assertEqual(len(key_lists), len(master_secrets))
+            self.assertEqual(len(key_lists), num_keys)
             for l in key_lists:
-                self.assertEqual(len(l), num_keys)
+                self.assertEqual(len(l), len(master_secrets))
             for key in key_lists[0]:
                 self.assertEqual(len(key), DEFAULT_KEY_SIZE, msg='key should be of size "default_key_size"')
 
@@ -44,8 +44,8 @@ class TestKeyDerivation(unittest.TestCase):
         k = 10
         keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
         keys_legacy = generate_key_lists(master_secrets, len(row), kdf='legacy')
-        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf[0], keys_hkdf[1], k=k)
-        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy[0], keys_legacy[1], k=k)
+        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf, k=k)
+        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy, k=k)
         hkdf_count = bloom_hkdf[0].count()
         legacy_count = bloom_legacy[0].count()
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
