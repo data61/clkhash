@@ -7,9 +7,10 @@ requirements = [
         "futures==3.1.1",
         "cryptography==2.1.3",
         "tqdm==4.19.4",
-        "typing",
+        "typing>=3.6.2",
         "future==0.16.0",
-        "typing>=3.6.2"
+        "pyblake2==1.1.0; python_version < '3.6'",
+        "enum34==1.1.6; python_version < '3.4'"
     ]
 
 setup(
