@@ -315,8 +315,7 @@ def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
     :return: Yields bloom filters as 3-tuples
     """
     for s in dataset:
-        yield crypto_bloom_filter(s, schema_types, keys[0], keys[1],
-                                  xor_folds=xor_folds)
+        yield crypto_bloom_filter(s, schema_types, keys, xor_folds=xor_folds)
 
 
 def calculate_bloom_filters(dataset,     # type: Iterable[Tuple[Any]]
