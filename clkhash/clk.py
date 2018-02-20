@@ -8,7 +8,7 @@ import logging
 import time
 
 import sys
-from typing import List, Any, Generator, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
+from typing import List, Any, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
     Callable, Optional
 
 if sys.version_info[0] >= 3:
@@ -21,9 +21,10 @@ from clkhash.identifier_types import IdentifierType
 log = logging.getLogger('clkhash.clk')
 
 
-def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
-                             schema_types,      # type: Iterable[IdentifierType]
-                             keys               # type: Tuple[Tuple[bytes, ...]]
+def hash_and_serialize_chunk(chunk_pii_data, # type: Iterable[Tuple[Any]]
+                             schema_types,   # type: Iterable[IdentifierType]
+                             keys,           # type: Tuple[Tuple[bytes, ...]]
+                             xor_folds       # type: int
                              ):
     # type: (...) -> List[str]
     """
@@ -33,20 +34,24 @@ def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param xor_folds: Number of XOR folds to perform. Each fold halves
+        the hash length.
     :return: A list of serialized Bloom filters
     """
     clk_data = []
-    for clk in stream_bloom_filters(chunk_pii_data, schema_types, keys):
+    for clk in stream_bloom_filters(chunk_pii_data, schema_types,
+                                    keys, xor_folds):
         clk_data.append(serialize_bitarray(clk[0]).strip())
 
     return clk_data
 
 
-def generate_clk_from_csv(input,            # type: TextIO
-                          keys,             # type: Tuple[Union[bytes, str], Union[bytes, str]]
-                          schema_types,     # type: List[IdentifierType]
-                          no_header=False,  # type: bool
-                          progress_bar=True # type: bool
+def generate_clk_from_csv(input,             # type: TextIO
+                          keys,              # type: Tuple[Union[bytes, str], Union[bytes, str]]
+                          schema_types,      # type: List[IdentifierType]
+                          no_header=False,   # type: bool
+                          progress_bar=True, # type: bool
+                          xor_folds=0        # type: int
                           ):
     # type: (...) -> List[str]
     log.info("Hashing data")
@@ -72,9 +77,10 @@ def generate_clk_from_csv(input,            # type: TextIO
     if progress_bar:
         with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
             progress_bar_callback = lambda update: pbar.update(update)
-            results = generate_clks(pii_data, schema_types, key_lists, progress_bar_callback)
+            results = generate_clks(pii_data, schema_types, key_lists,
+                                    xor_folds, progress_bar_callback)
     else:
-        results = generate_clks(pii_data, schema_types, key_lists)
+        results = generate_clks(pii_data, schema_types, key_lists, xor_folds)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
@@ -83,6 +89,7 @@ def generate_clk_from_csv(input,            # type: TextIO
 def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
                   schema_types,     # type: List[IdentifierType]
                   key_lists,        # type: Tuple[Tuple[bytes, ...], ...]
+                  xor_folds,        # type: int
                   callback=None     # type: Optional[Callable[[int], None]]
                   ):
     # type: (...) -> List[Any]
@@ -98,8 +105,9 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
         with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = []
             for chunk in chunks(pii_data, chunk_size):
-                future = executor.submit(hash_and_serialize_chunk,
-                                         chunk, schema_types, key_lists)
+                future = executor.submit(
+                    hash_and_serialize_chunk,
+                    chunk, schema_types, key_lists, xor_folds)
                 if callback is not None:
                     future.add_done_callback(lambda f: callback(len(f.result())))
                 futures.append(future)
@@ -110,7 +118,8 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
     else:
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
         for chunk in chunks(pii_data, chunk_size):
-            results.extend(hash_and_serialize_chunk(chunk, schema_types, key_lists))
+            results.extend(hash_and_serialize_chunk(chunk, schema_types,
+                                                    key_lists, xor_folds))
             if callback is not None:
                 callback(len(chunk))
     return results

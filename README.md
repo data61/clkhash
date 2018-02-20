@@ -5,25 +5,22 @@ Python implementation of cryptographic linkage key hashing. Supports Python vers
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
 
+[![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
+
 
 # Installation
 
-Install the dependencies with:
+Install clkhash with all dependencies using pip:
 
-    pip install -r requirements.txt
-
-
-Test and install with:
-
-    python setup.py test
-    pip install -e .
+    pip install clkhash
 
 
 # CLI Tool
 
 After installation of the clkhash library you should have a `clkutil` program in your path.
+Alternatively you can use `python -m clkhash`.
 
-This can be used to process PII data into Cryptographic Longterm Keys.
+This command line tool can be used to process PII data into Cryptographic Longterm Keys.
 The tool also has an option for generating fake pii data, and commands to upload hashes to an entity matching service.
 
 ```
@@ -70,10 +67,10 @@ As a rule of thumb a single modern core will hash around 1M entities in about 20
 
 # Tests
 
-Run unit tests with nose
+Run unit tests and print out code coverage with `py.test`:
 
 ```
-$ python -m nose
+$ python -m pytest --cov=clkhash
 ```
 
 Note several tests will be skipped by default. To enable the command
@@ -83,7 +80,7 @@ the tests which interact with an entity service set the
 address.
 
 ```
-$ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m nose
+$ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m pytest --cov=clkhash
 ```
 
 
