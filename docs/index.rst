@@ -11,6 +11,7 @@ Welcome to CLK hash's documentation!
    :caption: Contents:
 
    clkhash
+   schema
 
 
 Indices and tables
