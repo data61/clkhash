@@ -9,19 +9,22 @@ import csv
 import logging
 import sys
 import time
-from typing import (Any, Callable, Generator, Iterable, List,
+from typing import (Any, AnyStr, Callable, cast, Generator, Iterable, List,
                     Optional, Sequence, TextIO, Tuple, TypeVar, Union)
 
 from tqdm import tqdm
 
-from clkhash import bloomfilter, key_derivation, validate_data
+from clkhash import (bloomfilter, key_derivation, validate_data)
+import clkhash.schema  # Keep 'schema' for variable names.
 
 log = logging.getLogger('clkhash.clk')
 
+CHUNK_SIZE = 1000
 
-def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
-                             keys,              # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
-                             schema
+
+def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
+                             keys,            # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                             schema           # type: clhash.schema.Schema
                              ):
     # type: (...) -> List[str]
     """
@@ -40,12 +43,12 @@ def hash_and_serialize_chunk(chunk_pii_data,    # type: Iterable[Tuple[Any]]
     return clk_data
 
 
-def generate_clk_from_csv(input_f,          # type: TextIO
-                          keys,             # type: Tuple[Union[bytes, str], Union[bytes, str]]
-                          schema,
-                          validate=True,    # type: bool
-                          header=True,      # type: bool
-                          progress_bar=True # type: bool
+def generate_clk_from_csv(input_f,           # type: TextIO
+                          keys,              # type: Tuple[AnyStr, AnyStr]
+                          schema,            # type: clhash.schema.Schema
+                          validate=True,     # type: bool
+                          header=True,       # type: bool
+                          progress_bar=True  # type: bool
                           ):
     # type: (...) -> List[str]
     log.info("Hashing data")
@@ -66,7 +69,9 @@ def generate_clk_from_csv(input_f,          # type: TextIO
         pii_data.append(line)
 
     # generate two keys for each identifier
-    key_lists = key_derivation.generate_key_lists(keys, len(schema.fields))
+    key_lists = cast(
+        Tuple[Tuple[bytes, ...], Tuple[bytes, ...]],
+        key_derivation.generate_key_lists(keys, len(schema.fields)))
 
     if progress_bar:
         with tqdm(desc="generating CLKs",
@@ -89,9 +94,9 @@ def generate_clk_from_csv(input_f,          # type: TextIO
     return results
 
 
-def generate_clks(pii_data,       # type: Sequence[Sequence[str, ...]]
-                  schema,
-                  key_lists,      # type: Tuple[Tuple[bytes, ...], ...]
+def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
+                  schema,         # type: clhash.schema.Schema
+                  key_lists,      # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
                   validate=True,  # type: bool
                   callback=None   # type: Optional[Callable[[int], None]]
                   ):
@@ -99,16 +104,11 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str, ...]]
     if validate:
         validate_data.validate_data(schema.fields, pii_data)
 
-    results = []
-
-    # Chunks PII
-    log.info("Hashing {} entities".format(len(pii_data)))
-    chunk_size = 200 if len(pii_data) <= 10000 else 1000
-
     # Compute Bloom filter from the chunks and then serialise it
+    results = []
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
-        for chunk in chunks(pii_data, chunk_size):
+        for chunk in chunks(pii_data, CHUNK_SIZE):
             future = executor.submit(hash_and_serialize_chunk,
                                      chunk, key_lists, schema)
             if callback is not None:

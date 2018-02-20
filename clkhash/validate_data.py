@@ -6,18 +6,20 @@
     specified schema.
 """
 
+from typing import Sequence
+
 from future.utils import raise_from
 
 from clkhash import field_formats
 
 
-class EntryError(Exception):
+class EntryError(ValueError):
     """ An entry is invalid.
     """
     pass
 
 
-class FormatError(Exception):
+class FormatError(ValueError):
     """ The format of the data is invalid.
     """
     pass

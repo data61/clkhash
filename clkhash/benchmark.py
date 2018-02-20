@@ -1,28 +1,32 @@
-# from __future__ import print_function
-# from timeit import default_timer as timer
-# import tempfile
-# from clkhash.randomnames import NameList
-# from clkhash.schema import load_schema, get_schema_types
-# from clkhash.clk import generate_clk_from_csv
+from __future__ import print_function
 
+import tempfile
+from timeit import default_timer as timer
 
-# TODO: This needs rewriting with schema stuff
+from clkhash.clk import generate_clk_from_csv
+from clkhash.randomnames import NameList
+
 
 def compute_hash_speed(n, quiet=False):
     # type: (int, bool) -> float
-    """
-    Hash time.
+    """ Hash time.
     """
     namelist = NameList(n)
 
     tmpfile = tempfile.NamedTemporaryFile('wt')
 
+
+    schema = NameList.SCHEMA
+    print([f.__dict__ for f in schema.fields])
+    header_row = ','.join([f.identifier for f in schema.fields])
+
+
     with open(tmpfile.name,'wt') as f:
-        f.write("header row\n")
+        f.write(header_row)
+        f.write('\n')
         for person in namelist.names:
             print(','.join([str(field) for field in person]), file=f)
 
-    schema = get_schema_types(load_schema(None))
 
     with open(tmpfile.name, 'rt') as f:
         start = timer()
