@@ -8,3 +8,4 @@ future==0.16.0
 typing>=3.6.2
 PyYAML==3.12
 pytest
+jsonschema==2.6.0
