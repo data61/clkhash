@@ -301,7 +301,7 @@ def crypto_bloom_filter(record,       # type: Tuple[Any, ...]
 
 def stream_bloom_filters(dataset,       # type: Iterable[Tuple[Any, ...]]
                          schema_types,  # type: Iterable[IdentifierType]
-                         keys,          # type: Tuple[Tuple[bytes, ...],Tuple[bytes, ...]]
+                         keys,          # type: Tuple[Tuple[bytes, ...]]
                          xor_folds=0    # type: int
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Any, int]]
