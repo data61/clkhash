@@ -12,8 +12,18 @@ try:
     to_bytes = int.to_bytes
 except AttributeError:
     # We are in Python 2.
-    def to_bytes(n, length, endianess):
-        # Kudos: https://stackoverflow.com/a/20793663
+    def to_bytes(n,            # int
+                 length,       # int
+                 endianess,    # str
+                 signed=False  # DefaultNamedArg(bool, 'signed')
+                 ):
+        # type (...) -> bytes
+        if signed:
+            raise ValueError(
+                "This dirty backport of int.to_bytes doesn't support signed "
+                'integers. Implement it yourself, or better yet, switch to '
+                'Python 3.')
+            # Kudos: https://stackoverflow.com/a/20793663
         # With modifications for style.
         hex_str = '{:X}'.format(n)
         if len(hex_str) > length * 2:

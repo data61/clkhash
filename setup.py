@@ -1,15 +1,15 @@
 from setuptools import setup, find_packages
 
 requirements = [
-        "bitarray==0.8.1",
-        "click==6.7",
-        "requests==2.18.4",
-        "futures==3.1.1",
-        "cryptography==2.1.3",
-        "tqdm==4.19.4",
-        "typing",
-        "future==0.16.0",
-        "typing>=3.6.2"
+        "bitarray>=0.8",
+        "click>=6.7",
+        "requests>=2.18",
+        "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
+        "cryptography>=2.1",
+        "tqdm>=4.19",
+        "future>=0.16",
+        "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5
+        "jsonschema>=2.6",
     ]
 
 setup(

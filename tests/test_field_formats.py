@@ -20,11 +20,11 @@ class TestFieldFormats(unittest.TestCase):
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
-            field_formats.get_spec(regex_spec)
+            field_formats.spec_from_json_dict(regex_spec)
 
         # Ok, let's fix it. This should not raise.
         regex_spec['format']['pattern'] = r'dog(.dog)*'
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # Ensure we accept these.
         spec.validate('dog')
@@ -65,7 +65,7 @@ class TestFieldFormats(unittest.TestCase):
                 positional=True,
                 weight=0))
 
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # The min and max lengths should be None.
         self.assertIsNone(spec.min_length)
@@ -78,7 +78,7 @@ class TestFieldFormats(unittest.TestCase):
         # Ok, let's put a 'minLength' and 'maxLength' in.
         regex_spec['format']['minLength'] = 5
         regex_spec['format']['maxLength'] = 8
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # These are not fine anymore.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -118,7 +118,7 @@ class TestFieldFormats(unittest.TestCase):
                 ngram=1,
                 positional=True))
 
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # `minimum` should be 0. `maximum` should be None.
         self.assertEqual(spec.minimum, 0)
@@ -147,7 +147,7 @@ class TestFieldFormats(unittest.TestCase):
         # Ok, let's put a 'minimum' and 'maximum' in.
         regex_spec['format']['minimum'] = 8
         regex_spec['format']['maximum'] = 12
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # This remains invalid.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -189,7 +189,7 @@ class TestFieldFormats(unittest.TestCase):
                 positional=False,
                 weight=1))
 
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # These are valid dates.
         spec.validate('1946-06-14')
@@ -273,7 +273,7 @@ class TestFieldFormats(unittest.TestCase):
                 positional=False,
                 weight=2.57))
 
-        spec = field_formats.get_spec(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # These are fine.
         spec.validate('dogs')

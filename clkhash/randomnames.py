@@ -24,7 +24,7 @@ from typing import Dict, Iterable, List, TextIO, Tuple, Union
 
 from clkhash.schema import GlobalHashingProperties, Schema
 from clkhash.field_formats import (FieldHashingProperties, StringSpec,
-                                   IntegerSpec, EnumSpec)
+                                   IntegerSpec, EnumSpec, FieldSpec)
 
 
 def load_csv_data(resource_name):
@@ -153,7 +153,8 @@ class NameList:
 
     @property
     def schema_types(self):
-        return get_schema_types(self.schema)
+        # type: () -> Sequence[FieldSpec]
+        return self.SCHEMA.fields
 
     def generate_random_person(self, n):
         # type: (int) -> Iterable[Tuple[int, str, str, str]]

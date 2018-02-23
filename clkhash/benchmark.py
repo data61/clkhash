@@ -17,7 +17,6 @@ def compute_hash_speed(n, quiet=False):
 
 
     schema = NameList.SCHEMA
-    print([f.__dict__ for f in schema.fields])
     header_row = ','.join([f.identifier for f in schema.fields])
 
 
@@ -33,7 +32,8 @@ def compute_hash_speed(n, quiet=False):
         generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=not quiet)
         end = timer()
     elapsed_time = end - start
-    print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
+    if not quiet:
+        print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
     return n / elapsed_time
 
 

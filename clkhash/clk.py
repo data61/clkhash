@@ -24,7 +24,7 @@ CHUNK_SIZE = 1000
 
 def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
                              keys,            # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
-                             schema           # type: clhash.schema.Schema
+                             schema           # type: clkhash.schema.Schema
                              ):
     # type: (...) -> List[str]
     """
@@ -45,7 +45,7 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
 
 def generate_clk_from_csv(input_f,           # type: TextIO
                           keys,              # type: Tuple[AnyStr, AnyStr]
-                          schema,            # type: clhash.schema.Schema
+                          schema,            # type: clkhash.schema.Schema
                           validate=True,     # type: bool
                           header=True,       # type: bool
                           progress_bar=True  # type: bool
@@ -95,7 +95,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
 
 def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
-                  schema,         # type: clhash.schema.Schema
+                  schema,         # type: clkhash.schema.Schema
                   key_lists,      # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
                   validate=True,  # type: bool
                   callback=None   # type: Optional[Callable[[int], None]]

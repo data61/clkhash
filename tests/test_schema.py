@@ -14,21 +14,15 @@ class TestSchema(unittest.TestCase):
     def test_schema_validation(self):
         # This is a perfectly fine schema.
         with open(test_data_file_path('good-schema-v1.json')) as f:
-            schema.load_schema_from_json_file(f)
+            schema.schema_from_json_file(f)
 
         # This schema is not valid (missing encoding in its feature).
         with open(test_data_file_path('bad-schema-v1.json')) as f:
             with self.assertRaises(schema.SchemaError):
-                schema.load_schema_from_json_file(f)
+                schema.schema_from_json_file(f)
 
         # This schema has an unsupported version.
         with open(test_data_file_path(
-                'good-but-unsupported-schema.json')) as f:
+                'good-but-unsupported-schema-v1.json')) as f:
             with self.assertRaises(schema.SchemaError):
-                schema.load_schema_from_json_file(f)
-
-
-    def test_schema_loading(self):
-
-
-        raise NotImplementedError()
+                schema.schema_from_json_file(f)
