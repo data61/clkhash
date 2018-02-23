@@ -99,12 +99,12 @@ fetch the resulting linkage table from the service.
 
 To upload using the cli tool for entity A:
 
-    clkutil hash a_people.csv A_HASHED_FILE.json
+    clkutil hash a_people.csv key1 key2 schema.json A_HASHED_FILE.json
     clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[0]}"  A_HASHED_FILE.json
 
 To upload using the cli tool for entity B:
 
-    clkutil hash b_people.csv B_HASHED_FILE.json
+    clkutil hash b_people.csv key1 key2 schema.json B_HASHED_FILE.json
     clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[1]}" B_HASHED_FILE.json
 
 After both users have uploaded their data one can watch for and retrieve the results:
