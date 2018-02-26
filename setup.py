@@ -21,7 +21,7 @@ setup(
     license='Apache',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    test_requires=['pytest', 'pytest-cov'],
+    tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=['tests']),
     package_data={'clkhash': ['data/*.csv']},
     entry_points={
