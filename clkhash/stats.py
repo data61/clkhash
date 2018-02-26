@@ -23,7 +23,7 @@ class OnlineMeanVariance(object):
         :param x: list of numbers
         :return: nothing
         """
-        if not all(math.isfinite(i) for i in x):
+        if any(math.isnan(float(i)) or math.isinf(float(i)) for i in x):
             raise ValueError('input contains non-finite numbers like "nan" or "+/- inf"')
         t = sum(x)
         m = float(len(x))
