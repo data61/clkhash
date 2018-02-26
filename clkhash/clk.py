@@ -6,8 +6,9 @@ from tqdm import tqdm
 import csv
 import logging
 import time
-
+import platform
 import sys
+
 from typing import List, Any, Iterable, TypeVar, TextIO, Tuple, Union, Sequence, \
     Callable, Optional
 
@@ -107,8 +108,8 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
 
-    # If running Python3 parallelise hashing.
-    if sys.version_info[0] >= 3:
+    # If running Python3 and not on Windows parallelise hashing.
+    if sys.version_info[0] >= 3 and platform.system() != "Windows":
         # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = []

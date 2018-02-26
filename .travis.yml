@@ -22,7 +22,6 @@ matrix:
         - MYPY_TYPING=1
 
 install:
-  - travis_retry pip install pytest pytest-cov
   - if [ "${MYPY_TYPING}" == "1" ]; then travis_retry pip install mypy; fi
   - travis_retry pip install -r requirements.txt
   - travis_retry pip install -e .
