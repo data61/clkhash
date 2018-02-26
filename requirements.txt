@@ -8,6 +8,7 @@ tqdm==4.19.1
 typing>=3.6.2
 PyYAML==3.12
 pytest
+pytest-cov
 jsonschema==2.6.0
 pyblake2==1.1.0; python_version < '3.6'
 enum34==1.1.6; python_version < '3.4'
