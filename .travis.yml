@@ -19,11 +19,14 @@ matrix:
     - python: '3.6'
       env:
         - TEST_ENTITY_SERVICE=1
+        - MYPY_TYPING=1
 
 install:
   - travis_retry pip install pytest pytest-cov
+  - if [ "${MYPY_TYPING}" == "1" ]; then travis_retry pip install mypy; fi
   - travis_retry pip install -r requirements.txt
   - travis_retry pip install -e .
 
 script:
+  - if [ "${MYPY_TYPING}" == "1" ]; then mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls; fi
   - INCLUDE_CLI= pytest --cov=clkhash
