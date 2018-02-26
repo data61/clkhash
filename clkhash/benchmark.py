@@ -17,7 +17,6 @@ def compute_hash_speed(n, quiet=False):
 
     os_fd, tmpfile_name = tempfile.mkstemp(text='wt')
 
-
     with open(tmpfile_name, 'wt') as f:
         f.write("header row\n")
         for person in namelist.names:
