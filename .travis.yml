@@ -21,9 +21,10 @@ matrix:
         - TEST_ENTITY_SERVICE=1
 
 install:
-  - travis_retry pip install pytest pytest-cov
+  - travis_retry pip install pytest pytest-cov mypy
   - travis_retry pip install -r requirements.txt
   - travis_retry pip install -e .
 
 script:
+  - mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
   - INCLUDE_CLI= pytest --cov=clkhash
