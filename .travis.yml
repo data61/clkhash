@@ -30,3 +30,4 @@ install:
 script:
   - if [ "${MYPY_TYPING}" == "1" ]; then mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls; fi
   - INCLUDE_CLI= pytest --cov=clkhash
+
