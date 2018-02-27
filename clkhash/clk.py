@@ -30,22 +30,23 @@ def hash_and_serialize_chunk(chunk_pii_data, # type: Iterable[Tuple[Any]]
     # type: (...) -> Tuple[List[str], List[int]]
     """
     Generate Bloom filters (ie hash) from chunks of PII then serialize
-    the generated Bloom filters.
+    the generated Bloom filters. It also computes and outputs the Hamming weight (or popcount) -- the number of bits
+    set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :param xor_folds: Number of XOR folds to perform. Each fold halves
         the hash length.
-    :return: A list of serialized Bloom filters
+    :return: A list of serialized Bloom filters and a list of corresponding popcounts
     """
     clk_data = []
-    clk_bit_count = []
+    clk_popcounts = []
     for clk in stream_bloom_filters(chunk_pii_data, schema_types,
                                     keys, xor_folds):
         clk_data.append(serialize_bitarray(clk[0]).strip())
-        clk_bit_count.append(clk[2])
-    return clk_data, clk_bit_count
+        clk_popcounts.append(clk[2])
+    return clk_data, clk_popcounts
 
 
 def generate_clk_from_csv(input,             # type: TextIO
