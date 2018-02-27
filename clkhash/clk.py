@@ -17,6 +17,7 @@ if sys.version_info[0] >= 3:
 from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.identifier_types import IdentifierType
+from clkhash.stats import OnlineMeanVariance
 
 log = logging.getLogger('clkhash.clk')
 
@@ -26,24 +27,26 @@ def hash_and_serialize_chunk(chunk_pii_data, # type: Iterable[Tuple[Any]]
                              keys,           # type: Tuple[Tuple[bytes, ...]]
                              xor_folds       # type: int
                              ):
-    # type: (...) -> List[str]
+    # type: (...) -> Tuple[List[str], List[int]]
     """
     Generate Bloom filters (ie hash) from chunks of PII then serialize
-    the generated Bloom filters.
+    the generated Bloom filters. It also computes and outputs the Hamming weight (or popcount) -- the number of bits
+    set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
     :param schema_types: An iterable of identifier type names.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :param xor_folds: Number of XOR folds to perform. Each fold halves
         the hash length.
-    :return: A list of serialized Bloom filters
+    :return: A list of serialized Bloom filters and a list of corresponding popcounts
     """
     clk_data = []
+    clk_popcounts = []
     for clk in stream_bloom_filters(chunk_pii_data, schema_types,
                                     keys, xor_folds):
         clk_data.append(serialize_bitarray(clk[0]).strip())
-
-    return clk_data
+        clk_popcounts.append(clk[2])
+    return clk_data, clk_popcounts
 
 
 def generate_clk_from_csv(input,             # type: TextIO
@@ -73,10 +76,15 @@ def generate_clk_from_csv(input,             # type: TextIO
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema_types))
-
     if progress_bar:
-        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True) as pbar:
-            progress_bar_callback = lambda update: pbar.update(update)
+        stats = OnlineMeanVariance()
+        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True,
+                  postfix={'mean': stats.mean(), 'std': stats.std()}) as pbar:
+            def progress_bar_callback(tics, clk_stats):
+                stats.update(clk_stats)
+                pbar.set_postfix(mean=stats.mean(), std=stats.std(), refresh=False)
+                pbar.update(tics)
+
             results = generate_clks(pii_data, schema_types, key_lists,
                                     xor_folds, progress_bar_callback)
     else:
@@ -90,7 +98,7 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
                   schema_types,     # type: List[IdentifierType]
                   key_lists,        # type: Tuple[Tuple[bytes, ...], ...]
                   xor_folds,        # type: int
-                  callback=None     # type: Optional[Callable[[int], None]]
+                  callback=None     # type: Optional[Callable[[int, List[int]], None]]
                   ):
     # type: (...) -> List[Any]
     results = []
@@ -109,20 +117,23 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
                     hash_and_serialize_chunk,
                     chunk, schema_types, key_lists, xor_folds)
                 if callback is not None:
-                    future.add_done_callback(lambda f: callback(len(f.result())))
+                    future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
                 futures.append(future)
 
             for future in futures:
-                results.extend(future.result())
+                results.extend(future.result()[0])
 
     else:
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
+        stats = OnlineMeanVariance()
         for chunk in chunks(pii_data, chunk_size):
-            results.extend(hash_and_serialize_chunk(chunk, schema_types,
-                                                    key_lists, xor_folds))
+            clks, clk_stats = hash_and_serialize_chunk(chunk, schema_types, key_lists, xor_folds)
+            results.extend(clks)
+            stats.update(clk_stats)
             if callback is not None:
-                callback(len(chunk))
+                callback(len(chunk), clk_stats)
     return results
+
 
 T = TypeVar('T')      # Declare generic type variable
 
