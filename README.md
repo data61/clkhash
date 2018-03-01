@@ -14,6 +14,8 @@ Install clkhash with all dependencies using pip:
 
     pip install clkhash
 
+If the install fails on Windows you may need to install the
+[Visual Studio C++ compiler](https://wiki.python.org/moin/WindowsCompilers).
 
 # CLI Tool
 
