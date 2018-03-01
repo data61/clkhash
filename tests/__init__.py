@@ -30,4 +30,4 @@ class temporary_file(object):
 
 def create_temp_file():
     os_fd, filename = tempfile.mkstemp(text=True)
-    return open(filename, 'w')
+    return open(filename, 'wt', encoding='utf8', newline='')
