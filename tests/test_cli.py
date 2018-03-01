@@ -58,11 +58,20 @@ class CLITestHelper(unittest.TestCase):
         yaml.dump(schema, self.yaml_schema_file)
         json.dump(schema, self.json_schema_file)
 
-        self.pii_file.flush()
-        self.pii_file_2.flush()
-        self.text_schema_file.flush()
-        self.json_schema_file.flush()
-        self.yaml_schema_file.flush()
+    def tearDown(self):
+        super(CLITestHelper, self).tearDown()
+
+        try:
+            os.remove(self.pii_file.name)
+            os.remove(self.pii_file_2.name)
+            os.remove(self.text_schema_file.name)
+            os.remove(self.json_schema_file.name)
+            os.remove(self.yaml_schema_file.name)
+            os.remove(self.clk_file.name)
+            os.remove(self.clk_file_2.name)
+
+        except:
+            pass
 
     def run_command_capture_stdout(self, command):
         """
