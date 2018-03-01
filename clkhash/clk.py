@@ -73,7 +73,12 @@ def generate_clk_from_csv(input,             # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        pii_data.append(tuple([element.strip() for element in line]))
+        if len(line) == len(schema_types):
+            pii_data.append(tuple([element.strip() for element in line]))
+        else:
+            raise ValueError("Line had unexpected number of elements" 
+                "Expected {} but there was {}".format(
+                len(schema_types), len(line)))
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema_types))
