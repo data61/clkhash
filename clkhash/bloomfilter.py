@@ -17,9 +17,9 @@ from clkhash.identifier_types import IdentifierType
 from functools import partial
 from hashlib import sha1, md5
 
-if sys.version_info < (3,6):
+try:
     from pyblake2 import blake2b
-else:
+except ImportError:
     from hashlib import blake2b
 
 from bitarray import bitarray
