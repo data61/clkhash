@@ -196,7 +196,7 @@ class TestHashCommand(unittest.TestCase):
         runner = self.runner
         schema_file = os.path.join(
             os.path.dirname(__file__),
-            'testdata/default-schema.json'
+            'testdata/febrl-schema.json'
         )
         a_pii = os.path.join(
             os.path.dirname(__file__),
@@ -223,6 +223,34 @@ class TestHashCommand(unittest.TestCase):
 
         for i in range(1000):
             self.assertEqual(hasha[i], hashb[i])
+
+
+    def test_hash_wrong_schema(self):
+        runner = self.runner
+
+        # This schema only has 4 features
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.json'
+        )
+
+        # This csv has 14 features
+        a_pii = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/dirty_1000_50_1.csv'
+        )
+
+        with runner.isolated_filesystem():
+
+            result = runner.invoke(clkhash.cli.cli, ['hash',
+                                                     '--quiet',
+                                                     '--schema',
+                                                     schema_file,
+                                                     a_pii,
+                                                     'a', 'b', '-'])
+
+        assert result.exit_code != 0
+
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
@@ -269,7 +297,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_basic_hashing(self):
         runner = CliRunner()
         with temporary_file() as output_filename:
-            with open(output_filename) as output:
+            with open(output_filename, 'wt', encoding='utf8') as output:
                 cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
