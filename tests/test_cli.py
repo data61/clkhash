@@ -273,11 +273,15 @@ class TestHasherDefaultSchema(unittest.TestCase):
                 cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
+                                           '-q',
                                            self.pii_file.name,
                                            'secret',
                                            'key',
-                                           output.name])
-            with open(output_filename) as output:
+                                           output.name
+                                       ])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+
+            with open(output_filename, 'rt') as output:
                 json.load(output)
 
     def test_hashing_with_given_keys(self):
