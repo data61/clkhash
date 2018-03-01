@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 
 
@@ -30,4 +31,7 @@ class temporary_file(object):
 
 def create_temp_file():
     os_fd, filename = tempfile.mkstemp(text=True)
-    return open(filename, 'wt', encoding='utf8', newline='')
+    if sys.version_info[0] >= 3:
+        return open(filename, 'wt', encoding='utf8', newline='')
+    else:
+        return open(filename, 'wt')

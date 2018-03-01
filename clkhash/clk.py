@@ -14,6 +14,8 @@ from typing import List, Any, Iterable, TypeVar, TextIO, Tuple, Union, Sequence,
 
 if sys.version_info[0] >= 3:
     import concurrent.futures
+else:
+    from multiprocessing import Pool
 
 from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
@@ -112,12 +114,12 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
+    futures = []
 
-    # If running Python3 and not on Windows parallelise hashing.
-    if sys.version_info[0] >= 3 and platform.system() != "Windows":
+    # If running Python3 parallelise hashing with the concurrent module
+    if sys.version_info[0] >= 3:
         # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            futures = []
             for chunk in chunks(pii_data, chunk_size):
                 future = executor.submit(
                     hash_and_serialize_chunk,
@@ -130,14 +132,24 @@ def generate_clks(pii_data,         # type: Sequence[Tuple[str, ...]]
                 results.extend(future.result()[0])
 
     else:
-        log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
+        executor = Pool()
         stats = OnlineMeanVariance()
         for chunk in chunks(pii_data, chunk_size):
-            clks, clk_stats = hash_and_serialize_chunk(chunk, schema_types, key_lists, xor_folds)
-            results.extend(clks)
+            cb = lambda res, stats: callback(len(res)) if callback is not None else None
+            future = executor.apply_async(hash_and_serialize_chunk,
+                                          (chunk, schema_types, key_lists, xor_folds),
+                                          callback=cb
+                                          )
+            futures.append(future)
+
+        for future in futures:
+            clks, clk_stats = future.get()
             stats.update(clk_stats)
-            if callback is not None:
-                callback(len(chunk), clk_stats)
+            results.extend(clks)
+
+        executor.close()
+        executor.join()
+
     return results
 
 
