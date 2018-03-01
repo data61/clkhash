@@ -1,3 +1,16 @@
+## 0.10.0
+
+* Introduced a more secure variant of the double hash encoding scheme.
+* Introduced a Blake2 based encoding scheme. Still working on documentation.
+* Concurrent hashing now works on Windows as well as linux. This has also been backported to Python 2.
+* Command line tool now outputs basic statistics while hashing.
+* Command line tool is now officially supported on windows.
+
+We now build clkhash with continuous integration tools that anyone 
+can access [Travis CI](https://travis-ci.org/n1analytics/clkhash/) 
+and [AppVeyor](https://ci.appveyor.com/project/hardbyte/clkhash).
+
+
 ## 0.9.0
 
 * Adds the option to perform XOR folding. Schnell (2016) claims that it improves privacy whilst having little effect on accuracy; see [*XOR-Folding for hardening Bloom Filter based Encryptions for PPRL*](http://soz-159.uni-duisburg.de/wp-content/uploads/2017/07/XOR-Folding-for-Bloom.pdf) for details.
