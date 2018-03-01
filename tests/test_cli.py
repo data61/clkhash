@@ -297,7 +297,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     def test_basic_hashing(self):
         runner = CliRunner()
         with temporary_file() as output_filename:
-            with open(output_filename, 'wt', encoding='utf8') as output:
+            with open(output_filename, 'wt') as output:
                 cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
