@@ -18,9 +18,9 @@ from functools import partial
 from hashlib import sha1, md5
 
 try:
-    from pyblake2 import blake2b
-except ImportError:
     from hashlib import blake2b
+except ImportError:
+    from pyblake2 import blake2b
 
 from bitarray import bitarray
 
