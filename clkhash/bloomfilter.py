@@ -8,7 +8,6 @@ from typing import Tuple, Any, Iterable, List
 import base64
 import hmac
 import math
-import sys
 import struct
 
 from future.builtins import range
@@ -18,9 +17,9 @@ from functools import partial
 from hashlib import sha1, md5
 
 try:
-    from pyblake2 import blake2b
-except ImportError:
     from hashlib import blake2b
+except ImportError:
+    from pyblake2 import blake2b  # type: ignore
 
 from bitarray import bitarray
 

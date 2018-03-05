@@ -5,20 +5,16 @@ import tempfile
 
 class temporary_file(object):
     """
-        A cross platform temporary file context manager.
+    A cross platform temporary secure file context manager.
 
-        Usage:
+    Usage:
 
-            with temporary_file() as filename:
-                # use the file
+        with temporary_file() as filename:
+            # open and use the file at filename
 
-            # file is now deleted
+        # file is now deleted
 
-        We don't use NamedTemporaryFile as it can't be opened multiple times on windows
-        #return tempfile.NamedTemporaryFile()
-
-        :return: (file name)
-        """
+    """
 
     def __enter__(self):
         self.os_fd, self.tmpfile_name = tempfile.mkstemp(text=True)
@@ -30,6 +26,10 @@ class temporary_file(object):
 
 
 def create_temp_file():
+    """
+    Creates, opens and returns a temporary file.
+    Note this file will not be automatically deleted by Python.
+    """
     os_fd, filename = tempfile.mkstemp(text=True)
     if sys.version_info[0] >= 3:
         return open(filename, 'wt', encoding='utf8', newline='')
