@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Sequence, Union
 import math
 
 
@@ -11,7 +11,7 @@ class OnlineMeanVariance(object):
         self.S = 0  # type: float
 
     def update(self,
-               x  # type: List[Union[int, float]]
+               x  # type: Sequence[Union[int, float]]
                ):
         # type: (...) -> None
         """
