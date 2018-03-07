@@ -25,7 +25,7 @@ class temporary_file(object):
         os.remove(self.tmpfile_name)
 
 
-def create_temp_file(suffix=None):
+def create_temp_file(suffix=''):
     """
     Creates, opens and returns a temporary file.
     Note this file will not be automatically deleted by Python.
