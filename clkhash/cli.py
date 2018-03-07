@@ -73,7 +73,8 @@ def hash(input, output, schema, keys, quiet, no_header, xor_folds):
 
     clk_data = clk.generate_clk_from_csv(input, keys, schema_types, no_header, not quiet, xor_folds)
     json.dump({'clks': clk_data}, output)
-    log("CLK data written to {}".format(output.name))
+    if hasattr(output, 'name'):
+        log("CLK data written to {}".format(output.name))
 
 
 @cli.command('status', short_help='Get status of entity service')
