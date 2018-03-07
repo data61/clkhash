@@ -20,6 +20,12 @@ matrix:
       env:
         - TEST_ENTITY_SERVICE=1
         - MYPY_TYPING=1
+        - INCLUDE_CLI=1
+    - python: '2.7'
+      env:
+        - TEST_ENTITY_SERVICE=1
+        - INCLUDE_CLI=1
+
 
 install:
   - if [ "${MYPY_TYPING}" == "1" ]; then travis_retry pip install mypy; fi
@@ -28,5 +34,4 @@ install:
 
 script:
   - if [ "${MYPY_TYPING}" == "1" ]; then mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls; fi
-  - INCLUDE_CLI= pytest --cov=clkhash
-
+  - pytest --cov=clkhash
