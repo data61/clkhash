@@ -25,12 +25,12 @@ class temporary_file(object):
         os.remove(self.tmpfile_name)
 
 
-def create_temp_file():
+def create_temp_file(suffix=None):
     """
     Creates, opens and returns a temporary file.
     Note this file will not be automatically deleted by Python.
     """
-    os_fd, filename = tempfile.mkstemp(text=True)
+    os_fd, filename = tempfile.mkstemp(suffix=suffix, text=True)
     if sys.version_info[0] >= 3:
         return open(filename, 'wt', encoding='utf8', newline='')
     else:

@@ -75,7 +75,7 @@ def generate_clk_from_csv(input,             # type: TextIO
         if len(line) == len(schema_types):
             pii_data.append(tuple([element.strip() for element in line]))
         else:
-            raise ValueError("Line had unexpected number of elements" 
+            raise ValueError("Line had unexpected number of elements. " 
                 "Expected {} but there was {}".format(
                 len(schema_types), len(line)))
 

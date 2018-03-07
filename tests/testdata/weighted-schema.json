@@ -1,8 +1,5 @@
 [
   {
-    "identifier": "INDEX"
-  },
-  {
     "identifier": "NAME freetext",
     "weight": 10
   },
