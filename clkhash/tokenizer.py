@@ -11,23 +11,29 @@ from typing import AnyStr, Callable, Text, Iterable
 from clkhash import field_formats
 
 
-def tokenize(n, positional, word):
+def tokenize(n, positional, word, ignore=None):
     # type: (int, bool, Text) -> Iterable[Text]
     """ Produce `n`-grams of `word`.
 
         :param n: Length of `n`-grams.
         :param positional: If `True`, then include the index of the
             substring with the `n`-gram.
+        :param word: The string to tokenize.
+        :param ignore: The substring whose occurences we remove from
+            `word` before tokenization.
         :raises ValueError: When `n` is negative.
     """
     if n < 0:
         raise ValueError('`n` in `n`-gram must be non-negative.')
 
-    if n >= 1:
+    if ignore is not None:
+        word = word.replace(ignore, '')
+
+    if n > 1:
         word = ' {} '.format(word)
 
     if positional:
-        # Why do these have to be 1-indexed??
+        # These are 1-indexed.
         return ('{} {}'.format(i + 1, word[i:i+n])
                 for i in range(len(word) - n + 1))
     else:

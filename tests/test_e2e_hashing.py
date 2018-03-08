@@ -17,10 +17,10 @@ class TestNamelistHashable(unittest.TestCase):
 
         schema = randomnames.NameList.SCHEMA
         key_lists = generate_key_lists(('secret', 'sshh'),
-                                       len(schema.fields)),
+                                       len(schema.fields))
 
         bf1 = list(bloomfilter.stream_bloom_filters(s1, key_lists, schema))
-        bf1 = list(bloomfilter.stream_bloom_filters(s2, key_lists, schema))
+        bf2 = list(bloomfilter.stream_bloom_filters(s2, key_lists, schema))
 
         self.assertEqual(len(bf1), 100)
         self.assertEqual(len(bf2), 100)
@@ -69,16 +69,16 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
         keys = generate_key_lists(('secret', 'sauce'), 1)
 
         schema.fields[0].hashing_properties.weight = 0
-        bf0 = bloomfilter.calculate_bloom_filters(pii, keys, schema)[0]
+        bf0 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         schema.fields[0].hashing_properties.weight = 1
-        bf1 = bloomfilter.calculate_bloom_filters(pii, keys, schema)[0]
+        bf1 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         schema.fields[0].hashing_properties.weight = 2
-        bf2 = bloomfilter.calculate_bloom_filters(pii, keys, schema)[0]
+        bf2 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         schema.fields[0].hashing_properties.weight = 1.5
-        bf15 = bloomfilter.calculate_bloom_filters(pii, keys, schema)[0]
+        bf15 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         self.assertEqual(bf0[0].count(), 0)
         n1 = bf1[0].count()

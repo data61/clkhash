@@ -20,7 +20,7 @@ import math
 import pkgutil
 import random
 import re
-from typing import Dict, Iterable, List, TextIO, Tuple, Union
+from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
 from clkhash.schema import GlobalHashingProperties, Schema
 from clkhash.field_formats import (FieldHashingProperties, StringSpec,
@@ -171,7 +171,7 @@ class NameList:
             last_name = random.choice(self.all_last_names)
 
             yield (
-                i,
+                str(i),
                 first_name + ' ' + last_name,
                 dob,
                 sex

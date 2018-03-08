@@ -9,34 +9,14 @@ from __future__ import unicode_literals
 
 import abc
 from datetime import datetime
-import re
 import sre_constants
-from typing import Any, AnyStr, cast, Dict, Iterable, Optional, Pattern, Set, Text
+from typing import Any, cast, Dict, Optional, Text
 
 from future.builtins import super
 from future.utils import raise_from
 from six import add_metaclass
 
-
-def compile_full(pattern, flags=0):
-    # type: (AnyStr, int) -> Pattern
-    """ Create compiled regular expression such that it matches the
-        entire string. Calling re.match on the output of this function
-        is equivalent to calling re.fullmatch on its input.
-
-        This is needed to support Python 2.
-        Kudos: https://stackoverflow.com/a/30212799
-
-        :param pattern: The pattern to compile.
-        :param flags: Regular expression flags. Refer to Python
-            documentation.
-
-        :returns: A compiled regular expression.
-    """
-    # A pattern of type bytes doesn't make sense in Python 3.
-    assert type(pattern) is not bytes or str is bytes
-
-    return re.compile('(?:{})\Z'.format(pattern), flags=flags)
+from clkhash.backports import re_compile_full
 
 
 class InvalidEntryError(ValueError):
@@ -267,7 +247,7 @@ class StringSpec(FieldSpec):
         if 'pattern' in format_:
             pattern = format_['pattern']
             try:
-                result.regex = compile_full(pattern)
+                result.regex = re_compile_full(pattern)
             except (SyntaxError, sre_constants.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 raise_from(InvalidSchemaError(msg), e)
@@ -417,7 +397,7 @@ class DateSpec(FieldSpec):
 
         :ivar format: The format of the date.
     """
-    RFC3339_REGEX = compile_full(r'\d\d\d\d-\d\d-\d\d')
+    RFC3339_REGEX = re_compile_full(r'\d\d\d\d-\d\d-\d\d')
     RFC3339_FORMAT = '%Y-%m-%d'
 
     def __init__(self, **kwargs):

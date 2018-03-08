@@ -7,39 +7,14 @@ import base64
 import hashlib
 import hmac
 import sys
-from typing import Any, Callable, cast, Iterable, List, Sequence, Text, Tuple
+from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
 from bitarray import bitarray
 from future.builtins import map
 
 from clkhash import field_formats, tokenizer
+from clkhash.backports import int_from_bytes
 import clkhash.schema
-
-
-try:
-    from_bytes = cast(Callable[[bytes, str], int],  # Close enough.
-                      int.from_bytes)
-except AttributeError:
-    import codecs
-    def from_bytes(bytes_, byteorder):
-        # type: (bytes, str) -> int
-        """ Emulate Python 3's int.from_bytes.
-
-            Kudos: https://stackoverflow.com/a/30403242 (with
-            modifications)
-
-            :param bytes_: The bytes to turn into an `int`.
-            :param byteorder: Either `'big'` or `'little'`.
-        """
-        if byteorder == 'big':
-            pass
-        elif byteorder == 'little':
-            bytes_ = bytes_[::-1]
-        else:
-            raise ValueError("byteorder must be either 'little' or 'big'")
-
-        hex_str = codecs.encode(bytes_, 'hex')  # type: ignore
-        return int(hex_str, 16)
 
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
@@ -61,19 +36,20 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     :param key_md5: hmac secret keys for md5 as bytes
     :param k: number of hash functions to use per element of the ngrams
     :param l: length of the output bitarray
+    :param encoding: the encoding to use when turning the ngrams to bytes
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
-        binary = m.encode(encoding=encoding)
+        m_bytes = m.encode(encoding=encoding)
 
-        sha1hm_bytes = hmac.new(key_sha1, binary, hashlib.sha1).digest()
-        md5hm_bytes = hmac.new(key_md5, binary, hashlib.md5).digest()
+        sha1hm_bytes = hmac.new(key_sha1, m_bytes, hashlib.sha1).digest()
+        md5hm_bytes = hmac.new(key_md5, m_bytes, hashlib.md5).digest()
 
-        sha1hm = from_bytes(sha1hm_bytes, 'big') % l
-        md5hm = from_bytes(md5hm_bytes, 'big') % l
+        sha1hm = int_from_bytes(sha1hm_bytes, 'big') % l
+        md5hm = int_from_bytes(md5hm_bytes, 'big') % l
 
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
@@ -127,10 +103,9 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
     :param tokenizers: A tokenizers. A tokenizer is a function that
         returns tokens from a string.
+    :param field_hashing: Hashing properties for each field.
     :param keys: Keys for the hash functions as a tuple of lists of bytes.
-    :param xor_folds: number of XOR folds to perform
-    :param l: length of the Bloom filter in number of bits
-    :param k: number of hash functions to use per element
+    :param hash_properties: Global hashing properties.
 
     :return: 3-tuple:
             - bloom filter for record as a bitarray

@@ -1,6 +1,7 @@
 import pkg_resources
 
 from . import bloomfilter
+from . import key_derivation
 from . import randomnames
 
 try:
