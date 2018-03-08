@@ -6,13 +6,13 @@ Functions to tokenize words (PII)
 from __future__ import unicode_literals
 
 import functools
-from typing import AnyStr, Callable, Text, Iterable
+from typing import AnyStr, Callable, Iterable, Optional, Text
 
 from clkhash import field_formats
 
 
 def tokenize(n, positional, word, ignore=None):
-    # type: (int, bool, Text) -> Iterable[Text]
+    # type: (int, bool, Text, Optional[str]) -> Iterable[Text]
     """ Produce `n`-grams of `word`.
 
         :param n: Length of `n`-grams.

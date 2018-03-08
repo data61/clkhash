@@ -6,15 +6,17 @@ import csv
 import logging
 import sys
 import time
-from typing import Any, AnyStr, Callable, cast, Generator, Iterable, List, Optional, Sequence, TextIO, Tuple, TypeVar, Union
+from typing import (Any, AnyStr, Callable, cast, Iterable, List, Optional,
+                    Sequence, TextIO, Tuple, TypeVar, Union)
 
 from tqdm import tqdm
 
-from clkhash.bloomfilter import stream_bloom_filters, calculate_bloom_filters, serialize_bitarray
+from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.identifier_types import IdentifierType
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
+from clkhash.validate_data import validate_data, validate_header
 
 
 log = logging.getLogger('clkhash.clk')
@@ -22,11 +24,11 @@ log = logging.getLogger('clkhash.clk')
 CHUNK_SIZE = 1000
 
 
-def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
+def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
                              keys,            # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
                              schema           # type: Schema
                              ):
-    # type: (...) -> Tuple[List[str], List[int]]
+    # type: (...) -> Tuple[List[str], Sequence[int]]
     """
     Generate Bloom filters (ie hash) from chunks of PII then serialize
     the generated Bloom filters. It also computes and outputs the Hamming weight (or popcount) -- the number of bits
@@ -39,7 +41,7 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
     """
     clk_data = []
     clk_popcounts = []
-    for clk in stream_bloom_filters(chunk_pii_data, keys, schema_types):
+    for clk in stream_bloom_filters(chunk_pii_data, keys, schema):
         clk_data.append(serialize_bitarray(clk[0]).strip())
         clk_popcounts.append(clk[2])
     return clk_data, clk_popcounts
@@ -47,7 +49,7 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Iterable[Tuple[Any]]
 
 def generate_clk_from_csv(input_f,           # type: TextIO
                           keys,              # type: Tuple[AnyStr, AnyStr]
-                          schema,            # type: clkhash.schema.Schema
+                          schema,            # type: Schema
                           validate=True,     # type: bool
                           header=True,       # type: bool
                           progress_bar=True  # type: bool
@@ -61,7 +63,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     if header:
         column_names = next(reader)
         if validate:
-            validate_data.validate_header(schema.fields, column_names)
+            validate_header(schema.fields, column_names)
 
     start_time = time.time()
 
@@ -73,7 +75,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     # generate two keys for each identifier
     key_lists = cast(
         Tuple[Tuple[bytes, ...], Tuple[bytes, ...]],
-        key_derivation.generate_key_lists(keys, len(schema.fields)))
+        generate_key_lists(keys, len(schema.fields)))
 
     if progress_bar:
         stats = OnlineMeanVariance()
@@ -100,18 +102,20 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
 
 def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
-                  schema,         # type: clkhash.schema.Schema
+                  schema,         # type: Schema
                   key_lists,      # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
                   validate=True,  # type: bool
-                  callback=None   # type: Optional[Callable[[int], None]]
+                  callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
     # type: (...) -> List[Any]
     if validate:
-        validate_data.validate_data(schema.fields, pii_data)
+        validate_data(schema.fields, pii_data)
 
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
+
+    results = []
 
     try:
         import concurrent.futures
@@ -119,7 +123,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
         stats = OnlineMeanVariance()
         for chunk in chunks(pii_data, chunk_size):
-            clks, clk_stats = hash_and_serialize_chunk(chunk, schema_types, key_lists, xor_folds)
+            clks, clk_stats = hash_and_serialize_chunk(chunk, key_lists, schema)
             results.extend(clks)
             stats.update(clk_stats)
             if callback is not None:
@@ -132,9 +136,12 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
             for chunk in chunks(pii_data, chunk_size):
                 future = executor.submit(
                     hash_and_serialize_chunk,
-                    chunk, schema_types, key_lists, xor_folds)
+                    chunk, key_lists, schema)
                 if callback is not None:
-                    future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
+                    def future_done_callback(f):
+                        bfs, popcount = f.result()
+                        callback(len(bf), popcount)
+                    future.add_done_callback(future_done_callback)
                 futures.append(future)
 
             for future in futures:

@@ -25,8 +25,9 @@ try:
     from hashlib import blake2b
 except ImportError:
     # We are in Python older than 3.6.
-    from pyblake2 import blake2b
-
+    from pyblake2 import blake2b  # type: ignore
+    # Ignore because otherwise Mypy raises errors, thinking that
+    # blake2b is already defined.
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
                               keys,            # type: Tuple[bytes, ...]
@@ -52,8 +53,8 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
-        sha1hm = int(hmac.new(key_sha1, m.encode(), sha1).hexdigest(), 16) % l
-        md5hm = int(hmac.new(key_md5, m.encode(), md5).hexdigest(), 16) % l
+        sha1hm = int(hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(), 16) % l
+        md5hm = int(hmac.new(key_md5, m.encode(encoding=encoding), md5).hexdigest(), 16) % l
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
             bf[gi] = 1
@@ -63,7 +64,8 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
 def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str]
                               keys,            # type: Tuple[bytes, ...]
                               k,               # type: int
-                              l                # type: int
+                              l,               # type: int
+                              encoding         # type: str
                               ):
     # type: (...) -> bitarray.bitarray
     """
@@ -130,7 +132,8 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
 def blake_encode_ngrams(ngrams,          # type: Iterable[str]
                        key,              # type: bytes
                        k,                # type: int
-                       l                 # type: int
+                       l,                # type: int
+                       encoding          # type: str
                        ):
     # type: (...) -> bitarray.bitarray
     """
@@ -206,7 +209,7 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     for m in ngrams:
         random_shorts = []  # type: List[int]
         for i in range(num_macs):
-            hash_bytes = blake2b(m.encode(), key=key, salt=str(i).encode()).digest()
+            hash_bytes = blake2b(m.encode(encoding=encoding), key=key, salt=str(i).encode()).digest()
             random_shorts.extend(struct.unpack('32H', hash_bytes))  # interpret hash bytes as 32 unsigned shorts.
         for i in range(k):
             idx = random_shorts[i] % l
@@ -306,7 +309,7 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
         adjusted_k = int(round(field.weight * k))
 
         bloomfilter |= double_hash_encode_ngrams(
-            ngrams, key1, key2, adjusted_k, l, field.encoding)
+            ngrams, (key1, key2), adjusted_k, l, field.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)
 
