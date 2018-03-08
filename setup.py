@@ -4,14 +4,14 @@ requirements = [
         "bitarray>=0.8",
         "click>=6.7",
         "cryptography>=2.1",
-        "enum34==1.1.6; python_version < '3.4'"
+        "enum34==1.1.6; python_version < '3.4'",
         "future>=0.16",
         "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
         "pyblake2>=1.1; python_version < '3.6'",
         "jsonschema>=2.6",
         "requests>=2.18",
         "tqdm>=4.19",
-        "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5
+        "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
 
 setup(
