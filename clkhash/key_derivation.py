@@ -142,8 +142,8 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
     :param info: optional context and application specific information as bytes
     :param kdf: the key derivation function algorithm to use
     :return: The derived keys.
-             First dimension is the same as master_secrets, second dimension is of size
-             num_identifier. A key is represented as bytes.
+             First dimension is of size num_identifier, second dimension is the same as master_secrets.
+             A key is represented as bytes.
     """
     keys = []
     try:
@@ -155,7 +155,9 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
     except AttributeError:
         raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
     if kdf is 'HKDF':
-        return tuple([hkdf(HKDFconfig(key, salt, info), num_identifier, key_size) for key in keys])
+        key_lists = [hkdf(HKDFconfig(key, salt, info), num_identifier, key_size) for key in keys]
+        # regroup such that we get a tuple of keys for each identifier
+        return tuple(zip(*key_lists))
     if kdf is 'legacy':
-        return tuple([tuple([key] * num_identifier) for key in keys])
+        return tuple([tuple(keys) for _ in range(num_identifier)])
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))

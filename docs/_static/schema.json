@@ -1,0 +1,166 @@
+{
+  "id": "https://schema.n1analytics.com/entityservice/hashing-schema.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "hashing-schema",
+  "type": "object",
+  "required": ["version", "clkConfig", "features"],
+  "properties": {
+    "version": {"type": "number"},
+    "clkConfig": {"$ref": "#/definitions/clkConfig"},
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+          "oneOf": [
+            { "$ref": "#/definitions/featureConfig"}
+          ]
+      }
+    }
+  },
+  "definitions": {
+    "clkConfig": {
+      "type": "object",
+      "required": ["l", "k", "kdf", "hash"],
+      "properties": {
+        "l": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1024,
+          "description": "the length of a clk in number of bits"
+        },
+        "k": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 20,
+          "description": "max number of indices per n-gram"
+        },
+        "xorFolds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk BEFORE the XOR folding!"
+        },
+        "kdf": {
+          "type": "object",
+          "oneOf": [
+            {"$ref": "#/definitions/hkdf"}
+          ]
+        },
+        "hash": {
+          "type": "object",
+          "oneOf": [
+            {"$ref": "#/definitions/doubleHash"},
+            {"$ref": "#/definitions/blakeHash"}
+          ],
+          "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
+        }
+      }
+    },
+    "doubleHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["doubleHash"]},
+        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/n1analytics/clkhash/issues/33"}
+      }
+    },
+    "blakeHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["blakeHash"]}
+      }
+    },
+    "hkdf": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["HKDF"]},
+        "hash": {"enum": ["SHA256", "SHA512"], "default": "SHA256"},
+        "salt": {"type": "string", "description": "base64 encoded bytes"},
+        "info": {"type": "string", "description": "base64 encoded bytes"},
+        "keySize": {"type": "integer", "minimum": 1}
+      }
+    },
+    "featureConfig": {
+      "type": "object",
+      "required": ["identifier", "format", "hashing"],
+      "properties": {
+        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "description": {"type": "string"},
+        "format": {"oneOf": [
+            {"$ref": "#definitions/textFormat"},
+            {"$ref": "#definitions/textPatternFormat"},
+            {"$ref": "#definitions/numberFormat"},
+            {"$ref": "#definitions/dateFormat"},
+            {"$ref": "#definitions/enumFormat"}
+          ]},
+        "hashing": {"$ref": "#definitions/hashingConfig"}
+      }
+    },
+    "textFormat": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["string"]},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "case": {"enum": ["upper", "lower", "mixed"]},
+        "minLength": {"type": "integer", "minimum": 0},
+        "maxLength": {"type": "integer", "minimum": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "textPatternFormat": {
+      "type": "object",
+      "required": ["type", "pattern"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["string"]},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "pattern": {"type": "string", "description": "asRegEx"},
+        "description": {"type": "string"}
+      }
+    },
+    "numberFormat": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["integer"]},
+        "minimum": {"type": "integer", "minimum": 0},
+        "maximum": {"type": "integer", "minimum": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "dateFormat": {
+      "type": "object",
+      "required": ["type", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["date"]},
+        "format": {"enum": ["rfc3339"], "description": "standard internet format: yyyy-mm-dd"},
+        "description": {"type": "string"}
+      }
+    },
+    "enumFormat": {
+      "type": "object",
+      "required": ["type", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["enum"]},
+        "values": {"type": "array", "items": {"type": "string"}},
+        "description": {"type": "string"}
+      }
+    },
+    "hashingConfig": {
+      "type": "object",
+      "required": ["ngram"],
+      "properties": {
+        "ngram": {"type": "integer", "minimum": 0, "default": 2},
+        "positional": {"type": "boolean", "default": false},
+        "weight": {"type": "number", "minimum": 0, "default": 1}
+      }
+    }
+  }
+}
