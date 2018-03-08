@@ -273,7 +273,7 @@ def fold_xor(bloomfilter,  # type: bitarray
 def crypto_bloom_filter(record,          # type: Sequence[Text]
                         tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
                         field_hashing,   # type: List[field_formats.FieldHashingProperties]
-                        keys,            # type: Tuple[Sequence[bytes], Sequence[bytes]]
+                        keys,            # type: Sequence[Sequence[bytes]]
                         hash_properties  # type: clkhash.schema.GlobalHashingProperties
                         ):
     # type: (...) -> Tuple[bitarray, Text, int]
@@ -295,7 +295,7 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
             - first element of record (usually an index)
             - number of bits set in the bloomfilter
     """
-    keys1, keys2 = keys
+    keys1, keys2 = zip(*keys)
     l = hash_properties.l
     k = hash_properties.k
     xor_folds = hash_properties.xor_folds
@@ -317,7 +317,7 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
 
 
 def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
-                         keys,     # type: Tuple[Sequence[bytes], Sequence[bytes]]
+                         keys,     # type: Sequence[Sequence[bytes]]
                          schema    # type: clkhash.schema.Schema
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]

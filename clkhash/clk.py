@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
-from clkhash.identifier_types import IdentifierType
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
 from clkhash.validate_data import validate_data, validate_header
@@ -25,7 +24,7 @@ CHUNK_SIZE = 1000
 
 
 def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
-                             keys,            # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                             keys,            # type: Sequence[Sequence[bytes]]
                              schema           # type: Schema
                              ):
     # type: (...) -> Tuple[List[str], Sequence[int]]
@@ -73,9 +72,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
         pii_data.append(line)
 
     # generate two keys for each identifier
-    key_lists = cast(
-        Tuple[Tuple[bytes, ...], Tuple[bytes, ...]],
-        generate_key_lists(keys, len(schema.fields)))
+    key_lists = generate_key_lists(keys, len(schema.fields))
 
     if progress_bar:
         stats = OnlineMeanVariance()
@@ -103,7 +100,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
 def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
                   schema,         # type: Schema
-                  key_lists,      # type: Tuple[Tuple[bytes, ...], Tuple[bytes, ...]]
+                  key_lists,      # type: Sequence[Sequence[bytes]]
                   validate=True,  # type: bool
                   callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
