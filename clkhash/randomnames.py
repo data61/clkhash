@@ -157,7 +157,7 @@ class NameList:
         return self.SCHEMA.fields
 
     def generate_random_person(self, n):
-        # type: (int) -> Iterable[Tuple[int, str, str, str]]
+        # type: (int) -> Iterable[Tuple[str, str, str, str]]
         """
         Generator that yields details on a person with plausible name, sex and age.
 
