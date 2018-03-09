@@ -104,7 +104,7 @@ class NameList:
                 minimum=0,
                 maximum=None
             ),
-            StringSpec(
+            StringSpec(  # type: ignore  # False positive.
                 identifier='NAME freetext',
                 hashing_properties=FieldHashingProperties(
                     encoding=FieldHashingProperties.DEFAULT_ENCODING,
@@ -117,7 +117,7 @@ class NameList:
                 min_length=3,
                 max_length=None
             ),
-            StringSpec(
+            StringSpec(  # type: ignore  # False positive.
                 identifier='DOB YYYY/MM/DD',
                 hashing_properties=FieldHashingProperties(
                     encoding='ascii',

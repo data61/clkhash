@@ -270,7 +270,10 @@ def generate(size, output, schema):
     if schema is not None:
         raise NotImplementedError
 
-    randomnames.save_csv(pii_data.names, pii_data.schema, output)
+    randomnames.save_csv(
+        pii_data.names,
+        [f.identifier for f in pii_data.SCHEMA.fields],
+        output)
 
 
 if __name__ == "__main__":
