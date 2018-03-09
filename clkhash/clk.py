@@ -7,8 +7,10 @@ import logging
 import platform
 import sys
 import time
-from typing import (Any, Callable, Iterable, List, Optional,
+from typing import (Any, AnyStr, Callable, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
+
+from tqdm import tqdm
 
 from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
@@ -69,7 +71,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        if len(line) == len(schema_types):
+        if len(line) == len(schema.fields):
             pii_data.append(tuple([element.strip() for element in line]))
         else:
             raise ValueError("Line had unexpected number of elements. "
@@ -125,11 +127,12 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(
                 hash_and_serialize_chunk,
-                chunk, schema_types, key_lists, xor_folds)
+                chunk, key_lists, schema,)
             if callback is not None:
                 future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
             futures.append(future)
 
+        results = []
         for future in futures:
             clks, clk_stats = future.result()
             stats.update(clk_stats)
