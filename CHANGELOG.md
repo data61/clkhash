@@ -2,9 +2,9 @@
 
 * Introduced a more secure variant of the double hash encoding scheme.
 * Introduced a Blake2 based encoding scheme. Still working on documentation.
-* Concurrent hashing now works on Windows as well as linux. This has also been backported to Python 2.
+* Concurrent hashing now works on Windows as well as Linux. This has also been backported to Python 2.
 * Command line tool now outputs basic statistics while hashing.
-* Command line tool is now officially supported on windows.
+* Command line tool is now officially supported on Windows.
 
 We now build clkhash with continuous integration tools that anyone 
 can access [Travis CI](https://travis-ci.org/n1analytics/clkhash/) 
