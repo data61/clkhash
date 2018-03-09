@@ -5,21 +5,15 @@ from __future__ import division, print_function
 
 import json
 import os
-import random
-from tempfile import NamedTemporaryFile
-import time
 import unittest
-
-from click.testing import CliRunner
 
 import clkhash
 import clkhash.cli
 from clkhash import randomnames
 
 
-TEST_CLI_SCHEMA_PATH = os.path.join(os.path.dirname(__file__),
-                                    'testdata',
-                                    'cli-tests-schema.json')
+from tests import temporary_file, create_temp_file
+
 
 
 class CLITestHelper(unittest.TestCase):
@@ -27,27 +21,54 @@ class CLITestHelper(unittest.TestCase):
 
     def setUp(self):
         super(CLITestHelper, self).setUp()
-
-        self.pii_file = NamedTemporaryFile('w')
-        self.pii_file_2 = NamedTemporaryFile('w')
-        self.clk_file = NamedTemporaryFile('w')
-        self.clk_file_2 = NamedTemporaryFile('w')
+        self.pii_file = create_temp_file()
+        self.pii_file_2 = create_temp_file()
+        self.text_schema_file = create_temp_file()
+        self.json_schema_file = create_temp_file(suffix='.json')
+        self.yaml_schema_file = create_temp_file(suffix='.yaml')
 
         # Get random PII
         pii_data = randomnames.NameList(self.SAMPLES)
         data = [(name, dob) for _, name, dob, _ in pii_data.names]
 
-        # Store aforementioned PII in files.
-        randomnames.save_csv(data,
-                             ['NAME freetext','DOB YYYY/MM/DD'],
-                             self.pii_file)
+        self.mini_schema = [{"identifier": 'NAME freetext'}, {'identifier': 'DOB YYYY/MM/DD'}]
+        randomnames.save_csv(data, self.mini_schema, self.pii_file)
+
         random.shuffle(data)
-        randomnames.save_csv(data[::2],  # Take half.,
-                             ['NAME freetext','DOB YYYY/MM/DD'],
+        randomnames.save_csv(data[:self.samples//2],
+                             self.mini_schema,
                              self.pii_file_2)
 
-        self.pii_file.flush()
-        self.pii_file_2.flush()
+        print('NAME freetext,DOB YYYY/MM/DD', file=self.text_schema_file)
+
+        self.default_schema = [
+            {"identifier": "INDEX"},
+            {"identifier": "NAME freetext"},
+            {"identifier": "DOB YYYY/MM/DD"},
+            {"identifier": "GENDER M or F"}
+        ]
+
+        yaml.dump(self.mini_schema, self.yaml_schema_file)
+        json.dump(self.mini_schema, self.json_schema_file)
+
+        self.text_schema_file.close()
+        self.pii_file.close()
+        self.pii_file_2.close()
+        self.yaml_schema_file.close()
+        self.json_schema_file.close()
+
+    def tearDown(self):
+        super(CLITestHelper, self).tearDown()
+
+        try:
+            os.remove(self.pii_file.name)
+            os.remove(self.pii_file_2.name)
+            os.remove(self.text_schema_file.name)
+            os.remove(self.json_schema_file.name)
+            os.remove(self.yaml_schema_file.name)
+
+        except:
+            pass
 
     def run_command_capture_output(self, command):
         """
@@ -62,12 +83,12 @@ class CLITestHelper(unittest.TestCase):
 
         runner = CliRunner()
 
-        with NamedTemporaryFile() as output:
-            command = command + [output.name]
+        with temporary_file() as output_filename:
+            command.extend(['-o', output_filename])
             cli_result = runner.invoke(clkhash.cli.cli, command)
             assert cli_result.exit_code == 0
-            output.seek(0)
-            return output.read().decode('utf-8')
+            with open(output_filename, 'rt') as output:
+                return output.read()
 
     def run_command_load_json_output(self, command):
         """
@@ -160,7 +181,7 @@ class TestHashCommand(unittest.TestCase):
         runner = self.runner
         schema_file = os.path.join(
             os.path.dirname(__file__),
-            'testdata/dirty-data-schema.json'
+            'testdata/febrl-schema.json'
         )
         a_pii = os.path.join(
             os.path.dirname(__file__),
@@ -185,6 +206,33 @@ class TestHashCommand(unittest.TestCase):
         for i in range(1000):
             self.assertEqual(hasha[i], hashb[i])
 
+    def test_hash_wrong_schema(self):
+        runner = self.runner
+
+        # This schema only has 4 features
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.json'
+        )
+
+        # This csv has 14 features
+        a_pii = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/dirty_1000_50_1.csv'
+        )
+
+        with runner.isolated_filesystem():
+
+            result = runner.invoke(clkhash.cli.cli, ['hash',
+                                                     '--quiet',
+                                                     '--schema',
+                                                     schema_file,
+                                                     a_pii,
+                                                     'a', 'b', '-'])
+
+        assert result.exit_code != 0
+
+
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
@@ -193,7 +241,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
     samples = 100
 
     def setUp(self):
-        self.pii_file = NamedTemporaryFile('w')
+        self.pii_file = create_temp_file()
 
         pii_data = randomnames.NameList(TestHasherDefaultSchema.samples)
         randomnames.save_csv(
@@ -218,51 +266,77 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
     def test_generate_command(self):
         runner = CliRunner()
-        with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(clkhash.cli.cli,
+        with temporary_file() as output_filename:
+            with open(output_filename) as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'generate',
                                            '50',
                                            output.name])
             self.assertEqual(cli_result.exit_code, 0, cli_result.output)
-            output.seek(0)
-            out = output.read().decode('utf-8')
+            with open(output_filename, 'rt') as output:
+                out = output.read()
         assert len(out) > 50
 
     def test_basic_hashing(self):
         runner = CliRunner()
-        with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(clkhash.cli.cli,
+        with temporary_file() as output_filename:
+            with open(output_filename, 'wt') as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
                                        [
                                            'hash',
+                                           '-q',
                                            self.pii_file.name,
                                            'secret',
                                            'key',
-                                           output.name])
-            output.seek(0)
-            json.loads(output.read().decode('utf-8'))
+                                           output.name
+                                       ])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+
+            with open(output_filename, 'rt') as output:
+                json.load(output)
 
     def test_hashing_with_given_keys(self):
         runner = CliRunner()
-        with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(clkhash.cli.cli,
+        with temporary_file() as output_filename:
+            with open(output_filename) as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         self.pii_file.name,
                                         'key1', 'key2',
                                         output.name])
             self.assertEqual(cli_result.exit_code, 0, cli_result.output)
-            output.seek(0)
-            json.loads(output.read().decode('utf-8'))
+            with open(output_filename) as output:
+                json.load(output)
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
 class TestHasherGivenSchema(CLITestHelper):
+
+    def test_hashing_given_text_schema(self):
+        runner = CliRunner()
+
+        with temporary_file() as output_filename:
+            with open(output_filename) as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.text_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            with open(output_filename) as output:
+                json.load(output)
+
+
     def test_hashing_given_json_schema(self):
         runner = CliRunner()
 
-        with NamedTemporaryFile() as output:
-            cli_result = runner.invoke(clkhash.cli.cli,
+        with temporary_file() as output_filename:
+            with open(output_filename) as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
                                        ['hash',
                                         '-s', self.json_schema_file.name,
                                         self.pii_file.name,
@@ -270,8 +344,100 @@ class TestHasherGivenSchema(CLITestHelper):
                                         'secretkey2',
                                         output.name])
             self.assertEqual(cli_result.exit_code, 0, cli_result.output)
-            output.seek(0)
-            json.loads(output.read().decode('utf-8'))
+            with open(output_filename) as output:
+                json.load(output)
+
+    def test_hashing_given_yaml_schema(self):
+        runner = CliRunner()
+
+        with temporary_file() as output_filename:
+
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', self.yaml_schema_file.name,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output_filename])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            with open(output_filename) as output:
+                json.load(output)
+
+    def test_hashing_default_yaml_schema(self):
+        runner = CliRunner()
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.yaml'
+        )
+
+        pii_data = randomnames.NameList(self.samples)
+        pii_file = create_temp_file()
+        randomnames.save_csv(pii_data.names,
+                             self.default_schema,
+                             pii_file)
+        pii_file.close()
+
+        with temporary_file() as output_filename:
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', schema_file,
+                                        pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output_filename])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+
+            with open(output_filename) as output:
+                json.load(output)
+
+    def test_hashing_default_json_schema(self):
+        runner = CliRunner()
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/default-schema.json'
+        )
+
+        pii_data = randomnames.NameList(self.samples)
+        pii_file = create_temp_file()
+        randomnames.save_csv(pii_data.names,
+                             self.default_schema,
+                             pii_file)
+        pii_file.close()
+
+        with temporary_file() as output_filename:
+
+            cli_result = runner.invoke(clkhash.cli.cli,
+                                   ['hash',
+                                    '-s', schema_file,
+                                    pii_file.name,
+                                    'secretkey1',
+                                    'secretkey2',
+                                    output_filename])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+
+            with open(output_filename, 'rt') as output:
+                json.load(output)
+
+
+
+    def test_hashing_weighted_json_schema(self):
+        runner = CliRunner()
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/weighted-schema.json'
+        )
+        with temporary_file() as output_filename:
+            with open(output_filename) as output:
+                cli_result = runner.invoke(clkhash.cli.cli,
+                                       ['hash',
+                                        '-s', schema_file,
+                                        self.pii_file.name,
+                                        'secretkey1',
+                                        'secretkey2',
+                                        output.name])
+            self.assertEqual(cli_result.exit_code, 0, cli_result.output)
+            with open(output_filename) as output:
+                json.load(output)
 
 
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,
@@ -281,6 +447,9 @@ class TestCliInteractionWithService(CLITestHelper):
     def setUp(self):
         super(TestCliInteractionWithService, self).setUp()
         self.url = os.environ['TEST_ENTITY_SERVICE']
+
+        self.clk_file = create_temp_file()
+        self.clk_file_2 = create_temp_file()
 
         # hash some PII for uploading
         runner = CliRunner()
@@ -302,8 +471,13 @@ class TestCliInteractionWithService(CLITestHelper):
                                     self.clk_file_2.name])
         assert cli_result.exit_code == 0
 
-        self.clk_file.seek(0)
-        self.clk_file_2.seek(0)
+        self.clk_file.close()
+        self.clk_file_2.close()
+
+    def tearDown(self):
+        super(TestCliInteractionWithService, self).tearDown()
+        os.remove(self.clk_file.name)
+        os.remove(self.clk_file_2.name)
 
     def test_status(self):
         self.run_command_load_json_output(['status'])
@@ -389,7 +563,7 @@ class TestCliInteractionWithService(CLITestHelper):
         )
 
         out_early = get_coord_results()
-        self.assertEquals("", out_early)
+        self.assertEqual("", out_early)
 
         # Upload Bob (subset of clks uploaded)
         bob_upload = self.run_command_load_json_output(
@@ -404,7 +578,7 @@ class TestCliInteractionWithService(CLITestHelper):
         )
 
         # Give the server a small amount of time to process
-        time.sleep(5.0)
+        time.sleep(3.0)
 
         res = json.loads(get_coord_results())
         self.assertIn('mask', res)

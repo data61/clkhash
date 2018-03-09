@@ -72,7 +72,8 @@ def hash(input, keys, schema, output, quiet, no_header):
         input, keys, schema_object,
         header=not no_header, progress_bar=not quiet)
     json.dump({'clks': clk_data}, output)
-    log("CLK data written to {}".format(output.name))
+    if hasattr(output, 'name'):
+        log("CLK data written to {}".format(output.name))
 
 
 @cli.command('status', short_help='Get status of entity service')
