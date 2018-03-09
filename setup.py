@@ -4,7 +4,7 @@ requirements = [
         "bitarray==0.8.1",
         "click==6.7",
         "requests==2.18.4",
-        "futures==3.1.1",
+        "futures>=3.1; python_version == '2.7'",
         "cryptography==2.1.3",
         "tqdm==4.19.4",
         "typing>=3.6.2",

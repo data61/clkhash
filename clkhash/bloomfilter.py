@@ -8,7 +8,6 @@ from typing import Tuple, Any, Iterable, List
 import base64
 import hmac
 import math
-import sys
 import struct
 
 from future.builtins import range
@@ -17,10 +16,10 @@ from clkhash.identifier_types import IdentifierType
 from functools import partial
 from hashlib import sha1, md5
 
-if sys.version_info < (3,6):
-    from pyblake2 import blake2b
-else:
+try:
     from hashlib import blake2b
+except ImportError:
+    from pyblake2 import blake2b  # type: ignore
 
 from bitarray import bitarray
 
