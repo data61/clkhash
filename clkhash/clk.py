@@ -2,7 +2,6 @@
 Generate CLK from data.
 """
 
-import csv
 import logging
 import sys
 import time
@@ -11,6 +10,7 @@ from typing import (Any, AnyStr, Callable, cast, Iterable, List, Optional,
 
 from tqdm import tqdm
 
+from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
@@ -57,7 +57,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     log.info("Hashing data")
 
     # Read from CSV file
-    reader = csv.reader(input_f)
+    reader = unicode_reader(input_f)
 
     if header:
         column_names = next(reader)

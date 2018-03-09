@@ -1,4 +1,4 @@
-rec_id, given_name, surname, street_number, address_1, address_2, suburb, postcode, state, date_of_birth, age, phone_number, soc_sec_id, blocking_number
+rec_id,given_name,surname,street_number,address_1,address_2,suburb,postcode,state,date_of_birth,age,phone_number,soc_sec_id,blocking_number
 58345,   naomi, robson, 5, bendigo street, , avalon, 4680, tas, 19010227, , 03 68182862, 8241986, 7
 744902,   , cresp, 92, bimberi crescent, , flagstaff hill, 2192, , 19530207, 10, 07 01376825, 2303925, 4
 275599,   madeline, white, 19, gurner street, central coast van park, murtoa, 5290, wa, 19290616, 36, 04 23745901, 9993747, 0

@@ -9,7 +9,7 @@ import requests
 
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames
-from clkhash.schema import Schema
+import clkhash.schema
 
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
@@ -35,7 +35,7 @@ def cli(verbose=False):
 
     Example:
 
-        clkutil hash private_data.csv secretkey1 secretkey2 output-clks.json
+        clkutil hash private_data.csv secretkey1 secretkey2 schema.json output-clks.json
 
 
     All rights reserved Confidential Computing 2016.
@@ -66,7 +66,7 @@ def hash(input, keys, schema, output, quiet, no_header):
     Use "-" to output to stdout.
     """
 
-    schema_object = Schema(schema_file=schema)
+    schema_object = clkhash.schema.schema_from_json_file(schema_file=schema)
 
     clk_data = clk.generate_clk_from_csv(
         input, keys, schema_object,
