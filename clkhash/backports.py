@@ -1,5 +1,7 @@
+import csv
 from typing import AnyStr, Callable, cast, Pattern, Sequence
 import re
+import sys
 
 from mypy_extensions import Arg, DefaultNamedArg
 
@@ -26,11 +28,11 @@ except AttributeError:
         if byteorder == 'big':
             pass
         elif byteorder == 'little':
-            bytes_ = bytes_[::-1]
+            bytes = bytes[::-1]
         else:
             raise ValueError("byteorder must be either 'little' or 'big'")
 
-        hex_str = codecs.encode(bytes_, 'hex')  # type: ignore
+        hex_str = codecs.encode(bytes, 'hex')  # type: ignore
         return int(hex_str, 16)
 
     # Make this cast since Python 2 doesn't have syntax for default
@@ -63,3 +65,35 @@ def re_compile_full(pattern, flags=0):
     assert type(pattern) is not bytes or str is bytes
 
     return re.compile('(?:{})\Z'.format(pattern), flags=flags)
+
+
+def _utf_8_encoder(unicode_csv_data):
+    return (line.encode('utf-8') for line in unicode_csv_data)
+
+
+def _p2_unicode_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
+    """ Encode Unicode as UTF-8 and parse as CSV.
+
+        This is needed since Python 2's `csv` doesn't do Unicode.
+
+        Kudos: https://docs.python.org/2/library/csv.html#examples
+
+        :param unicode_csv_data: The Unicode stream to parse.
+        :param dialect: The CSV dialect to use.
+        :param kwargs: Any other parameters to pass to csv.reader.
+
+        :returns: An iterator
+    """
+    # Encode temporarily as UTF-8:
+    utf8_csv_data = _utf_8_encoder(unicode_csv_data)
+
+    # Now we can parse!
+    csv_reader = csv.reader(utf8_csv_data, dialect=dialect, **kwargs)
+
+    # Decode UTF-8 back to Unicode, cell by cell:
+    return ([unicode(cell, 'utf-8') for cell in row] for row in csv_reader)
+
+
+unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
+                  if sys.version_info < (3,0)
+                  else csv.reader)  # Py3 with native Unicode support.

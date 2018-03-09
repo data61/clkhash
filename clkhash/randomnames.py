@@ -42,7 +42,7 @@ def load_csv_data(resource_name):
 
 
 def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
-             schema,    # type: Iterable[Dict[str, str]]
+             headers,   # type: Iterable[str]
              file       # type: TextIO
              ):
     # type: (...) -> None
@@ -54,7 +54,7 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
     :param file: A writeable stream in which to write the csv
     """
 
-    print(','.join(col['identifier'] for col in schema), file=file)
+    print(','.join(headers), file=file)
     writer = csv.writer(file)
     writer.writerows(data)
 
