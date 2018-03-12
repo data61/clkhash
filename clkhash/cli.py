@@ -2,6 +2,8 @@
 from __future__ import print_function
 
 import json
+import os
+import shutil
 import time
 
 import click
@@ -274,6 +276,19 @@ def generate(size, output, schema):
         pii_data.names,
         [f.identifier for f in pii_data.SCHEMA.fields],
         output)
+
+
+@cli.command('generate-default-schema',
+             short_help='get the default schema used in generated random PII')
+@click.argument('output', type=click.Path(writable=True,
+                                          readable=False,
+                                          resolve_path=True))
+def generate_default_schema(output):
+    """Get default schema for fake PII"""
+    original_path = os.path.join(os.path.dirname(__file__),
+                                 'data',
+                                 'randomnames-schema.json')
+    shutil.copyfile(original_path, output)
 
 
 if __name__ == "__main__":

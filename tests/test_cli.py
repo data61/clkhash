@@ -19,12 +19,14 @@ from tests import temporary_file, create_temp_file
 
 SIMPLE_SCHEMA_PATH = os.path.join(
     os.path.dirname(__file__),
-    'testdata/simple-schema.json'
+    'testdata',
+    'simple-schema.json'
 )
 
 RANDOMNAMES_SCHEMA_PATH = os.path.join(
-    os.path.dirname(__file__),
-    'testdata/randomnames-schema.json'
+    os.path.dirname(clkhash.__file__),
+    'data',
+    'randomnames-schema.json'
 )
 
 
@@ -273,6 +275,22 @@ class TestHasherDefaultSchema(unittest.TestCase):
             with open(output_filename, 'rt') as output:
                 out = output.read()
         assert len(out) > 50
+
+    def test_generate_default_schema_command(self):
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            generate_schema_result = runner.invoke(
+                clkhash.cli.cli,
+                ['generate-default-schema', 'pii-schema.json'])
+            self.assertEqual(generate_schema_result.exit_code, 0,
+                             msg=generate_schema_result.output)
+
+            hash_result = runner.invoke(
+                clkhash.cli.cli,
+                ['hash', self.pii_file.name, 'secret', 'key',
+                 'pii-schema.json', 'pii-hashes.json'])
+            self.assertEqual(hash_result.exit_code, 0, msg=hash_result.output)
+
 
     def test_basic_hashing(self):
         runner = CliRunner()
