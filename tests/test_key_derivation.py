@@ -50,7 +50,8 @@ class TestKeyDerivation(unittest.TestCase):
                 kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
                 kdf_type='HKDF',
                 l=1024,
-                type='double hash',
+                hash_type='doubleHash',
+                hash_prevent_singularity=False,
                 xor_folds=0
             ),
             fields=[

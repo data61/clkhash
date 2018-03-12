@@ -78,9 +78,6 @@ def generate_clk_from_csv(input_f,           # type: TextIO
                 "Expected {} but there was {}".format(
                 len(schema.fields), len(line)))
 
-    # generate two keys for each identifier
-    key_lists = generate_key_lists(keys, len(schema.fields))
-
     if progress_bar:
         stats = OnlineMeanVariance()
         with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True,
@@ -92,13 +89,13 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
             results = generate_clks(pii_data,
                                     schema,
-                                    key_lists,
+                                    keys,
                                     validate=validate,
                                     callback=callback)
     else:
         results = generate_clks(pii_data,
                                 schema,
-                                key_lists,
+                                keys,
                                 validate=validate)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
@@ -107,11 +104,22 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
 def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
                   schema,         # type: Schema
-                  key_lists,      # type: Sequence[Sequence[bytes]]
+                  keys,           # type: Tuple[AnyStr, AnyStr]
                   validate=True,  # type: bool
                   callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
     # type: (...) -> List[Any]
+
+    # generate two keys for each identifier
+    key_lists = generate_key_lists(
+        keys,
+        len(schema.fields),
+        key_size=schema.hashing_globals.kdf_key_size,
+        salt=schema.hashing_globals.kdf_salt,
+        info=schema.hashing_globals.kdf_info,
+        kdf=schema.hashing_globals.kdf_type,
+        hash_algo=schema.hashing_globals.kdf_hash)
+
     if validate:
         validate_data(schema.fields, pii_data)
 

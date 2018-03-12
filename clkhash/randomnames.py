@@ -17,15 +17,14 @@ import base64
 import csv
 from datetime import datetime, timedelta
 import math
+import os
 import pkgutil
 import random
 import re
 from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
-from clkhash.schema import GlobalHashingProperties, Schema
-from clkhash.field_formats import (FieldHashingProperties, StringSpec,
-                                   IntegerSpec, EnumSpec, FieldSpec)
-
+from clkhash.schema import schema_from_json_file
+from clkhash.field_formats import FieldSpec
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
@@ -78,69 +77,11 @@ class NameList:
     """ List of randomly generated names.
     """
 
-    SCHEMA = Schema(
-        version=1,
-        hashing_globals=GlobalHashingProperties(
-            k=30,
-            kdf_hash='SHA256',
-            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
-            kdf_key_size=64,
-            kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
-            kdf_type='HKDF',
-            l=1024,
-            type='double hash',
-            xor_folds=0
-        ),
-        fields=[
-            IntegerSpec(
-                identifier='INDEX',
-                hashing_properties=FieldHashingProperties(
-                    encoding='ascii',
-                    ngram=1,
-                    positional=True,
-                    weight=1
-                ),
-                description=None,
-                minimum=0,
-                maximum=None
-            ),
-            StringSpec(  # type: ignore  # False positive.
-                identifier='NAME freetext',
-                hashing_properties=FieldHashingProperties(
-                    encoding=FieldHashingProperties.DEFAULT_ENCODING,
-                    ngram=2,
-                    positional=False,
-                    weight=.5
-                ),
-                description=None,
-                case=StringSpec.DEFAULT_CASE,
-                min_length=3,
-                max_length=None
-            ),
-            StringSpec(  # type: ignore  # False positive.
-                identifier='DOB YYYY/MM/DD',
-                hashing_properties=FieldHashingProperties(
-                    encoding='ascii',
-                    ngram=1,
-                    positional=True,
-                    weight=1
-                ),
-                description=None,
-                regex=re.compile(r'(?:\d\d\d\d/\d\d/\d\d)\Z')
-            ),
-            EnumSpec(
-                identifier='GENDER M or F',
-                hashing_properties=FieldHashingProperties(
-                    encoding='ascii',
-                    ngram=1,
-                    positional=False,
-                    weight=2
-                ),
-                description=None,
-                values=['M', 'F']
-            )
-        ]
-    )
+    with open(os.path.join(os.path.dirname(__file__),
+                           'data',
+                           'randomnames-schema.json')) as f:
+        SCHEMA = schema_from_json_file(f)
+    del f
 
     def __init__(self, n):
         # type: (int) -> None

@@ -34,15 +34,17 @@ class TestComplexSchemaChanges(unittest.TestCase):
             )
         SCHEMA_DICT = dict(
             version=1,
-            hash=dict(
-                type='double hash',
-                config=dict(
-                    kdf=dict(
-                        type='HKDF',
-                        hash='SHA256',
-                        salt='SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==',
-                        info='c2NoZW1hX2V4YW1wbGU',
-                        keySize=64))),
+            clkConfig=dict(
+                l=1024,
+                k=30,
+                kdf=dict(
+                    type='HKDF',
+                    hash='SHA256',
+                    salt='SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==',
+                    info='c2NoZW1hX2V4YW1wbGU=',
+                    keySize=64),
+                hash=dict(
+                    type='doubleHash')),
             features=[
                 dict(
                     identifier='name',
@@ -67,7 +69,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
                     format=dict(
                         type='date',
                         format='rfc3339',
-                        description='When were ya born, m8?'),
+                        description='When were ya born?'),
                     hashing=dict(
                         ngram=2,
                         positional=True,
