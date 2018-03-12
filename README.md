@@ -41,7 +41,7 @@ A schema is required to hash this data. You can retrieve the default schema with
 
 or you can make your own.
 
-To hash this data using its schema, with the shared secret keys `horse staple`:
+To hash this data using its schema, with the shared secret keys `horse` and `staple`:
 
     $ clkutil hash fake-pii-out.csv horse staple fake-pii-schema.json /tmp/fake-clk.json
     CLK data written to /tmp/fake-clk.json

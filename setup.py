@@ -25,7 +25,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-cov'],
     packages=find_packages(exclude=['tests']),
-    package_data={'clkhash': ['data/*.csv', 'master-schemas/*.json']},
+    package_data={'clkhash': ['data/*.csv', 'data/*.json', 'master-schemas/*.json']},
     entry_points={
         'console_scripts': [
             'clkutil = clkhash.cli:cli'
