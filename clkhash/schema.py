@@ -262,7 +262,7 @@ def validate_schema_dict(schema):
 
 
 def schema_from_json_file(schema_file):
-    # (TextIO) -> Schema
+    # type: (TextIO) -> Schema
     """ Load a Schema object from a json file.
 
         :param schema_file: A JSON file containing the schema.
