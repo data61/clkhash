@@ -133,6 +133,7 @@ class TestXorFolding(unittest.TestCase):
             fields=schema_0.fields
         )
         schema_1.hashing_globals.xor_folds = 1
+        schema_1.hashing_globals.l //= 2
 
         key_lists = generate_key_lists(('secret', 'sshh'),
                                        len(namelist.schema_types))

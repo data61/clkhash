@@ -1,16 +1,18 @@
 
 {
   "version": 99,
-  "hash": {
-    "type": "double hash",
-    "config": {
-      "kdf": {
-        "type": "HKDF",
-        "hash": "SHA256",
-        "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
-        "info": "c2NoZW1hX2V4YW1wbGU=",
-        "keySize": 64
-      }
+  "clkConfig": {
+    "l": 1024,
+    "k": 20,
+    "hash": {
+      "type": "doubleHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
     }
   },
   "features": [

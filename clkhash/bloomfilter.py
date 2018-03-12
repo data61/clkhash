@@ -239,6 +239,22 @@ class NgramEncodings(Enum):
     def __call__(self, *args):
         return self.value(*args)
 
+    @classmethod
+    def from_properties(cls,
+                        properties  # type: clkhash.schema.GlobalHashingProperties
+                        ):
+        # type: (...) -> Callable[[Iterable[str], Tuple[bytes, ...], int, int, str], bitarray]
+        if properties.hash_type == 'doubleHash':
+            if properties.hash_prevent_singularity:
+                return cls.DOUBLE_HASH_NON_SINGULAR
+            else:
+                return cls.DOUBLE_HASH
+        elif properties.hash_type == 'blakeHash':
+            return cls.BLAKE_HASH
+        else:
+            msg = "Unsupported hash type '{}'".format(properties.hash_type)
+            raise ValueError(msg)
+
 
 def fold_xor(bloomfilter,  # type: bitarray
              folds         # type: int
@@ -270,6 +286,7 @@ def fold_xor(bloomfilter,  # type: bitarray
 
     return bloomfilter
 
+
 def crypto_bloom_filter(record,          # type: Sequence[Text]
                         tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
                         field_hashing,   # type: List[field_formats.FieldHashingProperties]
@@ -296,9 +313,10 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
             - number of bits set in the bloomfilter
     """
     keys1, keys2 = zip(*keys)
-    l = hash_properties.l
-    k = hash_properties.k
     xor_folds = hash_properties.xor_folds
+    l = hash_properties.l * 2 ** xor_folds
+    k = hash_properties.k
+    hash_fun = NgramEncodings.from_properties(hash_properties)
 
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
@@ -308,7 +326,7 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
         ngrams = tokenizer(entry)
         adjusted_k = int(round(field.weight * k))
 
-        bloomfilter |= double_hash_encode_ngrams(
+        bloomfilter |= hash_fun(
             ngrams, (key1, key2), adjusted_k, l, field.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)

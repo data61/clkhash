@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Optional, Sequence, Any
+from typing import cast, Tuple, Union, Optional, Sequence, Any
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -14,7 +14,8 @@ DEFAULT_KEY_SIZE = 64
 class HKDFconfig:
     supported_hash_algos = 'SHA256', 'SHA512'
 
-    def __init__(self, master_secret,   # type: bytes
+    def __init__(self,
+                 master_secret,   # type: bytes
                  salt=None,             # type: Optional[bytes]
                  info=None,             # type: Optional[bytes]
                  hash_algo='SHA256'     # type: str
@@ -123,7 +124,8 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
                        key_size=DEFAULT_KEY_SIZE,   # type: int
                        salt=None,                   # type: Optional[bytes]
                        info=None,                   # type: Optional[bytes]
-                       kdf='HKDF'                   # type: str
+                       kdf='HKDF',                  # type: str
+                       hash_algo='SHA256'           # type: str
                        ):
     # type: (...) -> Tuple[Tuple[bytes, ...], ...]
     """
@@ -141,6 +143,7 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
     :param salt: salt for the KDF as bytes
     :param info: optional context and application specific information as bytes
     :param kdf: the key derivation function algorithm to use
+    :param hash_algo: the hashing algorithm to use (ignored if `kdf` is not 'HKDF')
     :return: The derived keys.
              First dimension is of size num_identifier, second dimension is the same as master_secrets.
              A key is represented as bytes.
@@ -154,10 +157,14 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
                 keys.append(key.encode('UTF-8'))
     except AttributeError:
         raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
-    if kdf is 'HKDF':
-        key_lists = [hkdf(HKDFconfig(key, salt, info), num_identifier, key_size) for key in keys]
+    if kdf == 'HKDF':
+        key_lists = [hkdf(HKDFconfig(key, salt=salt, info=info,
+                                     hash_algo=hash_algo),
+                          num_identifier,
+                          key_size)
+                     for key in keys]
         # regroup such that we get a tuple of keys for each identifier
         return tuple(zip(*key_lists))
-    if kdf is 'legacy':
+    if kdf == 'legacy':
         return tuple([tuple(keys) for _ in range(num_identifier)])
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))

@@ -25,52 +25,70 @@ MASTER_SCHEMA_DIRECTORY = os.path.dirname(__file__)
 class GlobalHashingProperties(object):
     """ Stores global hashing properties.
 
-        :ivar type: TODO: find out what this does.
-        :ivar kdf_type: TODO: find out what this does.
-        :ivar kdf_hash: TODO: find out what this does.
-        :ivar kdf_key_size: TODO: find out what this does.
-        :ivar kdf_salt: TODO: find out what this does.
-        :ivar kdf_info: TODO: find out what this does.
-        :ivar xor_folds: Number of XOR folds to perform.
-        :ivar l: Length of the Bloom filter (in bits).
-        :ivar k: Number of bits set per n-gram.
+        :param k: The number of bits of the hash to set per ngram.
+        :param l: The length of the resulting hash in bits. This is the
+            length after XOR folding.
+        :param xor_folds: The number of XOR folds to perform on the hash.
+        :param hash_type: The hashing function to use. Choices are
+            'doubleHash' and 'blakeHash'.
+        :param hash_prevent_singularity: Ignored unless hash_type is
+            'doubleHash'. Prevents bloom filter collisions in certain
+            cases when True.
+        :param kdf_type: The key derivation function to use. Currently,
+            the only permitted value is 'HKDF'.
+        :param kdf_hash: The hash function to use in key derivation. The
+            options are 'SHA256' and 'SHA512'.
+        :param kdf_info: The info for key derivation. See documentation
+            of `HKDFconfig` for details.
+        :param kdf_salt: The salt for key derivation. See documentation
+            of `HKDFconfig` for details.
+        :param kdf_key_size: The size of the derived keys in bytes.
+
     """
-    __slots__ = ('type', 'kdf_type', 'kdf_hash', 'kdf_key_size', 'kdf_salt',
-                 'kdf_info', 'xor_folds', 'l', 'k')
+    __slots__ = ('k', 'l', 'xor_folds', 'hash_type',
+                 'hash_prevent_singularity', 'kdf_type', 'kdf_hash',
+                 'kdf_info', 'kdf_salt', 'kdf_key_size')
 
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a GlobalHashingProperties object from keyword
             arguments.
 
-            :param k: (optional) Value of `self.k`.
-            :param kdf_hash: (optional) Value of `self.kdf_hash`.
-            :param kdf_info: (optional) Value of `self.kdf_info`.
-            :param kdf_key_size: (optional) Value of `self.kdf_key_size`.
-            :param kdf_salt: (optional) Value of `self.kdf_salt`.
-            :param kdf_type: (optional) Value of `self.kdf_type`.
-            :param l: (optional) Value of `self.l`.
-            :param type: (optional) Value of `self.type`.
-            :param xor_folds: (optional) Value of `self.xor_folds`.
+            :param k: Value of `self.k`.
+            :param l: Value of `self.l`.
+            :param xor_folds: Value of `self.xor_folds`.
+            :param hash_type: Value of `self.hash_type`.
+            :param hash_prevent_singularity: Value of `self.hash_prevent_singularity`.
+            :param kdf_type: Value of `self.kdf_type`.
+            :param kdf_hash: Value of `self.kdf_hash`.
+            :param kdf_info: Value of `self.kdf_info`.
+            :param kdf_salt: Value of `self.kdf_salt`.
+            :param kdf_key_size: Value of `self.kdf_key_size`.
+
         """
         if 'k' in kwargs:
-             self.k = kwargs['k']
+            self.k = kwargs['k']
+        if 'l' in kwargs:
+            self.l = kwargs['l']
+        if 'xor_folds' in kwargs:
+            self.xor_folds = kwargs['xor_folds']
+
+        if 'hash_type' in kwargs:
+            self.hash_type = kwargs['hash_type']
+        if 'hash_prevent_singularity' in kwargs:
+            self.hash_prevent_singularity = kwargs['hash_prevent_singularity']
+
+        if 'kdf_type' in kwargs:
+            self.kdf_type = kwargs['kdf_type']
         if 'kdf_hash' in kwargs:
             self.kdf_hash = kwargs['kdf_hash']
         if 'kdf_info' in kwargs:
             self.kdf_info = kwargs['kdf_info']
-        if 'kdf_key_size' in kwargs:
-            self.kdf_key_size = kwargs['kdf_key_size']
         if 'kdf_salt' in kwargs:
             self.kdf_salt = kwargs['kdf_salt']
-        if 'kdf_type' in kwargs:
-            self.kdf_type = kwargs['kdf_type']
-        if 'l' in kwargs:
-            self.l = kwargs['l']
-        if 'type' in kwargs:
-            self.type = kwargs['type']
-        if 'xor_folds' in kwargs:
-            self.xor_folds = kwargs['xor_folds']
+        if 'kdf_key_size' in kwargs:
+            self.kdf_key_size = kwargs['kdf_key_size']
+
 
     @classmethod
     def from_json_dict(cls, properties_dict):
@@ -87,20 +105,21 @@ class GlobalHashingProperties(object):
         """
         result = cls()
 
-        result.type = properties_dict['type']
-        result.kdf_type = properties_dict['config']['kdf']['type']
-        result.kdf_hash = properties_dict['config']['kdf']['hash']
-        result.kdf_key_size = properties_dict['config']['kdf']['keySize']
+        result.k = properties_dict['k']
+        result.l = properties_dict['l']
+        result.xor_folds = properties_dict.get('xor_folds', 0)
 
-        kdf_salt_b64 = properties_dict['config']['kdf']['salt']
-        result.kdf_salt = base64.b64decode(kdf_salt_b64)
+        result.hash_type = properties_dict['hash']['type']
+        result.hash_prevent_singularity = properties_dict['hash'].get(
+            'prevent_singularity')
 
-        kdf_info_b64 = properties_dict['config']['kdf']['type']
-        result.kdf_info = base64.b64decode(kdf_info_b64)
-
-        result.xor_folds = 0  # TODO: This will need to change.
-        result.l = 1024  # TODO: This will need to change.
-        result.k = 30  # TODO: This will need to change.
+        result.kdf_type = properties_dict['kdf']['type']
+        result.kdf_hash = properties_dict['kdf']['hash']
+        result.kdf_info = base64.b64decode(
+            properties_dict['kdf']['info'])
+        result.kdf_salt = base64.b64decode(
+            properties_dict['kdf']['salt'])
+        result.kdf_key_size = properties_dict['kdf']['keySize']
 
         return result
 
@@ -162,7 +181,7 @@ class Schema(object):
         result.version = schema_dict['version']
 
         result.hashing_globals = GlobalHashingProperties.from_json_dict(
-            schema_dict['hash'])
+            schema_dict['clkConfig'])
 
         return result
 

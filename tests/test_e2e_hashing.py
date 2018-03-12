@@ -45,8 +45,9 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
                 kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
                 kdf_type='HKDF',
                 l=1024,
-                type='double hash',
-                xor_folds=0
+                hash_type='doubleHash',
+                xor_folds=0,
+                hash_prevent_singularity=True
             ),
             fields=[
                 StringSpec(
