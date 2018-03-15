@@ -1,7 +1,7 @@
 import base64
 import unittest
 
-from clkhash import randomnames, bloomfilter
+from clkhash import bloomfilter, clk, randomnames
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import GlobalHashingProperties, Schema
 from clkhash.field_formats import FieldHashingProperties, StringSpec
@@ -16,21 +16,21 @@ class TestNamelistHashable(unittest.TestCase):
         self.assertEqual(len(s2), 100)
 
         schema = randomnames.NameList.SCHEMA
-        key_lists = generate_key_lists(('secret', 'sshh'),
-                                       len(schema.fields))
+        keys = ('secret', 'sshh')
 
-        bf1 = list(bloomfilter.stream_bloom_filters(s1, key_lists, schema))
-        bf2 = list(bloomfilter.stream_bloom_filters(s2, key_lists, schema))
+        bf1 = clk.generate_clks(s1, schema, keys)
+        bf2 = clk.generate_clks(s2, schema, keys)
 
         self.assertEqual(len(bf1), 100)
         self.assertEqual(len(bf2), 100)
 
         # An "exact match" bloomfilter comparison:
-        set1 = set([tuple(bf[0]) for bf in bf1])
-        set2 = set([tuple(bf[0]) for bf in bf2])
+        set1 = set(bf1)
+        set2 = set(bf2)
 
-        self.assertGreaterEqual(len(set1.intersection(set2)), 80,
-                                "Expected at least 80 hashes to be exactly the same")
+        self.assertGreaterEqual(
+            len(set1 & set2), 80,
+            "Expected at least 80 hashes to be exactly the same")
 
 
 class TestHashingWithDifferentWeights(unittest.TestCase):
@@ -45,9 +45,8 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
                 kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
                 kdf_type='HKDF',
                 l=1024,
-                hash_type='doubleHash',
+                hash_type='blakeHash',
                 xor_folds=0,
-                hash_prevent_singularity=True
             ),
             fields=[
                 StringSpec(
@@ -67,7 +66,7 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
         )
 
         pii = [['Deckard']]
-        keys = generate_key_lists(('secret', 'sauce'), 1)
+        keys = generate_key_lists(('secret',), 1)
 
         schema.fields[0].hashing_properties.weight = 0
         bf0 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))

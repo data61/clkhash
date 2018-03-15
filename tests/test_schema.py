@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+import io
 import os
 import unittest
 
@@ -10,19 +13,57 @@ def _test_data_file_path(file_name):
     return os.path.join(TEST_DATA_DIRECTORY, file_name)
 
 
-class TestSchema(unittest.TestCase):
-    def test_schema_validation(self):
+class TestSchemaValidation(unittest.TestCase):
+    def test_good_schema(self):
         # This is a perfectly fine schema.
         with open(_test_data_file_path('good-schema-v1.json')) as f:
             schema.schema_from_json_file(f)
 
+    def test_invalid_schema(self):
         # This schema is not valid (missing encoding in its feature).
         with open(_test_data_file_path('bad-schema-v1.json')) as f:
             with self.assertRaises(schema.SchemaError):
                 schema.schema_from_json_file(f)
 
+    def test_valid_but_unsupported_schema(self):
         # This schema has an unsupported version.
         with open(_test_data_file_path(
                 'good-but-unsupported-schema-v1.json')) as f:
             with self.assertRaises(schema.SchemaError):
                 schema.schema_from_json_file(f)
+
+    def test_invalid_json_schema(self):
+        invalid_schema_file = io.StringIO('{')  # Invalid json.
+        msg = 'Invalid JSON in schema should raise SchemaError.'
+        with self.assertRaises(schema.SchemaError, msg=msg):
+            schema.schema_from_json_file(invalid_schema_file)
+
+    def test_list_schema(self):
+        invalid_schema_file = io.StringIO('[]')  # Must be dict instead.
+        msg = 'List as top element should raise SchemaError.'
+        with self.assertRaises(schema.SchemaError, msg=msg):
+            schema.schema_from_json_file(invalid_schema_file)
+
+    def test_string_schema(self):
+        invalid_schema_file = io.StringIO('"foo"')  # Must be dict.
+        msg = 'Literal as top element should raise SchemaError.'
+        with self.assertRaises(schema.SchemaError, msg=msg):
+            schema.schema_from_json_file(invalid_schema_file)
+
+    def test_no_version(self):
+        invalid_schema_file = io.StringIO('{}')  # Missing version.
+        msg = 'Schema with no version should raise SchemaError.'
+        with self.assertRaises(schema.SchemaError, msg=msg):
+            schema.schema_from_json_file(invalid_schema_file)
+
+    def test_missing_master(self):
+        # This shouldn't happen but we need to be able to handle it if,
+        # for example, we have a corrupt install.
+        original_paths = schema.MASTER_SCHEMA_PATHS
+        schema.MASTER_SCHEMA_PATHS = {1: 'nonexistent.json'}
+
+        msg = 'Missing master schema should raise MasterSchemaError.'
+        with self.assertRaises(schema.MasterSchemaError, msg=msg):
+            schema.validate_schema_dict({'version': 1})
+
+        schema.MASTER_SCHEMA_PATHS = original_paths
