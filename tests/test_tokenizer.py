@@ -2,48 +2,98 @@ import unittest
 import random
 from bitarray import bitarray
 
-import clkhash.identifier_types
-import clkhash.tokenizer
+from clkhash.field_formats import FieldHashingProperties
+from clkhash.tokenizer import get_tokenizer, tokenize
 
 __author__ = 'shardy'
 
 
 class TestTokenizer(unittest.TestCase):
-
-    def generate_bitarray(self, length):
-        return bitarray(
-            ''.join('1' if random.random() > 0.5 else '0' for _ in range(length))
-        )
-
     def test_unigram_1(self):
-        self.assertEqual(clkhash.tokenizer.unigramlist("1/2/93", '/'), ['1', '2', '9', '3'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("1/2/93", ignore='/')),
+                         ['1', '2', '9', '3'])
 
     def test_unigram_2(self):
-        self.assertEqual(clkhash.tokenizer.unigramlist("1*2*93", '*'), ['1', '2', '9', '3'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("1*2*93", ignore='*')),
+                         ['1', '2', '9', '3'])
 
     def test_unigram_duplicate(self):
-        self.assertEqual(clkhash.tokenizer.unigramlist("1212"), ['1', '2', '1', '2'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("1212")),
+                         ['1', '2', '1', '2'])
 
     def test_unigram_1_positional(self):
-        self.assertEqual(clkhash.tokenizer.unigramlist("1/2/93", '/', positional=True), ['1 1', '2 2', '3 9', '4 3'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=True
+        )
+        self.assertEqual(list(get_tokenizer(properties)("1/2/93", ignore='/')),
+                         ['1 1', '2 2', '3 9', '4 3'])
 
     def test_positional_unigram_1(self):
-        self.assertEqual(clkhash.tokenizer.positional_unigrams("123"), ['1 1', '2 2', '3 3'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=True
+        )
+        self.assertEqual(list(get_tokenizer(properties)("123")),
+                         ['1 1', '2 2', '3 3'])
 
     def test_positional_unigram_2(self):
-        self.assertEqual(clkhash.tokenizer.positional_unigrams("1*2*"), ['1 1', '2 *', '3 2', '4 *'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=True
+        )
+        self.assertEqual(list(get_tokenizer(properties)("1*2*")),
+                         ['1 1', '2 *', '3 2', '4 *'])
 
     def test_positional_unigram_duplicate(self):
-        self.assertEqual(clkhash.tokenizer.positional_unigrams("111"), ['1 1', '2 1', '3 1'])
+        properties = FieldHashingProperties(
+            ngram=1,
+            positional=True
+        )
+        self.assertEqual(list(get_tokenizer(properties)("111")),
+                         ['1 1', '2 1', '3 1'])
 
     def test_bigram_1(self):
-        self.assertEqual(clkhash.tokenizer.bigramlist("steve"), [' s', 'st', 'te', 'ev', 've', 'e '])
+        properties = FieldHashingProperties(
+            ngram=2,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("steve")),
+                         [' s', 'st', 'te', 'ev', 've', 'e '])
 
     def test_bigram_2(self):
-        self.assertEqual(clkhash.tokenizer.bigramlist("steve", 'e'), [' s', 'st', 'tv', 'v '])
+        properties = FieldHashingProperties(
+            ngram=2,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("steve", ignore='e')),
+                         [' s', 'st', 'tv', 'v '])
 
     def test_bigram_duplicate(self):
-        self.assertEqual(clkhash.tokenizer.bigramlist("abab"), [' a', 'ab', 'ba', 'ab', 'b '])
+        properties = FieldHashingProperties(
+            ngram=2,
+            positional=False
+        )
+        self.assertEqual(list(get_tokenizer(properties)("abab")),
+                         [' a', 'ab', 'ba', 'ab', 'b '])
+
+    def test_invalid_n(self):
+        with self.assertRaises(
+                ValueError,
+                msg='Expected raise ValueError on invalid n.'):
+            tokenize(-6, True, 'prawn')            
 
 
 

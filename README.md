@@ -24,7 +24,7 @@ After installation of the clkhash library you should have a `clkutil` program in
 Alternatively you can use `python -m clkhash`.
 
 This command line tool can be used to process PII data into Cryptographic Longterm Keys.
-The tool also has an option for generating fake pii data, and commands to upload hashes to an entity matching service.
+The tool also has an option for generating fake PII data, and commands to upload hashes to an entity matching service.
 
 ```
 $ clkutil generate 1000 fake-pii-out.csv
@@ -34,14 +34,20 @@ INDEX,NAME freetext,DOB YYYY/MM/DD,GENDER M or F
 1,Garold Staten,1928/11/23,M
 2,Yaritza Edman,1972/11/30,F
 ```
- 
-To hash this data using the default schema, with the shared secret keys `horse staple`:
 
-    $ clkutil hash fake-pii-out.csv horse staple /tmp/fake-clk.json
+A schema is required to hash this data. You can retrieve the default schema with
+
+    $ clkutil generate-default-schema fake-pii-schema.json
+
+or you can make your own.
+
+To hash this data using its schema, with the shared secret keys `horse` and `staple`:
+
+    $ clkutil hash fake-pii-out.csv horse staple fake-pii-schema.json /tmp/fake-clk.json
     CLK data written to /tmp/fake-clk.json
 
 
-Note the keys should only be shared with the other entity - and not with anyone carrying out 
+Note the keys should only be shared with the other entity - and not with anyone carrying out
 the record linkage.
 
 To use the clkutil without installation (after installing the dependencies) just run:
@@ -53,9 +59,9 @@ To use the clkutil without installation (after installing the dependencies) just
 To hash a csv file of entities using the default schema:
 
 ```python
-from clkhash import clk, schema
-default_schema = schema.get_schema_types(schema.load_schema(None))
-clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), default_schema)
+from clkhash import clk, randomnames
+fake_pii_schema = randomnames.NameList.SCHEMA
+clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), fake_pii_schema)
 ```
 
 ## Benchmark
@@ -79,7 +85,7 @@ $ python -m pytest --cov=clkhash
 Note several tests will be skipped by default. To enable the command
 line tests set the  `INCLUDE_CLI` environment variable. To enable
 the tests which interact with an entity service set the
-`TEST_ENTITY_SERVICE` environment variable to the target service's 
+`TEST_ENTITY_SERVICE` environment variable to the target service's
 address.
 
 ```

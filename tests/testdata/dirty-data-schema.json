@@ -1,0 +1,168 @@
+
+{
+  "version": 1,
+  "clkConfig": {
+    "l": 1024,
+    "k": 20,
+    "hash": {
+      "type": "doubleHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "rec_id",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "given_name",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "surname",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "street_number",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "address_1",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "address_2",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "suburb",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "postcode",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "state",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "date_of_birth",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "age",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "phone_number",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "soc_sec_id",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "blocking_number",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    }
+  ]
+}
