@@ -3,7 +3,7 @@ import random
 from bitarray import bitarray
 
 from clkhash.field_formats import FieldHashingProperties
-from clkhash.tokenizer import get_tokenizer
+from clkhash.tokenizer import get_tokenizer, tokenize
 
 __author__ = 'shardy'
 
@@ -88,6 +88,12 @@ class TestTokenizer(unittest.TestCase):
         )
         self.assertEqual(list(get_tokenizer(properties)("abab")),
                          [' a', 'ab', 'ba', 'ab', 'b '])
+
+    def test_invalid_n(self):
+        with self.assertRaises(
+                ValueError,
+                msg='Expected raise ValueError on invalid n.'):
+            tokenize(-6, True, 'prawn')            
 
 
 

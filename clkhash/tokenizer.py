@@ -44,6 +44,11 @@ def tokenize(n, positional, word, ignore=None):
 def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties
                   ):
     # type: (...) -> Callable[[Text], Iterable[Text]]
+    """ Get tokeniser function from the hash settings.
+
+        This function takes a FieldHashingProperties object. It returns a
+        function that takes a string and tokenises based on those properties.
+    """
     n = hash_settings.ngram
     p = hash_settings.positional
 

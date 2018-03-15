@@ -30,7 +30,7 @@ except ImportError:
     # blake2b is already defined.
 
 def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
-                              keys,            # type: Tuple[bytes, ...]
+                              keys,            # type: Sequence[bytes]
                               k,               # type: int
                               l,               # type: int
                               encoding         # type: str
@@ -62,7 +62,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
 
 
 def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str]
-                              keys,            # type: Tuple[bytes, ...]
+                              keys,            # type: Sequence[bytes]
                               k,               # type: int
                               l,               # type: int
                               encoding         # type: str
@@ -120,7 +120,9 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
 
         i = 0
         while md5hm == 0:
-            md5hm = int(hmac.new(key_md5, m.encode() + chr(i).encode(), md5).hexdigest(), 16) % l
+            md5hm_bytes = hmac.new(
+                key_md5, m_bytes + chr(i).encode(), md5).digest()
+            md5hm = int_from_bytes(md5hm_bytes, 'big') % l
             i += 1
 
         for i in range(k):
@@ -130,11 +132,11 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
 
 
 def blake_encode_ngrams(ngrams,          # type: Iterable[str]
-                       key,              # type: bytes
-                       k,                # type: int
-                       l,                # type: int
-                       encoding          # type: str
-                       ):
+                        keys,            # type: Sequence[bytes]
+                        k,               # type: int
+                        l,               # type: int
+                        encoding         # type: str
+                        ):
     # type: (...) -> bitarray.bitarray
     """
     Computes the encoding of the provided ngrams using the BLAKE2 hash function.
@@ -197,6 +199,8 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
+    key, = keys  # Unpack.
+
     log_l = int(math.log(l, 2))
     if not 2**log_l == l:
         raise ValueError('parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(l))
@@ -243,7 +247,7 @@ class NgramEncodings(Enum):
     def from_properties(cls,
                         properties  # type: clkhash.schema.GlobalHashingProperties
                         ):
-        # type: (...) -> Callable[[Iterable[str], Tuple[bytes, ...], int, int, str], bitarray]
+        # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
         if properties.hash_type == 'doubleHash':
             if properties.hash_prevent_singularity:
                 return cls.DOUBLE_HASH_NON_SINGULAR
@@ -312,7 +316,6 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
             - first element of record (usually an index)
             - number of bits set in the bloomfilter
     """
-    keys1, keys2 = zip(*keys)
     xor_folds = hash_properties.xor_folds
     l = hash_properties.l * 2 ** xor_folds
     k = hash_properties.k
@@ -321,13 +324,13 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
 
-    for (entry, tokenizer, field, key1, key2) \
-            in zip(record, tokenizers, field_hashing, keys1, keys2):
+    for (entry, tokenizer, field, key) \
+            in zip(record, tokenizers, field_hashing, keys):
         ngrams = tokenizer(entry)
         adjusted_k = int(round(field.weight * k))
 
         bloomfilter |= hash_fun(
-            ngrams, (key1, key2), adjusted_k, l, field.encoding)
+            ngrams, key, adjusted_k, l, field.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)
 

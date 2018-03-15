@@ -108,7 +108,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
                   validate=True,  # type: bool
                   callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
-    # type: (...) -> List[Any]
+    # type: (...) -> List[str]
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(
