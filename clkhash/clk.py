@@ -2,13 +2,13 @@
 Generate CLK from data.
 """
 
+import concurrent.futures
 import logging
+import platform
 import sys
 import time
-from typing import (Any, AnyStr, Callable, cast, Iterable, List, Optional,
+from typing import (Any, Callable, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
-
-from tqdm import tqdm
 
 from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
@@ -69,7 +69,12 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        pii_data.append(line)
+        if len(line) == len(schema_types):
+            pii_data.append(tuple([element.strip() for element in line]))
+        else:
+            raise ValueError("Line had unexpected number of elements. "
+                "Expected {} but there was {}".format(
+                len(schema.fields), len(line)))
 
     # generate two keys for each identifier
     key_lists = generate_key_lists(keys, len(schema.fields))
@@ -111,38 +116,24 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
+    futures = []
 
-    results = []
+    stats = OnlineMeanVariance()
 
-    try:
-        import concurrent.futures
-    except ImportError:
-        log.info("Hashing with one core, upgrade to python 3 to utilise all cores")
-        stats = OnlineMeanVariance()
+    # Compute Bloom filter from the chunks and then serialise it
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         for chunk in chunks(pii_data, chunk_size):
-            clks, clk_stats = hash_and_serialize_chunk(chunk, key_lists, schema)
-            results.extend(clks)
-            stats.update(clk_stats)
+            future = executor.submit(
+                hash_and_serialize_chunk,
+                chunk, schema_types, key_lists, xor_folds)
             if callback is not None:
-                callback(len(chunk), clk_stats)
-    else:
-        # If running Python3, parallelise hashing.
-        # Compute Bloom filter from the chunks and then serialise it
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            futures = []
-            for chunk in chunks(pii_data, chunk_size):
-                future = executor.submit(
-                    hash_and_serialize_chunk,
-                    chunk, key_lists, schema)
-                if callback is not None:
-                    def future_done_callback(f):
-                        bfs, popcount = f.result()
-                        callback(len(bf), popcount)
-                    future.add_done_callback(future_done_callback)
-                futures.append(future)
+                future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
+            futures.append(future)
 
-            for future in futures:
-                results.extend(future.result()[0])
+        for future in futures:
+            clks, clk_stats = future.result()
+            stats.update(clk_stats)
+            results.extend(clks)
 
     return results
 

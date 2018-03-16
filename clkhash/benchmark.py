@@ -41,4 +41,4 @@ def compute_hash_speed(n, quiet=False):
 
 if __name__ == '__main__':
     for n in [100, 1000, 10000, 50000, 100000]:
-        compute_hash_speed(n)
+        compute_hash_speed(n, quiet=n<=10000)
