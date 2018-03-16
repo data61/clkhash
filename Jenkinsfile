@@ -62,16 +62,10 @@ def build(label, release=false) {
 
                    """
 
-                   junit 'nosetests.xml'
+                   junit 'testout.xml'
               }
 
               stage('Coverage'){
-                // Code coverage only needs to be done once
-                sh """#!/usr/bin/env bash
-                    set -xe
-
-                    .tox/py35/bin/python .tox/py35/bin/coverage xml
-                """
 
                 step([$class: 'CoberturaPublisher', coberturaReportFile: 'coverage.xml'])
 

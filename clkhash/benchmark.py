@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import tempfile
 from timeit import default_timer as timer
 
@@ -13,7 +14,7 @@ def compute_hash_speed(n, quiet=False):
     """
     namelist = NameList(n)
 
-    tmpfile = tempfile.NamedTemporaryFile('wt')
+    os_fd, tmpfile_name = tempfile.mkstemp(text=True)
 
 
     schema = NameList.SCHEMA
@@ -27,10 +28,14 @@ def compute_hash_speed(n, quiet=False):
             print(','.join([str(field) for field in person]), file=f)
 
 
-    with open(tmpfile.name, 'rt') as f:
+    with open(tmpfile_name, 'rt') as f:
         start = timer()
         generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=not quiet)
         end = timer()
+
+    os.close(os_fd)
+    os.remove(tmpfile_name)
+
     elapsed_time = end - start
     if not quiet:
         print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
