@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 import base64
 import json
 import os
+import pkgutil
 from typing import Any, Dict, Hashable, List, Optional, Text, TextIO, Tuple
 
 from future.utils import raise_from
@@ -17,10 +18,7 @@ from clkhash import field_formats
 
 # These are relative to this file. Using tuples to represent hierarches
 # for compatibility (thx Windows for those backslashes).
-MASTER_SCHEMA_PATHS = {1: 'v1.json'}  # type: Dict[Hashable, Text]
-
-MASTER_SCHEMA_DIRECTORY = os.path.join(os.path.dirname(__file__),
-                                       'master-schemas')
+MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
 
 
 class GlobalHashingProperties(object):
@@ -189,24 +187,40 @@ class Schema(object):
         return result
 
 
-def get_master_schema_path(version):
-    # type: (Hashable) -> str
-    """ Get the path of the master schema given a version.
+def get_master_schema_(version):
+    # type: (Hashable) -> bytes
+    """ Loads the master schema of given version as bytes.
 
         :param version: The version of the master schema whose path we
             wish to retrieve.
         :raises SchemaError: When the schema version is unknown. This
             usually means that either (a) clkhash is out of date, or (b)
             the schema version listed is incorrect.
-        :return: Path to the schema.
+        :return: Bytes of the schema.
     """
     try:
-        file_name = MASTER_SCHEMA_PATHS[version]
+        file_name = MASTER_SCHEMA_FILE_NAMES[version]
     except (TypeError, KeyError) as e:
         msg = ('Schema version {} is not supported. '
                'Consider updating clkhash.').format(version)
         raise_from(SchemaError(msg), e)
-    return os.path.join(MASTER_SCHEMA_DIRECTORY, file_name)
+
+    try:
+        schema_bytes = pkgutil.get_data('clkhash',
+            'master-schemas/{}'.format(file_name))
+    except IOError as e:  # In Python 3 we can be more specific with
+                          # FileNotFoundError, but that doesn't exist in
+                          # Python 2.
+        msg = ('The master schema could not be found. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
+    
+    if schema_bytes is None:
+        msg = ('The master schema could not be loaded. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise MasterSchemaError(msg)
+
+    return schema_bytes
 
 
 class SchemaError(Exception):
@@ -241,16 +255,9 @@ def validate_schema_dict(schema):
     else:
         raise SchemaError('A format version is expected in the schema.')
 
-    master_schema_path = get_master_schema_path(version)
+    master_schema_bytes = get_master_schema_(version)
     try:
-        with open(master_schema_path) as master_schema_file:
-            master_schema = json.load(master_schema_file)
-    except IOError as e:  # In Python 3 we can be more specific with
-                          # FileNotFoundError, but that doesn't exist in
-                          # Python 2.
-        msg = ('The master schema could not be found. The schema cannot be '
-               'validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        master_schema = json.loads(master_schema_bytes.decode('utf-8'))
     except ValueError as e:  # In Python 3 we can be more specific with
                              # json.decoder.JSONDecodeError, but that
                              # doesn't exist in Python 2.

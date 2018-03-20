@@ -59,11 +59,11 @@ class TestSchemaValidation(unittest.TestCase):
     def test_missing_master(self):
         # This shouldn't happen but we need to be able to handle it if,
         # for example, we have a corrupt install.
-        original_paths = schema.MASTER_SCHEMA_PATHS
-        schema.MASTER_SCHEMA_PATHS = {1: 'nonexistent.json'}
+        original_paths = schema.MASTER_SCHEMA_FILE_NAMES
+        schema.MASTER_SCHEMA_FILE_NAMES = {1: 'nonexistent.json'}
 
         msg = 'Missing master schema should raise MasterSchemaError.'
         with self.assertRaises(schema.MasterSchemaError, msg=msg):
             schema.validate_schema_dict({'version': 1})
 
-        schema.MASTER_SCHEMA_PATHS = original_paths
+        schema.MASTER_SCHEMA_FILE_NAMES = original_paths

@@ -1,7 +1,13 @@
+# -*- encoding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 from base64 import b64decode
+import io
+import itertools
 import unittest
 
-from clkhash.backports import int_from_bytes
+from clkhash.backports import int_from_bytes, re_compile_full, unicode_reader
 
 
 class TestIntBackports(unittest.TestCase):
@@ -52,3 +58,36 @@ class TestIntBackports(unittest.TestCase):
             int_from_bytes(
                 b64decode('abIAAAAAAAAAAA=='.encode('ascii')),
                 'lobster')
+
+
+class TestCompileFull(unittest.TestCase):
+    def test_compile_full(self):
+        regex = re_compile_full('.?foo(d|bar)')
+
+        # These should match
+        self.assertIsNotNone(regex.match('food'))
+        self.assertIsNotNone(regex.match('foobar'))
+        self.assertIsNotNone(regex.match('0food'))
+        self.assertIsNotNone(regex.match('!foobar'))
+
+        # These shouldn't
+        self.assertIsNone(regex.match('foodbar'))
+        self.assertIsNone(regex.match('foobar0'))
+        self.assertIsNone(regex.match('..foobar'))
+        self.assertIsNone(regex.match('..foobarz'))
+
+
+class TestUnicodeReader(unittest.TestCase):
+    def test_unicode_reader(self):
+        data = [['first', 'last'],
+                ['James', 'Morgan'],
+                ['Françoise', 'Grossetête'],
+                ['القاهرة', 'مِصر‎']]
+        
+        csv_str = '\n'.join(','.join(row) for row in data)
+        csv_str += '\n'  # Trailing newlines are nice.
+        f = io.StringIO(csv_str)
+
+        reader = unicode_reader(f)
+        read_data = list(reader)
+        self.assertEqual(read_data, data)

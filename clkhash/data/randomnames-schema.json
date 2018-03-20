@@ -45,7 +45,7 @@
       "format": {
         "type": "string",
         "encoding": "ascii",
-        "description": "comma separated list of middle names",
+        "description": "Numbers separated by slashes, in the year, month, day order",
         "pattern": "(?:\\d\\d\\d\\d/\\d\\d/\\d\\d)\\Z"
       },
       "hashing": {
