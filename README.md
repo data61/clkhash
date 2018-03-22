@@ -70,7 +70,15 @@ As a rule of thumb a single modern core will hash around 1M entities in about 20
 
 # Tests
 
-Run unit tests and print out code coverage with `py.test`:
+Make sure you have all the required modules before running the tests
+(modules that are only needed for tests are not included during
+installation):
+
+```
+pip install -r requirements.txt
+```
+
+Now run the unit tests and print out code coverage with `py.test`:
 
 ```
 $ python -m pytest --cov=clkhash
