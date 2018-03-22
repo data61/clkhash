@@ -33,9 +33,10 @@ class TestRandomNames(unittest.TestCase):
         # notoverlap = sz - overlap = 200.
         # Thus sz + notoverlap = 1199 > n.
         sz = 999
-        nl = rn.NameList(sz * 1.2)
+        n = math.floor(sz * 1.2)
+        names = rn.NameList(n)
         with pytest.raises(ValueError):
-            s1, s2 = nl.generate_subsets(sz, 0.8)
+            s1, s2 = names.generate_subsets(sz, 0.8)
 
     def test_generate_large_subsets(self):
         nl = rn.NameList(2000)
