@@ -7,17 +7,15 @@ from __future__ import unicode_literals
 
 import base64
 import json
-import os
 import pkgutil
-from typing import Any, Dict, Hashable, List, Optional, Text, TextIO, Tuple
+from typing import Any, Dict, Hashable, List, Text, TextIO
 
 from future.utils import raise_from
 import jsonschema
 
-from clkhash import field_formats
+from clkhash.field_formats import FieldSpec, spec_from_json_dict
 
-# These are relative to this file. Using tuples to represent hierarches
-# for compatibility (thx Windows for those backslashes).
+
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
 
 
@@ -94,14 +92,13 @@ class GlobalHashingProperties(object):
         # type: (Dict[str, Any]) -> GlobalHashingProperties
         """ Make a GlobalHashingProperties object from a dictionary.
 
-            The dictionary must have a `'type'` key and a `'config'`
-            key. The `'config'` key must map to a dictionary
-            containinng a `'kdf'` key, which itself maps to a
-            dictioanry. That dictionary must have `'type'`, `'hash'`,
-            `'keySize'`, `'salt'`, and `'type'` keys.
-
-            :param properties_dict: The dictionary to use.
-            :return: The resulting GlobalHashingProperties object.
+            :param properties_dict:
+                The dictionary must have a `'type'` key and a `'config'`
+                key. The `'config'` key must map to a dictionary
+                containing a `'kdf'` key, which itself maps to a
+                dictionary. That dictionary must have `'type'`, `'hash'`,
+                `'keySize'`, `'salt'`, and `'type'` keys.
+            :return: The resulting :class:`GlobalHashingProperties` object.
         """
         result = cls()
 
@@ -125,34 +122,26 @@ class GlobalHashingProperties(object):
 
 
 class Schema(object):
-    """ Overall schema for hashing.
-
-        A single object contains all the settings you will need, want,
-        or desire.
+    """ Overall schema which describes how to hash plaintext identifiers into clks
 
         :ivar version: Version for the schema. Needed to keep behaviour
-            consistent between Clkhash versions for the same schema.
-        :ivar hashing_globals: Hashing globals. Your salts and lengths
-            and stuff.
-        :ivar fields: The columns in our dataset.
+            consistent between clkhash versions for the same schema.
+        :ivar hashing_globals: Configuration affecting hashing of all fields. For example
+            cryptographic salt material, bloom filter length.
+        :ivar fields: Information and configuration specific to each field. For example
+            how to validate and tokenize a phone number.
     """
     __slots__ = ('version', 'hashing_globals', 'fields')
 
-    def __init__(self, **kwargs):
-        # type: (...) -> None
-        """ Make a Schema object from keyword arguments.
+    def __init__(self, version, hashing_globals, fields):
+        # type: (str, GlobalHashingProperties, List[FieldSpec]) -> None
 
-            :param version: (optional) Value of `self.version`.
-            :param global_properties: (optional) Value of
-                `self.global_properties`.
-            :param fields: (optional) Value of `self.fields`.
-        """
-        if 'version' in kwargs:
-             self.version = kwargs['version']
-        if 'hashing_globals' in kwargs:
-            self.hashing_globals = kwargs['hashing_globals']
-        if 'fields' in kwargs:
-            self.fields = kwargs['fields']
+        self.version = version
+        self.hashing_globals = hashing_globals
+        self.fields = fields
+
+    def __repr__(self):
+        return "<Schema (v{}): {} fields>".format(self.version, len(self.fields))
 
     @classmethod
     def from_json_dict(cls, schema_dict, validate=True):
@@ -166,25 +155,21 @@ class Schema(object):
             globals.
 
             :param schema_dict: The dictionary to use.
-            :param validate: (default True) Should we throw if the
-                schema does not conform to the master schema?
-            :return: The resulting Schema object.
+            :param validate: (default True) Raise an exception if the
+                schema does not conform to the master schema.
+            :return: The resulting :class:`Schema` object.
         """
         if validate:
             # This raises iff the schema is invalid.
             validate_schema_dict(schema_dict)
 
-        result = cls()
-
+        hash_properties = GlobalHashingProperties.from_json_dict(schema_dict['clkConfig'])
         features = schema_dict['features']
-        result.fields = list(map(field_formats.spec_from_json_dict, features))
-
-        result.version = schema_dict['version']
-
-        result.hashing_globals = GlobalHashingProperties.from_json_dict(
-            schema_dict['clkConfig'])
-
-        return result
+        return cls(
+            schema_dict['version'],
+            hash_properties,
+            list(map(spec_from_json_dict, features))
+        )
 
 
 def get_master_schema_(version):
@@ -281,7 +266,7 @@ def schema_from_json_file(schema_file):
 
         :param schema_file: A JSON file containing the schema.
         :raises SchemaError: When the schema is invalid.
-        :return: The resulting Schema object.
+        :return: The resulting :class:`Schema` object.
     """
     try:
         schema_dict = json.load(schema_file)

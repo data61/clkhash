@@ -10,6 +10,7 @@ try:
     int_from_bytes = int.from_bytes
 except AttributeError:
     import codecs
+
     def __int_from_bytes(bytes, byteorder, signed=False):
         # type: (Sequence[int], str, bool) -> int
         """ Emulate Python 3's int.from_bytes.

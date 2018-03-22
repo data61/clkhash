@@ -12,16 +12,17 @@ from clkhash import field_formats
 
 
 def tokenize(n, positional, word, ignore=None):
-    # type: (int, bool, Text, Optional[str]) -> Iterable[Text]
+    # type: (int, bool, Text, Optional[Text]) -> Iterable[Text]
     """ Produce `n`-grams of `word`.
 
         :param n: Length of `n`-grams.
         :param positional: If `True`, then include the index of the
             substring with the `n`-gram.
         :param word: The string to tokenize.
-        :param ignore: The substring whose occurences we remove from
+        :param ignore: The substring whose occurrences we remove from
             `word` before tokenization.
         :raises ValueError: When `n` is negative.
+        :return: Tuple of n-gram strings.
     """
     if n < 0:
         raise ValueError('`n` in `n`-gram must be non-negative.')

@@ -10,22 +10,20 @@ from typing import Sequence
 
 from future.utils import raise_from
 
-from clkhash import field_formats
+from clkhash.field_formats import FieldSpec, InvalidEntryError, InvalidSchemaError
 
 
 class EntryError(ValueError):
     """ An entry is invalid.
     """
-    pass
 
 
 class FormatError(ValueError):
     """ The format of the data is invalid.
     """
-    pass
 
 
-def validate_data(fields,  # type: Sequence[field_formats.FieldSpec]
+def validate_data(fields,  # type: Sequence[FieldSpec]
                   data     # type: Sequence[Sequence[str]]
                   ):
     # type: (...) -> None
@@ -36,7 +34,7 @@ def validate_data(fields,  # type: Sequence[field_formats.FieldSpec]
             specification.
         :param data: The data to validate.
         :raises EntryError: When an entry is not valid according to its
-            `FieldSpec`.
+            :class:`FieldSpec`.
         :raises FormatError: When the number of entries in a row does
             not match expectation.
     """
@@ -51,11 +49,11 @@ def validate_data(fields,  # type: Sequence[field_formats.FieldSpec]
         for entry, v in zip(row, validators):
             try:
                 v(entry)
-            except field_formats.InvalidEntryError as e:
+            except InvalidEntryError as e:
                 raise_from(EntryError('Invalid entry.'), e)
 
 
-def validate_header(fields,       # type: Sequence[field_formats.FieldSpec]
+def validate_header(fields,       # type: Sequence[FieldSpec]
                     column_names  # type: Sequence[str]
                     ):
     # type: (...) -> None

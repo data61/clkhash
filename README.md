@@ -21,7 +21,7 @@ of Python; this is required because the `bitarray` library compiles a C extensio
 # CLI Tool
 
 After installation of the clkhash library you should have a `clkutil` program in your path.
-Alternatively you can use `python -m clkhash`.
+Alternatively you can use `python -m clkhash.cli`.
 
 This command line tool can be used to process PII data into Cryptographic Longterm Keys.
 The tool also has an option for generating fake PII data, and commands to upload hashes to an entity matching service.

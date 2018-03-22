@@ -9,8 +9,8 @@ from __future__ import unicode_literals
 
 import abc
 from datetime import datetime
-import sre_constants
-from typing import Any, cast, Dict, Optional, Text
+import re
+from typing import Any, cast, Dict, Text
 
 from future.builtins import super
 from future.utils import raise_from
@@ -22,7 +22,6 @@ from clkhash.backports import re_compile_full
 class InvalidEntryError(ValueError):
     """ An entry in the data file does not conform to the schema.
     """
-    pass
 
 
 class InvalidSchemaError(ValueError):
@@ -31,9 +30,6 @@ class InvalidSchemaError(ValueError):
         This exception is raised if, for example, a regular expression
         included in the schema is not syntactically correct.
     """
-    # TODO: Consider getting rid of this and just using ValueError
-    # instead.
-    pass
 
 
 class FieldHashingProperties(object):
@@ -74,25 +70,25 @@ class FieldHashingProperties(object):
             self.weight = kwargs['weight']
 
     @classmethod
-    def from_json_dict(cls, json_dict):
+    def from_json_dict(cls, field_hash_properties):
         # type: (Dict[str, Any]) -> FieldHashingProperties
         """ Make a HashingProperties object from a dictionary.
 
-            The dictionary must have have an 'ngram' key. It may have
-            'positional' and 'weight' keys; if these are missing, then
-            they are filled with the default values. The encoding is
-            always set to the default value.
-
-            :param hash_properties: The dictionary to use.
+            :param field_hash_properties:
+                The dictionary must have have an 'ngram' key. It may have
+                'positional' and 'weight' keys; if these are missing, then
+                they are filled with the default values. The encoding is
+                always set to the default value.
+            :return: A :class:`FieldHashingProperties` instance.
         """
         result = cls()
 
         result.encoding = FieldHashingProperties.DEFAULT_ENCODING
-        result.ngram = json_dict['ngram']
-        result.positional = json_dict.get(
+        result.ngram = field_hash_properties['ngram']
+        result.positional = field_hash_properties.get(
             'positional',
             FieldHashingProperties.DEFAULT_POSITIONAL)
-        result.weight = json_dict.get(
+        result.weight = field_hash_properties.get(
             'weight',
             FieldHashingProperties.DEFAULT_WEIGHT)
 
@@ -132,7 +128,7 @@ class FieldSpec(object):
             properties.
 
             This dictionary must contain a `'hashing'` key that meets
-            the requirements of `HashingProperties.__init__`.
+            the requirements of :meth:`HashingProperties.__init__()`.
 
             Subclasses may override this method to conduct their own
             initialisation. They should call the parent's initialiser
@@ -248,7 +244,7 @@ class StringSpec(FieldSpec):
             pattern = format_['pattern']
             try:
                 result.regex = re_compile_full(pattern)
-            except (SyntaxError, sre_constants.error) as e:
+            except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 raise_from(InvalidSchemaError(msg), e)
 
