@@ -132,13 +132,16 @@ class NameList:
 
     def generate_subsets(self, sz, overlap=0.8):
         """
-        Generate a pair of subsets of the name list with a specified overlap
+        Return a pair of random subsets of the name list with a specified
+        proportion of elements in common.
 
         :param sz: length of subsets to generate
         :param overlap: fraction of the subsets that should have the same names in them
-        :return: 2-tuple of lists of subsets
+        :return: pair of subsets
         """
         nrec = len(self.names)
+        assert sz <= nrec, 'Requested subset size exceeds the number of names'
+
         overlap = int(math.floor(overlap * sz))
         notoverlap = sz - overlap
         rsamp = random.sample(list(range(nrec)), sz + notoverlap)
