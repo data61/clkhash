@@ -1,4 +1,5 @@
 import unittest
+import math
 from datetime import datetime
 
 from clkhash import randomnames as rn
