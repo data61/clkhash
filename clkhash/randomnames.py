@@ -141,7 +141,8 @@ class NameList:
         """
         notoverlap = sz - int(math.floor(overlap * sz))
         total_sz = sz + notoverlap
-        assert total_sz <= len(self.names), \
-            'Requested subset size and overlap demands more than the number of available names'
+        if total_sz > len(self.names):
+            raise ValueError('Requested subset size and overlap demands more '
+                             + 'than the number of available names')
         sset = random.sample(self.names, total_sz)
         return sset[:sz], sset[notoverlap:]
