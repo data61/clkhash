@@ -139,14 +139,9 @@ class NameList:
         :param overlap: fraction of the subsets that should have the same names in them
         :return: pair of subsets
         """
-        nrec = len(self.names)
-        assert sz <= nrec, 'Requested subset size exceeds the number of names'
-
-        overlap = int(math.floor(overlap * sz))
-        notoverlap = sz - overlap
-        rsamp = random.sample(list(range(nrec)), sz + notoverlap)
-        l1 = rsamp[:sz]
-        l2 = rsamp[:overlap] + rsamp[sz:sz + notoverlap]
-        random.shuffle(l1)
-        random.shuffle(l2)
-        return [self.names[i] for i in l1],  [self.names[i] for i in l2]
+        notoverlap = sz - int(math.floor(overlap * sz))
+        total_sz = sz + notoverlap
+        assert total_sz <= len(self.names), \
+            'Requested subset size and overlap demands more than the number of available names'
+        sset = random.sample(self.names, total_sz)
+        return sset[:sz], sset[notoverlap:]
