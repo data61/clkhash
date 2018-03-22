@@ -137,6 +137,8 @@ class NameList:
 
         :param sz: length of subsets to generate
         :param overlap: fraction of the subsets that should have the same names in them
+        :raises ValueError: if there aren't sufficiently many names in the list to satisfy
+            the request; more precisely, raises if sz + (1 - overlap)*sz > n = len(self.names)
         :return: pair of subsets
         """
         notoverlap = sz - int(math.floor(overlap * sz))
