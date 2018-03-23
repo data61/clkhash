@@ -21,10 +21,11 @@ of Python; this is required because the `bitarray` library compiles a C extensio
 # CLI Tool
 
 After installation of the clkhash library you should have a `clkutil` program in your path.
-Alternatively you can use `python -m clkhash`.
+Alternatively you can use `python -m clkhash.cli`.
 
 This command line tool can be used to process PII data into Cryptographic Longterm Keys.
-The tool also has an option for generating fake pii data, and commands to upload hashes to an entity matching service.
+The tool also has an option for generating fake pii data, and commands to upload hashes to an 
+entity matching service.
 
 ```
 $ clkutil generate 1000 fake-pii-out.csv
@@ -63,40 +64,4 @@ clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'),
 ```
 $ python -m clkhash.cli benchmark
 10000 hashes in 1.524871 seconds. 6.56 KH/s
-```
-
-As a rule of thumb a single modern core will hash around 1M entities in about 20 minutes.
-
-
-# Tests
-
-Make sure you have all the required modules before running the tests
-(modules that are only needed for tests are not included during
-installation):
-
-```
-pip install -r requirements.txt
-```
-
-Now run the unit tests and print out code coverage with `py.test`:
-
-```
-$ python -m pytest --cov=clkhash
-```
-
-Note several tests will be skipped by default. To enable the command
-line tests set the  `INCLUDE_CLI` environment variable. To enable
-the tests which interact with an entity service set the
-`TEST_ENTITY_SERVICE` environment variable to the target service's 
-address.
-
-```
-$ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m pytest --cov=clkhash
-```
-
-
-# Static Typechecking
-
-```
-$ mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
 ```
