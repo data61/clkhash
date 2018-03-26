@@ -56,7 +56,7 @@ def cli(verbose=False):
 def hash(input, output, schema, keys, quiet, no_header, xor_folds):
     """Process data to create CLKs
 
-    Given a file containing csv data as INPUT, and optionally a json
+    Given a file containing CSV data as INPUT, and optionally a json
     document defining the expected schema, verify the schema, then
     hash the data to create CLKs writing to OUTPUT. Note the CSV
     file should contain a header row - however this row is not used

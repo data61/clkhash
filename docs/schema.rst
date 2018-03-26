@@ -1,4 +1,5 @@
-==============
+.. _schema:
+
 Hashing Schema
 ==============
 
@@ -23,7 +24,7 @@ The format of the hashing schema is defined in a separate ``JSON Schema`` docume
 
 
 Basic Structure
-===============
+---------------
 
 A hashing schema consists of three parts:
 
@@ -33,7 +34,7 @@ A hashing schema consists of three parts:
 
 
 Example Schema
-==============
+--------------
 
 ::
 
@@ -82,17 +83,20 @@ Example Schema
 A more advanced example can be found `here <_static/example_schema.json>`_.
 
 
+Schema Components
+-----------------
+
 .. _schema/version:
 
 Version
--------
+~~~~~~~
 Integer value which describes the version of the hashing schema.
 
 
 .. _schema/clkConfig:
 
 clkConfig
----------
+~~~~~~~~~
 
 Describes the general construction of the CLK.
 
@@ -153,7 +157,7 @@ type                string  no       must be set to "blakeHash"
 
 
 featureConfig
---------------
+~~~~~~~~~~~~~
 A feature is configured in three parts:
 
 * identifier, the name of the feature
@@ -263,12 +267,3 @@ values      array                  no       an array of items of type "string"
 description string                 yes      free text, ignored by clkhash.
 =========== =====================  ======== ===========
 
-
-
-References
-==========
-
-.. [Schnell2011] Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel Error-Tolerant Anonymous Linking Code.
-       http://soz-159.uni-duisburg.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
-
-.. [Schnell2016] Schnell, R., & Borgs, C. (2016). XOR-Folding for hardening Bloom Filter-based Encryptions for Privacy-preserving Record Linkage.
