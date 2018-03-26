@@ -1,4 +1,6 @@
 import unittest
+import math
+import pytest
 from datetime import datetime
 
 from clkhash import randomnames as rn
@@ -25,6 +27,18 @@ class TestRandomNames(unittest.TestCase):
                 if s == t:
                     counteq += 1
         self.assertEqual(counteq, 8)
+
+    def test_generate_subsets_raises(self):
+        # sz = 999
+        # n = floor(sz * 1.2) = 1198
+        # overlap = floor(0.8 * 999) = 799
+        # notoverlap = sz - overlap = 200.
+        # Thus sz + notoverlap = 1199 > n.
+        sz = 999
+        n = int(math.floor(sz * 1.2))
+        names = rn.NameList(n)
+        with pytest.raises(ValueError):
+            s1, s2 = names.generate_subsets(sz, 0.8)
 
     def test_generate_large_subsets(self):
         nl = rn.NameList(2000)
