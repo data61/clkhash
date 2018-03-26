@@ -27,7 +27,7 @@ from clkhash.schema import get_schema_types
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
-    """Loads a specified data file as csv and returns the first column as a Python list
+    """Loads a specified CSV data file and returns the first column as a Python list
     """
     data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
     if data_bytes is None:
@@ -45,11 +45,11 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
              ):
     # type: (...) -> None
     """
-    Output generated data as csv with header.
+    Output generated data to file as CSV with header.
 
     :param data: An iterable of tuples containing raw data.
     :param schema: Iterable of schema definition dicts
-    :param file: A writeable stream in which to write the csv
+    :param file: A writeable stream in which to write the CSV
     """
 
     print(','.join(col['identifier'] for col in schema), file=file)

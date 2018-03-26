@@ -1,6 +1,6 @@
 # CLK Hash
 
-Python implementation of cryptographic linkage key hashing. Supports Python versions 2.7+, 3.4+
+Python implementation of cryptographic longterm key hashing. Supports Python versions 2.7+, 3.4+
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
@@ -8,7 +8,7 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 
 
-# Installation
+## Installation
 
 Install clkhash with all dependencies using pip:
 
@@ -18,13 +18,18 @@ If the installation of `bitarray` fails on Windows you may need to install the a
 [Visual Studio C++ compiler](https://wiki.python.org/moin/WindowsCompilers) for your version
 of Python; this is required because the `bitarray` library compiles a C extension.
 
-# CLI Tool
+## Documentation
+
+[https://clkhash.readthedocs.io](https://clkhash.readthedocs.io/en/latest/)
+
+
+## CLI Tool
 
 After installation of the clkhash library you should have a `clkutil` program in your path.
 Alternatively you can use `python -m clkhash.cli`.
 
 This command line tool can be used to process PII data into Cryptographic Longterm Keys.
-The tool also has an option for generating fake pii data, and commands to upload hashes to an 
+The tool also has an option for generating fake PII data, and commands to upload hashes to an 
 entity matching service.
 
 ```
@@ -45,13 +50,13 @@ To hash this data using the default schema, with the shared secret keys `horse s
 Note the keys should only be shared with the other entity - and not with anyone carrying out 
 the record linkage.
 
-To use the clkutil without installation (after installing the dependencies) just run:
+To use the command line tool without installing `clkhash`, install the dependencies, then run:
 
     python -m clkhash.cli
 
-# clkhash api
+## clkhash api
 
-To hash a csv file of entities using the default schema:
+To hash a CSV file of entities using the default schema:
 
 ```python
 from clkhash import clk, schema
@@ -59,9 +64,3 @@ default_schema = schema.get_schema_types(schema.load_schema(None))
 clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), default_schema)
 ```
 
-## Benchmark
-
-```
-$ python -m clkhash.cli benchmark
-10000 hashes in 1.524871 seconds. 6.56 KH/s
-```
