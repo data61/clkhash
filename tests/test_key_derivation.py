@@ -58,52 +58,52 @@ class TestKeyDerivation(unittest.TestCase):
                 StringSpec(
                     identifier='ANY text 1',
                     hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1
                     ),
                     description=None,
-                    case=StringSpec.DEFAULT_CASE,
+                    case=StringSpec._DEFAULT_CASE,
                     min_length=0,
                     max_length=None
                 ),
                 StringSpec(
                     identifier='ANY text 2',
                     hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1
                     ),
                     description=None,
-                    case=StringSpec.DEFAULT_CASE,
+                    case=StringSpec._DEFAULT_CASE,
                     min_length=0,
                     max_length=None
                 ),
                 StringSpec(
                     identifier='ANY text 3',
                     hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1
                     ),
                     description=None,
-                    case=StringSpec.DEFAULT_CASE,
+                    case=StringSpec._DEFAULT_CASE,
                     min_length=0,
                     max_length=None
                 ),
                 StringSpec(
                     identifier='ANY text 4',
                     hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1
                     ),
                     description=None,
-                    case=StringSpec.DEFAULT_CASE,
+                    case=StringSpec._DEFAULT_CASE,
                     min_length=0,
                     max_length=None
                 )

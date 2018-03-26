@@ -23,7 +23,7 @@ import random
 import re
 from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
-from clkhash.schema import schema_from_json_file
+from clkhash.schema import Schema
 from clkhash.field_formats import FieldSpec
 
 def load_csv_data(resource_name):
@@ -80,7 +80,7 @@ class NameList:
     with open(os.path.join(os.path.dirname(__file__),
                            'data',
                            'randomnames-schema.json')) as f:
-        SCHEMA = schema_from_json_file(f)
+        SCHEMA = Schema.from_json_file(f)
     del f
 
     def __init__(self, n):

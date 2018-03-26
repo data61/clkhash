@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import base64
 import json
 import pkgutil
-from typing import Any, Dict, Hashable, List, Text, TextIO
+from typing import Any, Dict, Hashable, List, Sequence, Text, TextIO
 
 from future.utils import raise_from
 import jsonschema
@@ -17,6 +17,17 @@ from clkhash.field_formats import FieldSpec, spec_from_json_dict
 
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
+
+
+class SchemaError(Exception):
+    """ The user-defined schema is invalid.
+    """
+
+
+class MasterSchemaError(Exception):
+    """ Master schema missing? Corrupted? Otherwise surprising? This is
+        the exception for you!
+    """
 
 
 class GlobalHashingProperties(object):
@@ -36,32 +47,15 @@ class GlobalHashingProperties(object):
         :param kdf_hash: The hash function to use in key derivation. The
             options are 'SHA256' and 'SHA512'.
         :param kdf_info: The info for key derivation. See documentation
-            of `HKDFconfig` for details.
+            of :class:`HKDFconfig` for details.
         :param kdf_salt: The salt for key derivation. See documentation
-            of `HKDFconfig` for details.
+            of :class:`HKDFconfig` for details.
         :param kdf_key_size: The size of the derived keys in bytes.
-
     """
-    __slots__ = ('k', 'l', 'xor_folds', 'hash_type',
-                 'hash_prevent_singularity', 'kdf_type', 'kdf_hash',
-                 'kdf_info', 'kdf_salt', 'kdf_key_size')
-
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a GlobalHashingProperties object from keyword
             arguments.
-
-            :param k: Value of `self.k`.
-            :param l: Value of `self.l`.
-            :param xor_folds: Value of `self.xor_folds`.
-            :param hash_type: Value of `self.hash_type`.
-            :param hash_prevent_singularity: Value of `self.hash_prevent_singularity`.
-            :param kdf_type: Value of `self.kdf_type`.
-            :param kdf_hash: Value of `self.kdf_hash`.
-            :param kdf_info: Value of `self.kdf_info`.
-            :param kdf_salt: Value of `self.kdf_salt`.
-            :param kdf_key_size: Value of `self.kdf_key_size`.
-
         """
         if 'k' in kwargs:
             self.k = kwargs['k']
@@ -122,39 +116,42 @@ class GlobalHashingProperties(object):
 
 
 class Schema(object):
-    """ Overall schema which describes how to hash plaintext identifiers into clks
+    """ Overall schema which describes how to hash plaintext identifiers
+        into clks.
 
         :ivar version: Version for the schema. Needed to keep behaviour
             consistent between clkhash versions for the same schema.
-        :ivar hashing_globals: Configuration affecting hashing of all fields. For example
-            cryptographic salt material, bloom filter length.
-        :ivar fields: Information and configuration specific to each field. For example
-            how to validate and tokenize a phone number.
+        :ivar hashing_globals: Configuration affecting hashing of all
+            fields. For example cryptographic salt material, bloom
+            filter length.
+        :ivar fields: Information and configuration specific to each
+            field. For example how to validate and tokenize a phone
+            number.
     """
-    __slots__ = ('version', 'hashing_globals', 'fields')
-
-    def __init__(self, version, hashing_globals, fields):
-        # type: (str, GlobalHashingProperties, List[FieldSpec]) -> None
-
+    def __init__(self,
+                 version,          # type: Hashable
+                 hashing_globals,  # type: GlobalHashingProperties
+                 fields            # type: Sequence[FieldSpec]
+                 ):
+        # type: (...) -> None
         self.version = version
         self.hashing_globals = hashing_globals
         self.fields = fields
 
     def __repr__(self):
-        return "<Schema (v{}): {} fields>".format(self.version, len(self.fields))
+        return "<Schema (v{}): {} fields>".format(self.version,
+                                                  len(self.fields))
 
     @classmethod
     def from_json_dict(cls, schema_dict, validate=True):
         # type: (Dict[str, Any], bool) -> Schema
         """ Make a Schema object from a dictionary.
 
-            The dictionary must have a `'features'` key specifying the
-            columns of the dataset. It must have a `'version'` key
-            containing the master schema version that this schema
-            conforms to. It must have a `'hash'` key with all the
-            globals.
-
-            :param schema_dict: The dictionary to use.
+            :param schema_dict: This dictionary must have a `'features'`
+                key specifying the columns of the dataset. It must have
+                a `'version'` key containing the master schema version
+                that this schema conforms to. It must have a `'hash'`
+                key with all the globals.
             :param validate: (default True) Raise an exception if the
                 schema does not conform to the master schema.
             :return: The resulting :class:`Schema` object.
@@ -163,7 +160,8 @@ class Schema(object):
             # This raises iff the schema is invalid.
             validate_schema_dict(schema_dict)
 
-        hash_properties = GlobalHashingProperties.from_json_dict(schema_dict['clkConfig'])
+        hash_properties = GlobalHashingProperties.from_json_dict(
+            schema_dict['clkConfig'])
         features = schema_dict['features']
         return cls(
             schema_dict['version'],
@@ -171,8 +169,28 @@ class Schema(object):
             list(map(spec_from_json_dict, features))
         )
 
+    @classmethod
+    def from_json_file(cls, schema_file, validate=True):
+        # type: (TextIO, bool) -> Schema
+        """ Load a Schema object from a json file.
 
-def get_master_schema_(version):
+            :param schema_file: A JSON file containing the schema.
+            :raises SchemaError: When the schema is invalid.
+            :return: The resulting :class:`Schema` object.
+        """
+        try:
+            schema_dict = json.load(schema_file)
+        except ValueError as e:  # In Python 3 we can be more specific
+                                 # with json.decoder.JSONDecodeError,
+                                 # but that doesn't exist in Python 2.
+            msg = 'The schema is not a valid JSON file.'
+            raise_from(SchemaError(msg), e)
+
+        return cls.from_json_dict(schema_dict, validate=validate)
+
+
+
+def get_master_schema(version):
     # type: (Hashable) -> bytes
     """ Loads the master schema of given version as bytes.
 
@@ -208,17 +226,6 @@ def get_master_schema_(version):
     return schema_bytes
 
 
-class SchemaError(Exception):
-    """ The user-defined schema is invalid.
-    """
-
-
-class MasterSchemaError(Exception):
-    """ Master schema missing? Corrupted? Otherwise surprising? This is
-        the exception for you!
-    """
-
-
 def validate_schema_dict(schema):
     # type: (Dict[str, Any]) -> None
     """ Validate the schema.
@@ -240,7 +247,7 @@ def validate_schema_dict(schema):
     else:
         raise SchemaError('A format version is expected in the schema.')
 
-    master_schema_bytes = get_master_schema_(version)
+    master_schema_bytes = get_master_schema(version)
     try:
         master_schema = json.loads(master_schema_bytes.decode('utf-8'))
     except ValueError as e:  # In Python 3 we can be more specific with
@@ -258,23 +265,3 @@ def validate_schema_dict(schema):
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)
-
-
-def schema_from_json_file(schema_file):
-    # type: (TextIO) -> Schema
-    """ Load a Schema object from a json file.
-
-        :param schema_file: A JSON file containing the schema.
-        :raises SchemaError: When the schema is invalid.
-        :return: The resulting :class:`Schema` object.
-    """
-    try:
-        schema_dict = json.load(schema_file)
-    except ValueError as e:  # In Python 3 we can be more specific with
-                             # json.decoder.JSONDecodeError, but that
-                             # doesn't exist in Python 2.
-        raise_from(
-            SchemaError('The schema is not a valid JSON file.'),
-            e)
-
-    return Schema.from_json_dict(schema_dict, validate=True)

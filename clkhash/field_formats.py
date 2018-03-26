@@ -44,21 +44,13 @@ class FieldHashingProperties(object):
         :ivar weight: Controls the weight of the field in the Bloom
             filter.
     """
-    __slots__ = ('encoding', 'ngram', 'positional', 'weight')
-
-    DEFAULT_ENCODING = 'utf-8'
-    DEFAULT_POSITIONAL = False
-    DEFAULT_WEIGHT = 1
+    _DEFAULT_ENCODING = 'utf-8'
+    _DEFAULT_POSITIONAL = False
+    _DEFAULT_WEIGHT = 1
 
     def __init__(self, **kwargs):
         # type: (...) -> None
-        """ Make a FieldHashingProperties object from keyword
-            arguments.
-
-            :param encoding: (optional) Value of `self.encoding`.
-            :param ngram: (optional) Value of `self.ngram`.
-            :param positional: (optional) Value of `self.positional`.
-            :param weight: (optional) Value of `self.weight`.
+        """ Make a FieldHashingProperties object from keyword arguments.
         """
         if 'encoding' in kwargs:
             self.encoding = kwargs['encoding']
@@ -83,14 +75,14 @@ class FieldHashingProperties(object):
         """
         result = cls()
 
-        result.encoding = FieldHashingProperties.DEFAULT_ENCODING
+        result.encoding = FieldHashingProperties._DEFAULT_ENCODING
         result.ngram = field_hash_properties['ngram']
         result.positional = field_hash_properties.get(
             'positional',
-            FieldHashingProperties.DEFAULT_POSITIONAL)
+            FieldHashingProperties._DEFAULT_POSITIONAL)
         result.weight = field_hash_properties.get(
             'weight',
-            FieldHashingProperties.DEFAULT_WEIGHT)
+            FieldHashingProperties._DEFAULT_WEIGHT)
 
         return result
 
@@ -108,11 +100,6 @@ class FieldSpec(object):
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a HashingProperties object from keyword arguments.
-
-            :param identifier: (optional) Value of `self.identifier`.
-            :param description: (optional) Value of `self.description`.
-            :param hashing_properties: (optional) Value of
-                `self.hashing_properties`.
         """
         if 'identifier' in kwargs:
             self.identifier = kwargs['identifier']
@@ -194,16 +181,11 @@ class StringSpec(FieldSpec):
             there is no maximum length. Present only if the
             specification is not regex-based.
     """
-    DEFAULT_CASE = 'mixed'
+    _DEFAULT_CASE = 'mixed'
 
     def __init__(self, **kwargs):
         # type(...) -> None
         """ Make a HashingProperties object from keyword arguments.
-
-            :param regex: (optional) Value of `self.regex`.
-            :param case: (optional) Value of `self.case`.
-            :param min_length: (optional) Value of `self.min_length`.
-            :param max_length: (optional) Value of `self.max_length`.
         """
         super().__init__(**kwargs)
 
@@ -249,7 +231,7 @@ class StringSpec(FieldSpec):
                 raise_from(InvalidSchemaError(msg), e)
 
         else:
-            result.case = format_.get('case', StringSpec.DEFAULT_CASE)
+            result.case = format_.get('case', StringSpec._DEFAULT_CASE)
             result.min_length = format_.get('minLength')
             result.max_length = format_.get('maxLength')
 
@@ -319,9 +301,6 @@ class IntegerSpec(FieldSpec):
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a HashingProperties object from keyword arguments.
-
-            :param minimum: (optional) Value of `self.minimum`.
-            :param maximum: (optional) Value of `self.maximum`.
         """
         super().__init__(**kwargs)
 
@@ -399,8 +378,6 @@ class DateSpec(FieldSpec):
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a HashingProperties object from keyword arguments.
-
-            :param format: (optional) Value of `self.format`.
         """
         super().__init__(**kwargs)
 
@@ -469,8 +446,6 @@ class EnumSpec(FieldSpec):
     def __init__(self, **kwargs):
         # type: (...) -> None
         """ Make a HashingProperties object from keyword arguments.
-
-            :param values: (optional) Value of `self.values`.
         """
         super().__init__(**kwargs)
 

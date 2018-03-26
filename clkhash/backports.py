@@ -13,12 +13,12 @@ except AttributeError:
 
     def __int_from_bytes(bytes, byteorder, signed=False):
         # type: (Sequence[int], str, bool) -> int
-        """ Emulate Python 3's int.from_bytes.
+        """ Emulate Python 3's `int.from_bytes`.
 
             Kudos: https://stackoverflow.com/a/30403242 (with
             modifications)
 
-            :param bytes_: The bytes to turn into an `int`.
+            :param bytes: The bytes to turn into an `int`.
             :param byteorder: Either `'big'` or `'little'`.
         """
         if signed:

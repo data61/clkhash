@@ -1,7 +1,9 @@
 import pkg_resources
 
 from . import bloomfilter
+from . import field_formats
 from . import key_derivation
+from . import schema
 from . import randomnames
 
 try:

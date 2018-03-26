@@ -52,13 +52,13 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
                 StringSpec(
                     identifier='some info',
                     hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties.DEFAULT_ENCODING,
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1
                     ),
                     description=None,
-                    case=StringSpec.DEFAULT_CASE,
+                    case=StringSpec._DEFAULT_CASE,
                     min_length=0,
                     max_length=None
                 )

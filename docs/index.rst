@@ -12,6 +12,7 @@ Welcome to CLK hash's documentation!
 
    clkhash
    schema
+   field_formats
 
 
 Indices and tables

@@ -47,6 +47,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     :param keys: hmac secret keys for md5 and sha1 as bytes
     :param k: number of hash functions to use per element of the ngrams
     :param l: length of the output bitarray
+    :param encoding: the encoding to use when turning the ngrams to bytes
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
@@ -197,6 +198,7 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     :param key: secret key for blake2 as bytes
     :param k: number of hash functions to use per element of the ngrams
     :param l: length of the output bitarray (has to be a power of 2)
+    :param encoding: the encoding to use when turning the ngrams to bytes
 
     :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
