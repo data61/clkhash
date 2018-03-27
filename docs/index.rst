@@ -6,10 +6,12 @@ clkhash: Cryptographic Linkage Key Hashing
    :maxdepth: 2
    :caption: Contents:
 
+   tutorial.ipynb
    cli
    schema
    development
    references
+
 
 
 ``clkhash`` is a python implementation of cryptographic linkage key hashing as described by Rainer
