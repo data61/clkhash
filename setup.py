@@ -13,10 +13,14 @@ requirements = [
         "enum34==1.1.6; python_version < '3.4'"
     ]
 
+readme = open('README.md').read()
+
 setup(
     name="clkhash",
-    version='0.10.1',
+    version='0.10.1-rc2',
     description='Hash utility to create Cryptographic Linkage Keys',
+    long_description=readme,
+    long_description_content_type='text/markdown',
     url='https://github.com/n1analytics/clkhash',
     license='Apache',
     install_requires=requirements,
