@@ -7,6 +7,7 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 
+[![Build Status](https://travis-ci.org/n1analytics/clkhash.svg?branch=master)](https://travis-ci.org/n1analytics/clkhash)
 
 ## Installation
 

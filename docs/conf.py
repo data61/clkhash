@@ -121,8 +121,8 @@ html_logo = '_static/logo.svg'
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
+        'globaltoc.html',
+        'searchbox.html'
     ]
 }
 
