@@ -13,11 +13,11 @@ requirements = [
         "enum34==1.1.6; python_version < '3.4'"
     ]
 
-readme = open('README.md').read()
+readme = open('README.md', 'rt', encoding='utf8').read()
 
 setup(
     name="clkhash",
-    version='0.10.1-rc2',
+    version='0.10.1-rc3',
     description='Hash utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
