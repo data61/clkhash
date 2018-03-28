@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import codecs
 
 requirements = [
         "bitarray==0.8.1",
@@ -13,7 +14,8 @@ requirements = [
         "enum34==1.1.6; python_version < '3.4'"
     ]
 
-readme = open('README.md', 'rt', encoding='utf8').read()
+with codecs.open('README.md', 'r', 'utf-8') as f:
+    readme = f.read()
 
 setup(
     name="clkhash",
