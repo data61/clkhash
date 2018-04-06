@@ -13,17 +13,18 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 """
 from __future__ import print_function
 
+import base64
 import csv
-from typing import List, Tuple, Iterable, TextIO, Union, Dict
-
-import random
 from datetime import datetime, timedelta
 import math
-
+import os
 import pkgutil
+import random
+import re
+from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
-from clkhash.schema import get_schema_types
-
+from clkhash.schema import Schema
+from clkhash.field_formats import FieldSpec
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
@@ -40,7 +41,7 @@ def load_csv_data(resource_name):
 
 
 def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
-             schema,    # type: Iterable[Dict[str, str]]
+             headers,   # type: Iterable[str]
              file       # type: TextIO
              ):
     # type: (...) -> None
@@ -52,7 +53,7 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
     :param file: A writeable stream in which to write the CSV
     """
 
-    print(','.join(col['identifier'] for col in schema), file=file)
+    print(','.join(headers), file=file)
     writer = csv.writer(file)
     writer.writerows(data)
 
@@ -73,14 +74,14 @@ def random_date(start, end):
 
 
 class NameList:
-    """List of randomly generated names"""
+    """ List of randomly generated names.
+    """
 
-    schema = [
-            {"identifier": "INDEX"},
-            {"identifier": "NAME freetext"},
-            {"identifier": "DOB YYYY/MM/DD"},
-            {"identifier": "GENDER M or F"}
-        ]
+    with open(os.path.join(os.path.dirname(__file__),
+                           'data',
+                           'randomnames-schema.json')) as f:
+        SCHEMA = Schema.from_json_file(f)
+    del f
 
     def __init__(self, n):
         # type: (int) -> None
@@ -93,10 +94,11 @@ class NameList:
 
     @property
     def schema_types(self):
-        return get_schema_types(self.schema)
+        # type: () -> Sequence[FieldSpec]
+        return self.SCHEMA.fields
 
     def generate_random_person(self, n):
-        # type: (int) -> Iterable[Tuple[int, str, str, str]]
+        # type: (int) -> Iterable[Tuple[str, str, str, str]]
         """
         Generator that yields details on a person with plausible name, sex and age.
 
@@ -110,7 +112,7 @@ class NameList:
             last_name = random.choice(self.all_last_names)
 
             yield (
-                i,
+                str(i),
                 first_name + ' ' + last_name,
                 dob,
                 sex

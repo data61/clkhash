@@ -1,8 +1,10 @@
+import base64
 import unittest
-from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE, HKDFconfig
-from clkhash.identifier_types import IdentifierType
-from clkhash.bloomfilter import crypto_bloom_filter
 
+from clkhash.bloomfilter import stream_bloom_filters
+from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE, HKDFconfig
+from clkhash.schema import GlobalHashingProperties, Schema
+from clkhash.field_formats import FieldHashingProperties, StringSpec
 
 class TestKeyDerivation(unittest.TestCase):
 
@@ -38,18 +40,86 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_compare_to_legacy(self):
         # Identifier: 'ANY freetext'
-        schema = [IdentifierType()] * 4
+        schema = Schema(
+            version=1,
+            hashing_globals=GlobalHashingProperties(
+                k=10,
+                kdf_hash='SHA256',
+                kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+                kdf_key_size=64,
+                kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+                kdf_type='HKDF',
+                l=1024,
+                hash_type='doubleHash',
+                hash_prevent_singularity=False,
+                xor_folds=0
+            ),
+            fields=[
+                StringSpec(
+                    identifier='ANY text 1',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        weight=1
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                ),
+                StringSpec(
+                    identifier='ANY text 2',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        weight=1
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                ),
+                StringSpec(
+                    identifier='ANY text 3',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        weight=1
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                ),
+                StringSpec(
+                    identifier='ANY text 4',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        weight=1
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                )
+            ]
+        )
+
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
         master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
-        k = 10
         keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
         keys_legacy = generate_key_lists(master_secrets, len(row), kdf='legacy')
-        bloom_hkdf = crypto_bloom_filter(row, schema, keys_hkdf, k=k)
-        bloom_legacy = crypto_bloom_filter(row, schema, keys_legacy, k=k)
+        bloom_hkdf = next(stream_bloom_filters([row], keys_hkdf, schema))
+        bloom_legacy = next(stream_bloom_filters([row], keys_legacy, schema))
         hkdf_count = bloom_hkdf[0].count()
         legacy_count = bloom_legacy[0].count()
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
-        self.assertLessEqual(legacy_count, k * 6) # 6 bi-grams
+        self.assertLessEqual(legacy_count, schema.hashing_globals.k * 6) # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 

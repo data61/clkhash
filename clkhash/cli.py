@@ -2,16 +2,15 @@
 from __future__ import print_function
 
 import json
+import os
+import shutil
 import time
 
 import click
 import requests
 
 import clkhash
-from clkhash import clk
-from clkhash import benchmark as bench
-from clkhash import randomnames
-from clkhash.schema import get_schema_types, load_schema
+from clkhash import benchmark as bench, clk, randomnames
 
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
@@ -37,7 +36,7 @@ def cli(verbose=False):
 
     Example:
 
-        clkutil hash private_data.csv secretkey1 secretkey2 output-clks.json
+        clkutil hash private_data.csv secretkey1 secretkey2 schema.json output-clks.json
 
 
     All rights reserved Confidential Computing 2016.
@@ -48,15 +47,14 @@ def cli(verbose=False):
 @cli.command('hash', short_help="generate hashes from local PII data")
 @click.argument('input', type=click.File('r'))
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
-@click.option('--schema', '-s', type=click.File('r'), default=None)
+@click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('output', type=click.File('w'))
 @click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
-@click.option('--xor-folds', default=0, type=click.IntRange(0, None))
-def hash(input, output, schema, keys, quiet, no_header, xor_folds):
+def hash(input, keys, schema, output, quiet, no_header):
     """Process data to create CLKs
 
-    Given a file containing CSV data as INPUT, and optionally a json
+    Given a file containing csv data as INPUT, and a json
     document defining the expected schema, verify the schema, then
     hash the data to create CLKs writing to OUTPUT. Note the CSV
     file should contain a header row - however this row is not used
@@ -69,9 +67,11 @@ def hash(input, output, schema, keys, quiet, no_header, xor_folds):
     Use "-" to output to stdout.
     """
 
-    schema_types = get_schema_types(load_schema(schema))
+    schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
 
-    clk_data = clk.generate_clk_from_csv(input, keys, schema_types, no_header, not quiet, xor_folds)
+    clk_data = clk.generate_clk_from_csv(
+        input, keys, schema_object,
+        header=not no_header, progress_bar=not quiet)
     json.dump({'clks': clk_data}, output)
     if hasattr(output, 'name'):
         log("CLK data written to {}".format(output.name))
@@ -101,12 +101,12 @@ fetch the resulting linkage table from the service.
 
 To upload using the cli tool for entity A:
 
-    clkutil hash a_people.csv A_HASHED_FILE.json
+    clkutil hash a_people.csv key1 key2 schema.json A_HASHED_FILE.json
     clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[0]}"  A_HASHED_FILE.json
 
 To upload using the cli tool for entity B:
 
-    clkutil hash b_people.csv B_HASHED_FILE.json
+    clkutil hash b_people.csv key1 key2 schema.json B_HASHED_FILE.json
     clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[1]}" B_HASHED_FILE.json
 
 After both users have uploaded their data one can watch for and retrieve the results:
@@ -271,7 +271,23 @@ def generate(size, output, schema):
     if schema is not None:
         raise NotImplementedError
 
-    randomnames.save_csv(pii_data.names, pii_data.schema, output)
+    randomnames.save_csv(
+        pii_data.names,
+        [f.identifier for f in pii_data.SCHEMA.fields],
+        output)
+
+
+@cli.command('generate-default-schema',
+             short_help='get the default schema used in generated random PII')
+@click.argument('output', type=click.Path(writable=True,
+                                          readable=False,
+                                          resolve_path=True))
+def generate_default_schema(output):
+    """Get default schema for fake PII"""
+    original_path = os.path.join(os.path.dirname(__file__),
+                                 'data',
+                                 'randomnames-schema.json')
+    shutil.copyfile(original_path, output)
 
 
 if __name__ == "__main__":

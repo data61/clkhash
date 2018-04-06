@@ -1,0 +1,154 @@
+
+{
+  "version": 1,
+  "clkConfig": {
+    "k": 20,
+    "hash": {
+      "type": "doubleHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "firstName",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "middleNames",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 50,
+        "case": "upper",
+        "description": "comma separated list of middle names"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "lastName",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "mobilePhone",
+      "format": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 999999999999999,
+        "description": "as international number, but without '+' or '00' in front of country code. According to E.164 of ITU-T, a international number is limited to 15 digits."
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "homeLandLine",
+      "format": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 999999999999999
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "emailAddress",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "lower"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "gender",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F", "O"],
+        "description": "'O' for other. If unknown leave empty."
+      },
+      "hashing": {
+        "ngram": 1
+      }
+    },
+    {
+      "identifier": "DobYyyy",
+      "description": "The year of date of birth.",
+      "format": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 9999
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "dobMmDd",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "minLength": 4,
+        "maxLength": 4,
+        "description": "Month and day of birth (eg: 1125)"
+      },
+      "hashing": {
+        "ngram": 2
+      }
+    },
+    {
+      "identifier": "addressKey",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "pattern": "[1-9][0-9]{3}[0-9A-Z][0-9]{3}[L,0][0-9]{3}(FL|00|  )(     |[0-9]{5})$",
+        "description": "don't ask..."
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "postCode",
+      "format": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 9999
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    }
+  ]
+}
