@@ -28,7 +28,7 @@ from clkhash.field_formats import FieldSpec
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
-    """Loads a specified data file as csv and returns the first column as a Python list
+    """Loads a specified CSV data file and returns the first column as a Python list
     """
     data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
     if data_bytes is None:
@@ -46,11 +46,11 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
              ):
     # type: (...) -> None
     """
-    Output generated data as csv with header.
+    Output generated data to file as CSV with header.
 
     :param data: An iterable of tuples containing raw data.
     :param schema: Iterable of schema definition dicts
-    :param file: A writeable stream in which to write the csv
+    :param file: A writeable stream in which to write the CSV
     """
 
     print(','.join(headers), file=file)
@@ -134,18 +134,19 @@ class NameList:
 
     def generate_subsets(self, sz, overlap=0.8):
         """
-        Generate a pair of subsets of the name list with a specified overlap
+        Return a pair of random subsets of the name list with a specified
+        proportion of elements in common.
 
         :param sz: length of subsets to generate
         :param overlap: fraction of the subsets that should have the same names in them
-        :return: 2-tuple of lists of subsets
+        :raises ValueError: if there aren't sufficiently many names in the list to satisfy
+            the request; more precisely, raises if sz + (1 - overlap)*sz > n = len(self.names)
+        :return: pair of subsets
         """
-        nrec = len(self.names)
-        overlap = int(math.floor(overlap * sz))
-        notoverlap = sz - overlap
-        rsamp = random.sample(list(range(nrec)), sz + notoverlap)
-        l1 = rsamp[:sz]
-        l2 = rsamp[:overlap] + rsamp[sz:sz + notoverlap]
-        random.shuffle(l1)
-        random.shuffle(l2)
-        return [self.names[i] for i in l1],  [self.names[i] for i in l2]
+        notoverlap = sz - int(math.floor(overlap * sz))
+        total_sz = sz + notoverlap
+        if total_sz > len(self.names):
+            raise ValueError('Requested subset size and overlap demands more '
+                             + 'than the number of available names')
+        sset = random.sample(self.names, total_sz)
+        return sset[:sz], sset[notoverlap:]

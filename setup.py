@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import codecs
 
 requirements = [
         "bitarray>=0.8",
@@ -15,10 +16,15 @@ requirements = [
         "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
 
+with codecs.open('README.md', 'r', 'utf-8') as f:
+    readme = f.read()
+
 setup(
     name="clkhash",
-    version='0.10.0',
+    version='0.10.1',
     description='Hash utility to create Cryptographic Linkage Keys',
+    long_description=readme,
+    long_description_content_type='text/markdown',
     url='https://github.com/n1analytics/clkhash',
     license='Apache',
     install_requires=requirements,

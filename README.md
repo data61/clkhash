@@ -1,14 +1,15 @@
 # CLK Hash
 
-Python implementation of cryptographic linkage key hashing. Supports Python versions 2.7+, 3.4+
+Python implementation of cryptographic longterm key hashing. Supports Python versions 2.7+, 3.4+
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
 
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 
+[![Build Status](https://travis-ci.org/n1analytics/clkhash.svg?branch=master)](https://travis-ci.org/n1analytics/clkhash)
 
-# Installation
+## Installation
 
 Install clkhash with all dependencies using pip:
 
@@ -18,7 +19,12 @@ If the installation of `bitarray` fails on Windows you may need to install the a
 [Visual Studio C++ compiler](https://wiki.python.org/moin/WindowsCompilers) for your version
 of Python; this is required because the `bitarray` library compiles a C extension.
 
-# CLI Tool
+## Documentation
+
+[https://clkhash.readthedocs.io](https://clkhash.readthedocs.io/en/latest/)
+
+
+## CLI Tool
 
 After installation of the clkhash library you should have a `clkutil` program in your path.
 Alternatively you can use `python -m clkhash.cli`.
@@ -50,51 +56,16 @@ To hash this data using its schema, with the shared secret keys `horse` and `sta
 Note the keys should only be shared with the other entity - and not with anyone carrying out
 the record linkage.
 
-To use the clkutil without installation (after installing the dependencies) just run:
+To use the command line tool without installing `clkhash`, install the dependencies, then run:
 
     python -m clkhash.cli
 
-# clkhash api
+## clkhash api
 
-To hash a csv file of entities using the default schema:
+To hash a CSV file of entities using the default schema:
 
 ```python
 from clkhash import clk, randomnames
 fake_pii_schema = randomnames.NameList.SCHEMA
 clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), fake_pii_schema)
-```
-
-## Benchmark
-
-```
-$ python -m clkhash.cli benchmark
-10000 hashes in 1.524871 seconds. 6.56 KH/s
-```
-
-As a rule of thumb a single modern core will hash around 1M entities in about 20 minutes.
-
-
-# Tests
-
-Run unit tests and print out code coverage with `py.test`:
-
-```
-$ python -m pytest --cov=clkhash
-```
-
-Note several tests will be skipped by default. To enable the command
-line tests set the  `INCLUDE_CLI` environment variable. To enable
-the tests which interact with an entity service set the
-`TEST_ENTITY_SERVICE` environment variable to the target service's
-address.
-
-```
-$ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m pytest --cov=clkhash
-```
-
-
-# Static Typechecking
-
-```
-$ mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
 ```

@@ -215,7 +215,7 @@ class TestHashCommand(unittest.TestCase):
             'testdata/randomnames-schema.json'
         )
 
-        # This csv has 14 features
+        # This CSV has 14 features
         a_pii = os.path.join(
             os.path.dirname(__file__),
             'testdata/dirty_1000_50_1.csv'

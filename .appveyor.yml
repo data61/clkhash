@@ -37,9 +37,10 @@ after_test:
   # This step builds the source and wheel distribution packages.
   - "%PYTHON%\\python.exe setup.py sdist bdist_wheel"
 
-artifacts:
-  # bdist_wheel puts your built wheel in the dist directory
-  - path: dist\*
+# Note Appveyor has only a small allocation for artifacts
+#artifacts:
+#  # bdist_wheel puts your built wheel in the dist directory
+#  - path: dist\*
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.

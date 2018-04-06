@@ -1,3 +1,9 @@
+## 0.10.1
+
+* Major documentation updates.
+* Improvements and bug fix in data generation.
+* CI fix disable storing artifacts on AppVeyor.
+
 ## 0.10.0
 
 * Introduced a more secure variant of the double hash encoding scheme.
@@ -9,7 +15,6 @@
 We now build clkhash with continuous integration tools that anyone 
 can access [Travis CI](https://travis-ci.org/n1analytics/clkhash/) 
 and [AppVeyor](https://ci.appveyor.com/project/hardbyte/clkhash).
-
 
 ## 0.9.0
 

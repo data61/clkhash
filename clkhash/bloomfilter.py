@@ -96,9 +96,6 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
     irrespective of the value :math:`i`. A discussion of this potential flaw can be found
     `here <https://github.com/n1analytics/clkhash/issues/33>`_.
 
-    .. [Schnell2011] Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel Error-Tolerant Anonymous Linking Code.
-       http://soz-159.uni-duisburg.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
-
     :param ngrams: list of n-grams to be encoded
     :param key_sha1: hmac secret keys for sha1 as bytes
     :param key_md5: hmac secret keys for md5 as bytes
@@ -180,19 +177,6 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
          | However, we think that using independent hash functions alone will not be sufficient to ensure security, since
            in this case other approaches (maybe related to or at least inspired through work from the area of Frequent
            Itemset Mining) are promising to detect at least the most frequent atoms automatically.
-
-    .. [Schnell2011] Schnell, R & Bachteler, T, and Reiher, J.
-       A Novel Error-Tolerant Anonymous Linking Code
-       http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
-
-    .. [Kroll2015] Kroll, M., & Steinmetzer, S. (2015).
-       Who is 1011011111...1110110010? automated cryptanalysis of bloom filter encryptions of databases with several
-       personal identifiers.
-       In Communications in Computer and Information Science. https://doi.org/10.1007/978-3-319-27707-3_21
-
-    .. [Kaminsky2011] Kaminsky, A. (2011).
-       GPU Parallel Statistical and Cube Test Analysis of the SHA-3 Finalist Candidate Hash Functions.
-       https://www.cs.rit.edu/~ark/parallelcrypto/sha3test01/jce2011.pdf
 
     :param ngrams: list of n-grams to be encoded
     :param key: secret key for blake2 as bytes
