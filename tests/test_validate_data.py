@@ -9,7 +9,7 @@ from clkhash.validate_data import (EntryError, FormatError,
 
 class FieldsMaker(unittest.TestCase):
     def setUp(self):
-        ascii_hashing = FieldHashingProperties(encoding='ascii')
+        ascii_hashing = FieldHashingProperties(encoding='ascii', ngram=2)
         self.fields = [
             StringSpec(
                 identifier='given name',
@@ -27,7 +27,7 @@ class FieldsMaker(unittest.TestCase):
             ),
             StringSpec(
                 identifier='email address',
-                regex=re_compile_full(r'.+@.+\..+'),
+                regex=r'.+@.+\..+',
                 hashing_properties=ascii_hashing
             ),
             IntegerSpec(

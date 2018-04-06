@@ -52,11 +52,11 @@ class TestFieldFormats(unittest.TestCase):
         self.assertIs(spec.hashing_properties.positional, False)
         self.assertEqual(spec.hashing_properties.weight, 1)
 
-    def test_string_nonregex(self):
-        regex_spec = dict(
+    def test_string_nonregex_from_json_dict(self):
+        spec_dict = dict(
             identifier='noRegex',
             format=dict(
-                # 'minLength' and 'maxLength' are missing.
+                # note 'minLength' and 'maxLength' are missing.
                 type='string',
                 encoding='utf-8',
                 description='bar'),
@@ -65,7 +65,7 @@ class TestFieldFormats(unittest.TestCase):
                 positional=True,
                 weight=0))
 
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # The min and max lengths should be None.
         self.assertIsNone(spec.min_length)
@@ -76,9 +76,9 @@ class TestFieldFormats(unittest.TestCase):
         spec.validate('doggo' * 10000)
 
         # Ok, let's put a 'minLength' and 'maxLength' in.
-        regex_spec['format']['minLength'] = 5
-        regex_spec['format']['maxLength'] = 8
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        spec_dict['format']['minLength'] = 5
+        spec_dict['format']['maxLength'] = 8
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are not fine anymore.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -106,6 +106,31 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
         self.assertEqual(spec.hashing_properties.weight, 0)
+
+    def test_string_nonregex_init(self):
+        hashing_properties = field_formats.FieldHashingProperties(
+            ngram=2, encoding='utf-8')
+        spec = field_formats.StringSpec(
+            identifier='first name',
+            hashing_properties=hashing_properties,
+            case='mixed',
+            min_length=5)
+
+        # The min should be set, and max length should be None.
+        self.assertEqual(spec.min_length, 5)
+        self.assertIsNone(spec.max_length)
+
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('hi')
+        spec.validate('hello this is fine')
+
+        # Check random metadata.
+        self.assertEqual(spec.identifier, 'first name')
+        self.assertIsNone(spec.description)
+
+        # Check the hashing specs.
+        self.assertTrue(hasattr(spec, 'hashing_properties'))
+
 
     def test_integer(self):
         regex_spec = dict(
