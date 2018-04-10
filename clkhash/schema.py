@@ -16,7 +16,8 @@ import jsonschema
 from clkhash.field_formats import FieldSpec, spec_from_json_dict
 
 
-MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
+MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
+                            2: 'v2.json'}  # type: Dict[Hashable, Text]
 
 
 class SchemaError(Exception):
