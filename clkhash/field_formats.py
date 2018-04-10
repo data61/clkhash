@@ -585,6 +585,7 @@ class Ignore(FieldSpec):
     def __init__(self,
                  identifier=None  # type: str
                  ):
+        # type: (...) -> None
         super().__init__(identifier, None)
 
     def validate(self, str_in):
