@@ -3,7 +3,7 @@
   "version": 1,
   "clkConfig": {
     "l": 1024,
-    "k": 20,
+    "k": 30,
     "hash": {
       "type": "doubleHash"
     },
@@ -23,8 +23,7 @@
       },
       "hashing": {
         "ngram": 1,
-        "weight": 1,
-        "positional": true
+        "weight": 0
       }
     },
     {
