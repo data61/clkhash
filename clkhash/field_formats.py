@@ -578,6 +578,19 @@ class EnumSpec(FieldSpec):
             raise InvalidEntryError(msg)
 
 
+class Ignore(FieldSpec):
+    """
+    represent a field which will be ignored throughout the clk processing.
+    """
+    def __init__(self,
+                 identifier=None  # type: str
+                 ):
+        super().__init__(identifier, None)
+
+    def validate(self, str_in):
+        pass
+
+
 # Map type string (as defined in master schema) to
 FIELD_TYPE_MAP = {
     'string': StringSpec,
@@ -595,6 +608,8 @@ def spec_from_json_dict(json_dict):
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
+    if 'ignored' in json_dict:
+        return Ignore(json_dict['identifier'])
     type_str = json_dict['format']['type']
     spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
     return spec_type.from_json_dict(json_dict)
