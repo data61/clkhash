@@ -46,6 +46,15 @@ schema
     :show-inheritance:
 
 
+field_formats
+-------------
+
+.. automodule:: clkhash.field_formats
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 tokenizer
 ---------
 
