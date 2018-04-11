@@ -105,7 +105,7 @@ class FieldHashingProperties(object):
 class FieldSpec(object):
     """ Abstract base class representing the specification of a column
         in the dataset. Subclasses validate entries, and modify the
-        `hashing_properties  ivar to customise hashing procedures.
+        `hashing_properties`  ivar to customise hashing procedures.
 
         :ivar str identifier: The name of the field.
         :ivar str description: Description of the field format.
