@@ -586,7 +586,7 @@ class Ignore(FieldSpec):
                  identifier=None  # type: str
                  ):
         # type: (...) -> None
-        super().__init__(identifier, None)
+        super().__init__(identifier, FieldHashingProperties(ngram=0, weight=0))
 
     def validate(self, str_in):
         pass
