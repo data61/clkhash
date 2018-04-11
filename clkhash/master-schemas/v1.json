@@ -12,7 +12,8 @@
       "items": {
         "type": "object",
           "oneOf": [
-            { "$ref": "#/definitions/featureConfig"}
+            { "$ref": "#/definitions/featureConfig"},
+            { "$ref": "#/definitions/ignoreFeature"}
           ]
       }
     }
@@ -80,6 +81,15 @@
         "salt": {"type": "string", "description": "base64 encoded bytes"},
         "info": {"type": "string", "description": "base64 encoded bytes"},
         "keySize": {"type": "integer", "minimum": 1}
+      }
+    },
+    "ignoreFeature": {
+      "type": "object",
+      "required": ["identifier","ignored"],
+      "properties": {
+        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "ignored":  {"enum": [true]},
+        "description": {"type": "string"}
       }
     },
     "featureConfig": {
