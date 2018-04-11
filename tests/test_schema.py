@@ -18,8 +18,6 @@ class TestSchemaValidation(unittest.TestCase):
         # These are some perfectly fine schemas.
         with open(_test_data_file_path('good-schema-v1.json')) as f:
             schema.Schema.from_json_file(f)
-        with open(_test_data_file_path('good-schema-v2.json')) as f:
-            schema.Schema.from_json_file(f)
 
     def test_invalid_schema(self):
         # This schema is not valid (missing encoding in its feature).
