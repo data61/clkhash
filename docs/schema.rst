@@ -159,7 +159,7 @@ type                string  no       must be set to "blakeHash"
 features
 ~~~~~~~~
 A feature is either described by a :ref:`schema/featureConfig`, or alternatively, it can be ignored by the clkhash
-library by defining a :ref:`ignoreFeature` section.
+library by defining a :ref:`schema/ignoreFeature` section.
 
 
 .. _schema/ignoreFeature:
