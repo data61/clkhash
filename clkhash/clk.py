@@ -4,11 +4,9 @@ Generate CLK from data.
 
 import concurrent.futures
 import logging
-import platform
-import sys
 import time
-from typing import (Any, AnyStr, Callable, Iterable, List, Optional,
-                    Sequence, TextIO, Tuple, TypeVar, Union)
+from typing import (AnyStr, Callable, Iterable, List, Optional,
+                    Sequence, TextIO, Tuple, TypeVar)
 
 from tqdm import tqdm
 
@@ -128,8 +126,6 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
     futures = []
 
-    stats = OnlineMeanVariance()
-
     # Compute Bloom filter from the chunks and then serialise it
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for chunk in chunks(pii_data, chunk_size):
@@ -143,7 +139,6 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         results = []
         for future in futures:
             clks, clk_stats = future.result()
-            stats.update(clk_stats)
             results.extend(clks)
 
     return results
