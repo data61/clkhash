@@ -15,7 +15,7 @@ def _test_data_file_path(file_name):
 
 class TestSchemaValidation(unittest.TestCase):
     def test_good_schema(self):
-        # This is a perfectly fine schema.
+        # These are some perfectly fine schemas.
         with open(_test_data_file_path('good-schema-v1.json')) as f:
             schema.Schema.from_json_file(f)
 

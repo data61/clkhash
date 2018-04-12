@@ -153,8 +153,31 @@ name                type    optional description
 type                string  no       must be set to "blakeHash"
 =================== ======= ======== ===========
 
+
 .. _schema/features:
 
+features
+~~~~~~~~
+A feature is either described by a :ref:`schema/featureConfig`, or alternatively, it can be ignored by the clkhash
+library by defining a :ref:`schema/ignoreFeature` section.
+
+
+.. _schema/ignoreFeature:
+
+ignoreFeature
+~~~~~~~~~~~~~
+If defined, then clkhash will ignore this feature.
+
+=========== =====================  ======== ===========
+name        type                   optional description
+=========== =====================  ======== ===========
+identifier  string                 no       the name of the feature
+ignored     boolean                no       has to be set to "True"
+description string                 yes      free text, ignored by clkhash
+=========== =====================  ======== ===========
+
+
+.. _schema/featureConfig:
 
 featureConfig
 ~~~~~~~~~~~~~
