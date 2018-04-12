@@ -15,7 +15,8 @@ from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
-from clkhash.validate_data import validate_data, validate_header
+from clkhash.validate_data import (validate_entries, validate_header,
+                                   validate_row_lengths)
 
 
 log = logging.getLogger('clkhash.clk')
@@ -99,6 +100,8 @@ def generate_clk_from_csv(input_f,             # type: TextIO
     for line in reader:
         pii_data.append(tuple([element.strip() for element in line]))
 
+    validate_row_lengths(schema.fields, pii_data)
+
     if progress_bar:
         stats = OnlineMeanVariance()
         with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True,
@@ -142,7 +145,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         hash_algo=schema.hashing_globals.kdf_hash)
 
     if validate:
-        validate_data(schema.fields, pii_data)
+        validate_entries(schema.fields, pii_data)
 
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
