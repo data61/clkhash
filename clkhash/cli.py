@@ -51,7 +51,9 @@ def cli(verbose=False):
 @click.argument('output', type=click.File('w'))
 @click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
-def hash(input, keys, schema, output, quiet, no_header):
+@click.option('--no-check-header', default=False, is_flag=True, help="Don't check the header against the schema")
+@click.option('--no-validate', default=False, is_flag=True, help="Don't validate the entries against the schema")
+def hash(input, keys, schema, output, quiet, no_header, no_check_header, no_validate):
     """Process data to create CLKs
 
     Given a file containing csv data as INPUT, and a json
@@ -68,10 +70,17 @@ def hash(input, keys, schema, output, quiet, no_header):
     """
 
     schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
+    header = True
+    if no_check_header:
+        header = 'ignore'
+    if no_header:
+        header = False
 
     clk_data = clk.generate_clk_from_csv(
         input, keys, schema_object,
-        header=not no_header, progress_bar=not quiet)
+        validate=not no_validate,
+        header=header,
+        progress_bar=not quiet)
     json.dump({'clks': clk_data}, output)
     if hasattr(output, 'name'):
         log("CLK data written to {}".format(output.name))
