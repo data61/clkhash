@@ -105,7 +105,7 @@ class FieldHashingProperties(object):
 class FieldSpec(object):
     """ Abstract base class representing the specification of a column
         in the dataset. Subclasses validate entries, and modify the
-        `hashing_properties  ivar to customise hashing procedures.
+        `hashing_properties`  ivar to customise hashing procedures.
 
         :ivar str identifier: The name of the field.
         :ivar str description: Description of the field format.
@@ -578,6 +578,20 @@ class EnumSpec(FieldSpec):
             raise InvalidEntryError(msg)
 
 
+class Ignore(FieldSpec):
+    """
+    represent a field which will be ignored throughout the clk processing.
+    """
+    def __init__(self,
+                 identifier=None  # type: str
+                 ):
+        # type: (...) -> None
+        super().__init__(identifier, FieldHashingProperties(ngram=0, weight=0))
+
+    def validate(self, str_in):
+        pass
+
+
 # Map type string (as defined in master schema) to
 FIELD_TYPE_MAP = {
     'string': StringSpec,
@@ -595,6 +609,8 @@ def spec_from_json_dict(json_dict):
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
+    if 'ignored' in json_dict:
+        return Ignore(json_dict['identifier'])
     type_str = json_dict['format']['type']
     spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
     return spec_type.from_json_dict(json_dict)

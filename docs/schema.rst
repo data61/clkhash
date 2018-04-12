@@ -8,11 +8,11 @@ Hashing Schema
    This document and the referenced ``schema.json`` file are still in a draft status.
 
 
-As CLKs are usually used for privacy preserving linkage, it is important, that participating organisations agree on how
+As CLKs are usually used for privacy preserving linkage, it is important that participating organisations agree on how
 raw personally identifiable information is hashed to create the CLKs.
 
 We call the configuration of how to create CLKs a *hashing schema*. The organisations agree on one hashing schema
-as configuration to ensure that the have been created in the same way.
+as configuration to ensure that their respective CLKs have been created in the same way.
 
 This aims to be an open standard such that different client implementations could take the schema
 and create identical CLKS given the same data.
@@ -153,8 +153,31 @@ name                type    optional description
 type                string  no       must be set to "blakeHash"
 =================== ======= ======== ===========
 
+
 .. _schema/features:
 
+features
+~~~~~~~~
+A feature is either described by a :ref:`schema/featureConfig`, or alternatively, it can be ignored by the clkhash
+library by defining a :ref:`schema/ignoreFeature` section.
+
+
+.. _schema/ignoreFeature:
+
+ignoreFeature
+~~~~~~~~~~~~~
+If defined, then clkhash will ignore this feature.
+
+=========== =====================  ======== ===========
+name        type                   optional description
+=========== =====================  ======== ===========
+identifier  string                 no       the name of the feature
+ignored     boolean                no       has to be set to "True"
+description string                 yes      free text, ignored by clkhash
+=========== =====================  ======== ===========
+
+
+.. _schema/featureConfig:
 
 featureConfig
 ~~~~~~~~~~~~~
