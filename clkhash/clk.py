@@ -69,12 +69,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        if len(line) == len(schema.fields):
-            pii_data.append(tuple([element.strip() for element in line]))
-        else:
-            raise ValueError("Line had unexpected number of elements. "
-                "Expected {} but there was {}".format(
-                len(schema.fields), len(line)))
+        pii_data.append(tuple([element.strip() for element in line]))
 
     if progress_bar:
         stats = OnlineMeanVariance()

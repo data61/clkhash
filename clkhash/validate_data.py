@@ -6,21 +6,25 @@
     specified schema.
 """
 
-from typing import Sequence
+from typing import Optional, Sequence
 
 from future.utils import raise_from
 
-from clkhash.field_formats import FieldSpec, InvalidEntryError, InvalidSchemaError
+from clkhash.field_formats import (FieldSpec, InvalidEntryError,
+                                   InvalidSchemaError)
 
 
 class EntryError(ValueError):
     """ An entry is invalid.
     """
+    row_index = None  # type: Optional[int]
+    field_spec = None  # type: Optional[FieldSpec]
 
 
 class FormatError(ValueError):
     """ The format of the data is invalid.
     """
+    row_index = None  # type: Optional[int]
 
 
 def validate_data(fields,  # type: Sequence[FieldSpec]
@@ -40,17 +44,29 @@ def validate_data(fields,  # type: Sequence[FieldSpec]
     """
     validators = [f.validate for f in fields]
 
-    for row in data:
+    for i, row in enumerate(data, start=1):
         if len(validators) != len(row):
-            msg = 'Row has {} entries when {} are expected.'.format(
-                len(row), len(validators))
-            raise FormatError(msg)
+            msg = 'Row {} has {} entries when {} are expected.'.format(
+                i, len(row), len(validators))
+            e_row_length = FormatError(msg)
+            e_row_length.row_index = i
+            raise e_row_length
 
         for entry, v in zip(row, validators):
             try:
                 v(entry)
             except InvalidEntryError as e:
-                raise_from(EntryError('Invalid entry.'), e)
+                msg = (
+                    'Invalid entry in row {row_index}, column '
+                    "'{column_name}'. {original_message}"
+                ).format(
+                    row_index=i,
+                    column_name=e.field_spec.identifier,
+                    original_message=e.args[0])
+                e_invalid_entry = EntryError(msg)
+                e_invalid_entry.field_spec = e.field_spec
+                e_invalid_entry.row_index = i
+                raise_from(e_invalid_entry, e)
 
 
 def validate_header(fields,       # type: Sequence[FieldSpec]
@@ -67,12 +83,12 @@ def validate_header(fields,       # type: Sequence[FieldSpec]
             identifiers don't match the specification.
     """
     if len(fields) != len(column_names):
-        msg = 'Header has {} columns when {} are expected'.format(
+        msg = 'Header has {} columns when {} are expected.'.format(
             len(column_names), len(fields))
         raise FormatError(msg)
 
     for f, column in zip(fields, column_names):
         if f.identifier != column:
-            msg = "Column has identifier '{}' when '{}' is expected".format(
+            msg = "Column has identifier '{}' when '{}' is expected.".format(
                 column, f.identifier)
             raise FormatError(msg)

@@ -10,7 +10,7 @@ import click
 import requests
 
 import clkhash
-from clkhash import benchmark as bench, clk, randomnames
+from clkhash import benchmark as bench, clk, randomnames, validate_data
 
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
@@ -69,12 +69,18 @@ def hash(input, keys, schema, output, quiet, no_header):
 
     schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
 
-    clk_data = clk.generate_clk_from_csv(
-        input, keys, schema_object,
-        header=not no_header, progress_bar=not quiet)
-    json.dump({'clks': clk_data}, output)
-    if hasattr(output, 'name'):
-        log("CLK data written to {}".format(output.name))
+    try:
+        clk_data = clk.generate_clk_from_csv(
+            input, keys, schema_object,
+            header=not no_header, progress_bar=not quiet)
+    except (validate_data.EntryError, validate_data.FormatError) as e:
+        msg, = e.args
+        print(msg)
+        print('Hashing failed.')
+    else:
+        json.dump({'clks': clk_data}, output)
+        if hasattr(output, 'name'):
+            log("CLK data written to {}".format(output.name))
 
 
 @cli.command('status', short_help='Get status of entity service')
