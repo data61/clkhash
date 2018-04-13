@@ -6,7 +6,7 @@ import json
 import io
 import unittest
 
-from clkhash import clk, schema
+from clkhash import clk, schema, randomnames, validate_data
 
 
 class TestChunks(unittest.TestCase):
@@ -101,3 +101,126 @@ class TestComplexSchemaChanges(unittest.TestCase):
             validate=True,
             header=True,
             progress_bar=False)
+
+
+class TestHeaderChecking(unittest.TestCase):
+    def setUp(self):
+        self.schema = randomnames.NameList.SCHEMA
+        self.csv_correct_header = (
+            'INDEX,NAME freetext,DOB YYYY/MM/DD,GENDER M or F\n'
+            '0,Jane Austen,1775/12/16,F\n'
+            '1,Bob Hawke,1929/12/09,M\n'
+            '2,Tivadar Kanizsa,1933/04/04,M')
+        self.csv_incorrect_header_name = (
+            'INDEX,THIS IS INCORRECT,DOB YYYY/MM/DD,GENDER M or F\n'
+            '0,Jane Austen,1775/12/16,F\n'
+            '1,Bob Hawke,1929/12/09,M\n'
+            '2,Tivadar Kanizsa,1933/04/04,M')
+        self.csv_incorrect_count = (
+            'INDEX,THIS IS INCORRECT,DOB YYYY/MM/DD\n'
+            '0,Jane Austen,1775/12/16,F\n'
+            '1,Bob Hawke,1929/12/09,M\n'
+            '2,Tivadar Kanizsa,1933/04/04,M')
+        self.csv_no_header = (
+            '0,Jane Austen,1775/12/16,F\n'
+            '1,Bob Hawke,1929/12/09,M\n'
+            '2,Tivadar Kanizsa,1933/04/04,M')
+
+    def test_header(self):
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_correct_header),
+            ('open', 'sesame'),
+            self.schema,
+            header=True,
+            progress_bar=False)
+        self.assertEqual(len(out), 3)
+
+        with self.assertRaises(validate_data.FormatError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_incorrect_header_name),
+                ('open', 'sesame'),
+                self.schema,
+                header=True,
+                progress_bar=False)
+
+        with self.assertRaises(validate_data.FormatError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_incorrect_count),
+                ('open', 'sesame'),
+                self.schema,
+                header=True,
+                progress_bar=False)
+
+        with self.assertRaises(validate_data.FormatError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_no_header),
+                ('open', 'sesame'),
+                self.schema,
+                header=True,
+                progress_bar=False)
+
+    def test_ignore_header(self):
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_correct_header),
+            ('open', 'sesame'),
+            self.schema,
+            header='ignore',
+            progress_bar=False)
+        self.assertEqual(len(out), 3)
+
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_incorrect_header_name),
+            ('open', 'sesame'),
+            self.schema,
+            header='ignore',
+            progress_bar=False)
+        self.assertEqual(len(out), 3)
+
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_incorrect_count),
+            ('open', 'sesame'),
+            self.schema,
+            header='ignore',
+            progress_bar=False)
+        self.assertEqual(len(out), 3)
+
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_no_header),
+            ('open', 'sesame'),
+            self.schema,
+            header='ignore',
+            progress_bar=False)
+        self.assertEqual(len(out), 2)
+
+    def test_no_header(self):
+        with self.assertRaises(validate_data.EntryError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_correct_header),
+                ('open', 'sesame'),
+                self.schema,
+                header=False,
+                progress_bar=False)
+
+        with self.assertRaises(validate_data.EntryError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_incorrect_header_name),
+                ('open', 'sesame'),
+                self.schema,
+                header=False,
+                progress_bar=False)
+
+        with self.assertRaises(validate_data.FormatError):
+            clk.generate_clk_from_csv(
+                io.StringIO(self.csv_incorrect_count),
+                ('open', 'sesame'),
+                self.schema,
+                header=False,
+                progress_bar=False)
+
+        out = clk.generate_clk_from_csv(
+            io.StringIO(self.csv_no_header),
+            ('open', 'sesame'),
+            self.schema,
+            header=False,
+            progress_bar=False)
+        self.assertEqual(len(out), 3)
