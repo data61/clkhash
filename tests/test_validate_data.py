@@ -4,7 +4,8 @@ from clkhash.backports import re_compile_full
 from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingProperties,
                                    IntegerSpec, StringSpec)
 from clkhash.validate_data import (EntryError, FormatError,
-                                   validate_data, validate_header)
+                                   validate_entries, validate_header,
+                                   validate_row_lengths)
 
 
 class FieldsMaker(unittest.TestCase):
@@ -49,18 +50,25 @@ class FieldsMaker(unittest.TestCase):
         ]
 
 
-class TestValidateData(FieldsMaker):
+class TestValidateRowLengths(FieldsMaker):
     def test_good_data(self):
         row = [['john', 'DOE', 'john.doe@generic.com',
                                             '23', '2015-10-21', 'free']]
-        validate_data(self.fields, row)  # This should not throw
+        validate_row_lengths(self.fields, row)  # This should not throw
     
     def test_missing_data(self):
         row = [['john', 'DOE', 'john.doe@generic.com', '2015-10-21', 'free']]
         #                         missing 'age' field ^
         msg = 'Expected missing entry to throw FormatError.'
         with self.assertRaises(FormatError, msg=msg):
-            validate_data(self.fields, row)
+            validate_row_lengths(self.fields, row)
+
+
+class TestValidateEntries(FieldsMaker):
+    def test_good_data(self):
+        row = [['john', 'DOE', 'john.doe@generic.com',
+                                            '23', '2015-10-21', 'free']]
+        validate_entries(self.fields, row)  # This should not throw
     
     def test_invalid_data(self):
         msg = 'Expected invalid entry to throw EntryError.'
@@ -69,13 +77,13 @@ class TestValidateData(FieldsMaker):
                                             '23', '2015-10-21', 'free']]
         #        ^ Invalid case.
         with self.assertRaises(EntryError, msg=msg):
-            validate_data(self.fields, row)
+            validate_entries(self.fields, row)
 
         row = [['john', 'doe', 'john.doe@generic.com',
                                             '23', '2015-10-21', 'free']]
         #                ^^^ Invalid case.
         with self.assertRaises(EntryError, msg=msg):
-            validate_data(self.fields, row)
+            validate_entries(self.fields, row)
 
 
 class TestValidateHeader(FieldsMaker):
