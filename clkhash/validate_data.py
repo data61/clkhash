@@ -23,9 +23,30 @@ class FormatError(ValueError):
     """
 
 
-def validate_data(fields,  # type: Sequence[FieldSpec]
-                  data     # type: Sequence[Sequence[str]]
-                  ):
+def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
+                         data     # type: Sequence[Sequence[str]]
+                         ):
+    # type: (...) -> None
+    """ Validate the `data` row lengths according to the specification
+        in `fields`.
+
+        :param fields: The `FieldSpec` objects forming the
+            specification.
+        :param data: The rows to check.
+        :raises FormatError: When the number of entries in a row does
+            not match expectation.
+    """
+    for row in data:
+        if len(fields) != len(row):
+            msg = 'Row has {} entries when {} are expected.'.format(
+                len(row), len(fields))
+            raise FormatError(msg)
+
+
+
+def validate_entries(fields,  # type: Sequence[FieldSpec]
+                     data     # type: Sequence[Sequence[str]]
+                     ):
     # type: (...) -> None
     """ Validate the `data` entries according to the specification in
         `fields`.
@@ -35,17 +56,10 @@ def validate_data(fields,  # type: Sequence[FieldSpec]
         :param data: The data to validate.
         :raises EntryError: When an entry is not valid according to its
             :class:`FieldSpec`.
-        :raises FormatError: When the number of entries in a row does
-            not match expectation.
     """
     validators = [f.validate for f in fields]
 
     for row in data:
-        if len(validators) != len(row):
-            msg = 'Row has {} entries when {} are expected.'.format(
-                len(row), len(validators))
-            raise FormatError(msg)
-
         for entry, v in zip(row, validators):
             try:
                 v(entry)
