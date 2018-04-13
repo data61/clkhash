@@ -23,9 +23,7 @@ class FormatError(ValueError):
     """
 
 
-def validate_data(fields,  # type: Sequence[FieldSpec]
-                  data     # type: Sequence[Sequence[str]]
-                  ):
+def validate_data(fields, data):  # type: Sequence[FieldSpec]  # type: Sequence[Sequence[str]]
     # type: (...) -> None
     """ Validate the `data` entries according to the specification in
         `fields`.
@@ -42,20 +40,17 @@ def validate_data(fields,  # type: Sequence[FieldSpec]
 
     for row in data:
         if len(validators) != len(row):
-            msg = 'Row has {} entries when {} are expected.'.format(
-                len(row), len(validators))
+            msg = "Row has {} entries when {} are expected.".format(len(row), len(validators))
             raise FormatError(msg)
 
         for entry, v in zip(row, validators):
             try:
                 v(entry)
             except InvalidEntryError as e:
-                raise_from(EntryError('Invalid entry.'), e)
+                raise_from(EntryError("Invalid entry."), e)
 
 
-def validate_header(fields,       # type: Sequence[FieldSpec]
-                    column_names  # type: Sequence[str]
-                    ):
+def validate_header(fields, column_names):  # type: Sequence[FieldSpec]  # type: Sequence[str]
     # type: (...) -> None
     """ Validate the `column_names` according to the specification in
         `fields`.
@@ -67,12 +62,10 @@ def validate_header(fields,       # type: Sequence[FieldSpec]
             identifiers don't match the specification.
     """
     if len(fields) != len(column_names):
-        msg = 'Header has {} columns when {} are expected'.format(
-            len(column_names), len(fields))
+        msg = "Header has {} columns when {} are expected".format(len(column_names), len(fields))
         raise FormatError(msg)
 
     for f, column in zip(fields, column_names):
         if f.identifier != column:
-            msg = "Column has identifier '{}' when '{}' is expected".format(
-                column, f.identifier)
+            msg = "Column has identifier '{}' when '{}' is expected".format(column, f.identifier)
             raise FormatError(msg)

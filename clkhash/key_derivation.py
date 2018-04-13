@@ -12,14 +12,15 @@ DEFAULT_KEY_SIZE = 64
 
 
 class HKDFconfig:
-    supported_hash_algos = 'SHA256', 'SHA512'
+    supported_hash_algos = "SHA256", "SHA512"
 
-    def __init__(self,
-                 master_secret,   # type: bytes
-                 salt=None,             # type: Optional[bytes]
-                 info=None,             # type: Optional[bytes]
-                 hash_algo='SHA256'     # type: str
-                 ):                     # type: (...) -> None
+    def __init__(
+        self,
+        master_secret,  # type: bytes
+        salt=None,  # type: Optional[bytes]
+        info=None,  # type: Optional[bytes]
+        hash_algo="SHA256",  # type: str
+    ):  # type: (...) -> None
         """
         The parameters for the HDKF are defined as follows:
 
@@ -73,14 +74,18 @@ class HKDFconfig:
         if hash_algo in HKDFconfig.supported_hash_algos:
             self.hash_algo = hash_algo
         else:
-            raise ValueError('hash algorithm "{}" is not supported. Has to be one of {}'.format(hash_algo,
-                                                                                                HKDFconfig.supported_hash_algos))
+            raise ValueError(
+                'hash algorithm "{}" is not supported. Has to be one of {}'.format(
+                    hash_algo, HKDFconfig.supported_hash_algos
+                )
+            )
 
     @staticmethod
     def check_is_bytes(value):
         # type: (Any) -> bytes
         if isinstance(value, bytes):
             return value
+
         else:
             raise TypeError('provided value is not of type "bytes"')
 
@@ -89,6 +94,7 @@ class HKDFconfig:
         # type: (Any) -> Optional[bytes]
         if value is None:
             return value
+
         else:
             return HKDFconfig.check_is_bytes(value)
 
@@ -104,14 +110,17 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
     :param key_size: the size of the produced keys
     :return: Derived keys
     """
-    hash_dict = {
-        'SHA256': hashes.SHA256,
-        'SHA512': hashes.SHA512
-    }
+    hash_dict = {"SHA256": hashes.SHA256, "SHA512": hashes.SHA512}
     if not isinstance(hkdf_config, HKDFconfig):
         raise TypeError('provided config has to be of type "HKDFconfig"')
-    hkdf = HKDF(algorithm=hash_dict[hkdf_config.hash_algo](), length=num_keys * key_size, salt=hkdf_config.salt,
-                info=hkdf_config.info, backend=default_backend())
+
+    hkdf = HKDF(
+        algorithm=hash_dict[hkdf_config.hash_algo](),
+        length=num_keys * key_size,
+        salt=hkdf_config.salt,
+        info=hkdf_config.info,
+        backend=default_backend()
+    )
     # hkdf.derive returns a block of num_keys * key_size bytes which we divide up into num_keys chunks,
     # each of size key_size
     keybytes = hkdf.derive(hkdf_config.master_secret)
@@ -119,14 +128,15 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
     return keys
 
 
-def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes, str]]
-                       num_identifier,              # type: int
-                       key_size=DEFAULT_KEY_SIZE,   # type: int
-                       salt=None,                   # type: Optional[bytes]
-                       info=None,                   # type: Optional[bytes]
-                       kdf='HKDF',                  # type: str
-                       hash_algo='SHA256'           # type: str
-                       ):
+def generate_key_lists(
+    master_secrets,  # type: Sequence[Union[bytes, str]]
+    num_identifier,  # type: int
+    key_size=DEFAULT_KEY_SIZE,  # type: int
+    salt=None,  # type: Optional[bytes]
+    info=None,  # type: Optional[bytes]
+    kdf="HKDF",  # type: str
+    hash_algo="SHA256",  # type: str
+):
     # type: (...) -> Tuple[Tuple[bytes, ...], ...]
     """
     Generates a derived key for each identifier for each master secret using a key derivation function (KDF).
@@ -154,17 +164,18 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
             if isinstance(key, bytes):
                 keys.append(key)
             else:
-                keys.append(key.encode('UTF-8'))
+                keys.append(key.encode("UTF-8"))
     except AttributeError:
         raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
-    if kdf == 'HKDF':
-        key_lists = [hkdf(HKDFconfig(key, salt=salt, info=info,
-                                     hash_algo=hash_algo),
-                          num_identifier,
-                          key_size)
-                     for key in keys]
+
+    if kdf == "HKDF":
+        key_lists = [
+            hkdf(HKDFconfig(key, salt=salt, info=info, hash_algo=hash_algo), num_identifier, key_size) for key in keys
+        ]
         # regroup such that we get a tuple of keys for each identifier
         return tuple(zip(*key_lists))
-    if kdf == 'legacy':
+
+    if kdf == "legacy":
         return tuple([tuple(keys) for _ in range(num_identifier)])
+
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))

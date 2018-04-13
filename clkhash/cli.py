@@ -13,17 +13,16 @@ import clkhash
 from clkhash import benchmark as bench, clk, randomnames
 
 
-DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
+DEFAULT_SERVICE_URL = "https://es.data61.xyz"
 
 
-def log(m, color='red'):
+def log(m, color="red"):
     click.echo(click.style(m, fg=color), err=True)
 
 
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-@click.option('--verbose', '-v', is_flag=True,
-              help='Enables verbose mode.')
+@click.option("--verbose", "-v", is_flag=True, help="Enables verbose mode.")
 def cli(verbose=False):
     """
     This command line application allows a user to hash their
@@ -43,14 +42,13 @@ def cli(verbose=False):
     """
 
 
-
-@cli.command('hash', short_help="generate hashes from local PII data")
-@click.argument('input', type=click.File('r'))
-@click.argument('keys', nargs=2, type=click.Tuple([str, str]))
-@click.argument('schema', type=click.File('r', lazy=True))
-@click.argument('output', type=click.File('w'))
-@click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
-@click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
+@cli.command("hash", short_help="generate hashes from local PII data")
+@click.argument("input", type=click.File("r"))
+@click.argument("keys", nargs=2, type=click.Tuple([str, str]))
+@click.argument("schema", type=click.File("r", lazy=True))
+@click.argument("output", type=click.File("w"))
+@click.option("-q", "--quiet", default=False, is_flag=True, help="Quiet any progress messaging")
+@click.option("--no-header", default=False, is_flag=True, help="Don't skip the first row")
 def hash(input, keys, schema, output, quiet, no_header):
     """Process data to create CLKs
 
@@ -69,18 +67,16 @@ def hash(input, keys, schema, output, quiet, no_header):
 
     schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
 
-    clk_data = clk.generate_clk_from_csv(
-        input, keys, schema_object,
-        header=not no_header, progress_bar=not quiet)
-    json.dump({'clks': clk_data}, output)
-    if hasattr(output, 'name'):
+    clk_data = clk.generate_clk_from_csv(input, keys, schema_object, header=not no_header, progress_bar=not quiet)
+    json.dump({"clks": clk_data}, output)
+    if hasattr(output, "name"):
         log("CLK data written to {}".format(output.name))
 
 
-@cli.command('status', short_help='Get status of entity service')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+@cli.command("status", short_help="Get status of entity service")
+@click.option("--server", type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-v", "--verbose", default=False, is_flag=True, help="Script is more talkative")
 def status(server, output, verbose):
     """Connect to an entity matching server and check the service status.
 
@@ -91,7 +87,7 @@ def status(server, output, verbose):
     response = requests.get(server + "/api/v1/status")
     server_status = response.json()
     log("Response: {}".format(response.status_code))
-    log("Status: {}".format(server_status['status']))
+    log("Status: {}".format(server_status["status"]))
     print(json.dumps(server_status), file=output)
 
 
@@ -115,14 +111,18 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 """
 
-@cli.command('create', short_help="create a mapping on the entity service")
-@click.option('--type', default='permutation_unencrypted_mask',
-              help='Alternative protocol/view type of the mapping. Default is unencrypted permutation and mask.')
-@click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-t','--threshold', type=float, default=0.95)
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+
+@cli.command("create", short_help="create a mapping on the entity service")
+@click.option(
+    "--type",
+    default="permutation_unencrypted_mask",
+    help="Alternative protocol/view type of the mapping. Default is unencrypted permutation and mask.",
+)
+@click.option("--schema", type=click.File("r"), help="Schema to publicly share with participating parties.")
+@click.option("--server", type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-t", "--threshold", type=float, default=0.95)
+@click.option("-v", "--verbose", default=False, is_flag=True, help="Script is more talkative")
 def create(type, schema, server, output, threshold, verbose):
     """Create a new mapping on an entity matching server.
 
@@ -135,26 +135,21 @@ def create(type, schema, server, output, threshold, verbose):
     log("Entity Matching Server: {}".format(server))
 
     log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
+    status = requests.get(server + "/api/v1/status").json()["status"]
     log("Server Status: {}".format(status))
 
     if schema is not None:
         schema_object = load_schema(schema)
         schema_json = json.dumps(schema_object)
     else:
-        schema_json = 'NOT PROVIDED'
+        schema_json = "NOT PROVIDED"
 
     log("Schema: {}".format(schema_json))
     log("Type: {}".format(type))
 
     log("Creating new mapping")
     response = requests.post(
-        "{}/api/v1/mappings".format(server),
-        json={
-            'schema': schema_json,
-            'result_type': type,
-            'threshold': threshold
-        }
+        "{}/api/v1/mappings".format(server), json={"schema": schema_json, "result_type": type, "threshold": threshold}
     )
 
     if response.status_code != 200:
@@ -167,13 +162,13 @@ def create(type, schema, server, output, threshold, verbose):
         print(response.text, file=output)
 
 
-@cli.command('upload', short_help='upload hashes to entity service')
-@click.argument('input', type=click.File('r'))
-@click.option('--mapping', help='Server identifier of the mapping')
-@click.option('--apikey', help='Authentication API key for the server.')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+@cli.command("upload", short_help="upload hashes to entity service")
+@click.argument("input", type=click.File("r"))
+@click.option("--mapping", help="Server identifier of the mapping")
+@click.option("--apikey", help="Authentication API key for the server.")
+@click.option("--server", type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option("-o", "--output", type=click.File("w"), default="-")
+@click.option("-v", "--verbose", default=False, is_flag=True, help="Script is more talkative")
 def upload(input, mapping, apikey, server, output, verbose):
     """Upload CLK data to entity matching server.
 
@@ -188,36 +183,30 @@ def upload(input, mapping, apikey, server, output, verbose):
     log("Mapping ID: {}".format(mapping))
 
     log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
+    status = requests.get(server + "/api/v1/status").json()["status"]
     log("Status: {}".format(status))
 
     log("Uploading CLK data to the server")
 
     response = requests.put(
-        '{}/api/v1/mappings/{}'.format(server, mapping),
+        "{}/api/v1/mappings/{}".format(server, mapping),
         data=input,
-        headers={
-            "Authorization": apikey,
-            'content-type': 'application/json'
-        }
+        headers={"Authorization": apikey, "content-type": "application/json"},
     )
 
     if verbose:
         log(response.text)
         log("When the other party has uploaded their CLKS, you should be able to watch for results")
 
-
     print(response.text, file=output)
 
 
-
-@cli.command('results', short_help="fetch results from entity service")
-@click.option('--mapping',
-              help='Server identifier of the mapping')
-@click.option('--apikey', help='Authentication API key for the server.')
-@click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@cli.command("results", short_help="fetch results from entity service")
+@click.option("--mapping", help="Server identifier of the mapping")
+@click.option("--apikey", help="Authentication API key for the server.")
+@click.option("-w", "--watch", help="Follow/wait until results are available", is_flag=True)
+@click.option("--server", type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option("-o", "--output", type=click.File("w"), default="-")
 def results(mapping, apikey, watch, server, output):
     """
     Check to see if results are available for a particular mapping
@@ -230,14 +219,11 @@ def results(mapping, apikey, watch, server, output):
     """
 
     log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
+    status = requests.get(server + "/api/v1/status").json()["status"]
     log("Status: {}".format(status))
 
     def get_result():
-        return requests.get(
-            '{}/api/v1/mappings/{}'.format(server, mapping),
-            headers={"Authorization": apikey}
-        )
+        return requests.get("{}/api/v1/mappings/{}".format(server, mapping), headers={"Authorization": apikey})
 
     response = get_result()
     log("Response code: {}".format(response.status_code))
@@ -255,15 +241,15 @@ def results(mapping, apikey, watch, server, output):
         log(response.text)
 
 
-@cli.command('benchmark', short_help='carry out a local benchmark')
+@cli.command("benchmark", short_help="carry out a local benchmark")
 def benchmark():
     bench.compute_hash_speed(10000)
 
 
-@cli.command('generate', short_help='generate random pii data for testing')
-@click.argument('size', type=int, default=100)
-@click.argument('output', type=click.File('w'))
-@click.option('--schema', '-s', type=click.File('r'), default=None)
+@cli.command("generate", short_help="generate random pii data for testing")
+@click.argument("size", type=int, default=100)
+@click.argument("output", type=click.File("w"))
+@click.option("--schema", "-s", type=click.File("r"), default=None)
 def generate(size, output, schema):
     """Generate fake PII data for testing"""
     pii_data = randomnames.NameList(size)
@@ -271,22 +257,14 @@ def generate(size, output, schema):
     if schema is not None:
         raise NotImplementedError
 
-    randomnames.save_csv(
-        pii_data.names,
-        [f.identifier for f in pii_data.SCHEMA.fields],
-        output)
+    randomnames.save_csv(pii_data.names, [f.identifier for f in pii_data.SCHEMA.fields], output)
 
 
-@cli.command('generate-default-schema',
-             short_help='get the default schema used in generated random PII')
-@click.argument('output', type=click.Path(writable=True,
-                                          readable=False,
-                                          resolve_path=True))
+@cli.command("generate-default-schema", short_help="get the default schema used in generated random PII")
+@click.argument("output", type=click.Path(writable=True, readable=False, resolve_path=True))
 def generate_default_schema(output):
     """Get default schema for fake PII"""
-    original_path = os.path.join(os.path.dirname(__file__),
-                                 'data',
-                                 'randomnames-schema.json')
+    original_path = os.path.join(os.path.dirname(__file__), "data", "randomnames-schema.json")
     shutil.copyfile(original_path, output)
 
 

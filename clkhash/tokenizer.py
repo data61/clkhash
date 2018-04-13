@@ -25,25 +25,23 @@ def tokenize(n, positional, word, ignore=None):
         :return: Tuple of n-gram strings.
     """
     if n < 0:
-        raise ValueError('`n` in `n`-gram must be non-negative.')
+        raise ValueError("`n` in `n`-gram must be non-negative.")
 
     if ignore is not None:
-        word = word.replace(ignore, '')
+        word = word.replace(ignore, "")
 
     if n > 1:
-        word = ' {} '.format(word)
+        word = " {} ".format(word)
 
     if positional:
         # These are 1-indexed.
-        return ('{} {}'.format(i + 1, word[i:i+n])
-                for i in range(len(word) - n + 1))
+        return ("{} {}".format(i + 1, word[i:i + n]) for i in range(len(word) - n + 1))
+
     else:
-        return (word[i:i+n] for i in range(len(word) - n + 1))
+        return (word[i:i + n] for i in range(len(word) - n + 1))
 
 
-
-def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties
-                  ):
+def get_tokenizer(hash_settings):  # type: field_formats.FieldHashingProperties
     # type: (...) -> Callable[[Text], Iterable[Text]]
     """ Get tokeniser function from the hash settings.
 

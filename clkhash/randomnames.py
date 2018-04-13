@@ -26,24 +26,23 @@ from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 from clkhash.schema import Schema
 from clkhash.field_formats import FieldSpec
 
+
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
     """Loads a specified CSV data file and returns the first column as a Python list
     """
-    data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
+    data_bytes = pkgutil.get_data("clkhash", "data/{}".format(resource_name))
     if data_bytes is None:
         raise ValueError("No data resource found with name {}".format(resource_name))
+
     else:
-        data = data_bytes.decode('utf8')
+        data = data_bytes.decode("utf8")
         reader = csv.reader(data.splitlines())
         next(reader, None)  # skip the headers
         return [row[0] for row in reader]
 
 
-def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
-             headers,   # type: Iterable[str]
-             file       # type: TextIO
-             ):
+def save_csv(data, headers, file):  # type: Iterable[Tuple[Union[str, int], ...]]  # type: Iterable[str]  # type: TextIO
     # type: (...) -> None
     """
     Output generated data to file as CSV with header.
@@ -53,7 +52,7 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
     :param file: A writeable stream in which to write the CSV
     """
 
-    print(','.join(headers), file=file)
+    print(",".join(headers), file=file)
     writer = csv.writer(file)
     writer.writerows(data)
 
@@ -77,9 +76,7 @@ class NameList:
     """ List of randomly generated names.
     """
 
-    with open(os.path.join(os.path.dirname(__file__),
-                           'data',
-                           'randomnames-schema.json')) as f:
+    with open(os.path.join(os.path.dirname(__file__), "data", "randomnames-schema.json")) as f:
         SCHEMA = Schema.from_json_file(f)
     del f
 
@@ -106,17 +103,14 @@ class NameList:
             tuple - (id: int, name: str('First Last'), birthdate: str('DD/MM/YYYY'), sex: str('M' | 'F') )
         """
         for i in range(n):
-            sex = 'M' if random.random() > 0.5 else 'F'
+            sex = "M" if random.random() > 0.5 else "F"
             dob = random_date(self.earliest_birthday, self.latest_birthday).strftime("%Y/%m/%d")
-            first_name = random.choice(self.all_male_first_names) if sex == 'M' else random.choice(self.all_female_first_names)
+            first_name = random.choice(self.all_male_first_names) if sex == "M" else random.choice(
+                self.all_female_first_names
+            )
             last_name = random.choice(self.all_last_names)
 
-            yield (
-                str(i),
-                first_name + ' ' + last_name,
-                dob,
-                sex
-            )
+            yield (str(i), first_name + " " + last_name, dob, sex)
 
     def load_names(self):
         # type: () -> None
@@ -128,9 +122,9 @@ class NameList:
 
         """
 
-        self.all_male_first_names = load_csv_data('male-first-names.csv')
-        self.all_female_first_names = load_csv_data('female-first-names.csv')
-        self.all_last_names = load_csv_data('CSV_Database_of_Last_Names.csv')
+        self.all_male_first_names = load_csv_data("male-first-names.csv")
+        self.all_female_first_names = load_csv_data("female-first-names.csv")
+        self.all_last_names = load_csv_data("CSV_Database_of_Last_Names.csv")
 
     def generate_subsets(self, sz, overlap=0.8):
         """
@@ -146,7 +140,7 @@ class NameList:
         notoverlap = sz - int(math.floor(overlap * sz))
         total_sz = sz + notoverlap
         if total_sz > len(self.names):
-            raise ValueError('Requested subset size and overlap demands more '
-                             + 'than the number of available names')
+            raise ValueError("Requested subset size and overlap demands more " + "than the number of available names")
+
         sset = random.sample(self.names, total_sz)
         return sset[:sz], sset[notoverlap:]

@@ -5,8 +5,7 @@ Generate CLK from data.
 import concurrent.futures
 import logging
 import time
-from typing import (AnyStr, Callable, Iterable, List, Optional,
-                    Sequence, TextIO, Tuple, TypeVar)
+from typing import AnyStr, Callable, Iterable, List, Optional, Sequence, TextIO, Tuple, TypeVar
 
 from tqdm import tqdm
 
@@ -18,15 +17,14 @@ from clkhash.stats import OnlineMeanVariance
 from clkhash.validate_data import validate_data, validate_header
 
 
-log = logging.getLogger('clkhash.clk')
+log = logging.getLogger("clkhash.clk")
 
 CHUNK_SIZE = 1000
 
 
-def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
-                             keys,            # type: Sequence[Sequence[bytes]]
-                             schema           # type: Schema
-                             ):
+def hash_and_serialize_chunk(
+    chunk_pii_data, keys, schema  # type: Sequence[Sequence[str]]  # type: Sequence[Sequence[bytes]]  # type: Schema
+):
     # type: (...) -> Tuple[List[str], Sequence[int]]
     """
     Generate Bloom filters (ie hash) from chunks of PII then serialize
@@ -46,13 +44,14 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     return clk_data, clk_popcounts
 
 
-def generate_clk_from_csv(input_f,           # type: TextIO
-                          keys,              # type: Tuple[AnyStr, AnyStr]
-                          schema,            # type: Schema
-                          validate=True,     # type: bool
-                          header=True,       # type: bool
-                          progress_bar=True  # type: bool
-                          ):
+def generate_clk_from_csv(
+    input_f,  # type: TextIO
+    keys,  # type: Tuple[AnyStr, AnyStr]
+    schema,  # type: Schema
+    validate=True,  # type: bool
+    header=True,  # type: bool
+    progress_bar=True,  # type: bool
+):
     # type: (...) -> List[str]
     log.info("Hashing data")
 
@@ -72,40 +71,41 @@ def generate_clk_from_csv(input_f,           # type: TextIO
         if len(line) == len(schema.fields):
             pii_data.append(tuple([element.strip() for element in line]))
         else:
-            raise ValueError("Line had unexpected number of elements. "
-                "Expected {} but there was {}".format(
-                len(schema.fields), len(line)))
+            raise ValueError(
+                "Line had unexpected number of elements. "
+                "Expected {} but there was {}".format(len(schema.fields), len(line))
+            )
 
     if progress_bar:
         stats = OnlineMeanVariance()
-        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True,
-                  postfix={'mean': stats.mean(), 'std': stats.std()}) as pbar:
+        with tqdm(
+            desc="generating CLKs",
+            total=len(pii_data),
+            unit="clk",
+            unit_scale=True,
+            postfix={"mean": stats.mean(), "std": stats.std()},
+        ) as pbar:
+
             def callback(tics, clk_stats):
                 stats.update(clk_stats)
                 pbar.set_postfix(mean=stats.mean(), std=stats.std(), refresh=False)
                 pbar.update(tics)
 
-            results = generate_clks(pii_data,
-                                    schema,
-                                    keys,
-                                    validate=validate,
-                                    callback=callback)
+            results = generate_clks(pii_data, schema, keys, validate=validate, callback=callback)
     else:
-        results = generate_clks(pii_data,
-                                schema,
-                                keys,
-                                validate=validate)
+        results = generate_clks(pii_data, schema, keys, validate=validate)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
 
 
-def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
-                  schema,         # type: Schema
-                  keys,           # type: Tuple[AnyStr, AnyStr]
-                  validate=True,  # type: bool
-                  callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
-                  ):
+def generate_clks(
+    pii_data,  # type: Sequence[Sequence[str]]
+    schema,  # type: Schema
+    keys,  # type: Tuple[AnyStr, AnyStr]
+    validate=True,  # type: bool
+    callback=None,  # type: Optional[Callable[[int, Sequence[int]], None]]
+):
     # type: (...) -> List[str]
 
     # generate two keys for each identifier
@@ -116,7 +116,8 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         salt=schema.hashing_globals.kdf_salt,
         info=schema.hashing_globals.kdf_info,
         kdf=schema.hashing_globals.kdf_type,
-        hash_algo=schema.hashing_globals.kdf_hash)
+        hash_algo=schema.hashing_globals.kdf_hash,
+    )
 
     if validate:
         validate_data(schema.fields, pii_data)
@@ -129,9 +130,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
     # Compute Bloom filter from the chunks and then serialise it
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for chunk in chunks(pii_data, chunk_size):
-            future = executor.submit(
-                hash_and_serialize_chunk,
-                chunk, key_lists, schema,)
+            future = executor.submit(hash_and_serialize_chunk, chunk, key_lists, schema)
             if callback is not None:
                 future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
             futures.append(future)
@@ -144,7 +143,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
     return results
 
 
-T = TypeVar('T')      # Declare generic type variable
+T = TypeVar("T")  # Declare generic type variable
 
 
 def chunks(seq, chunk_size):

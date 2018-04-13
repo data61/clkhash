@@ -47,32 +47,33 @@ class FieldHashingProperties(object):
         :ivar float weight: Controls the weight of the field in the
             Bloom filter.
     """
-    _DEFAULT_ENCODING = 'utf-8'
+    _DEFAULT_ENCODING = "utf-8"
     _DEFAULT_POSITIONAL = False
     _DEFAULT_WEIGHT = 1
 
-    def __init__(self,
-                 ngram,                          # type: int
-                 encoding=_DEFAULT_ENCODING,     # type: str
-                 weight=_DEFAULT_WEIGHT,         # type: Union[int, float]
-                 positional=_DEFAULT_POSITIONAL  # type: bool
-                 ):
+    def __init__(
+        self,
+        ngram,  # type: int
+        encoding=_DEFAULT_ENCODING,  # type: str
+        weight=_DEFAULT_WEIGHT,  # type: Union[int, float]
+        positional=_DEFAULT_POSITIONAL,  # type: bool
+    ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
             attributes to values specified in keyword arguments.
         """
         if ngram not in range(3):
-            msg = 'ngram is {} but is expected to be 0, 1, or 2.'
+            msg = "ngram is {} but is expected to be 0, 1, or 2."
             raise ValueError(msg.format(ngram))
 
         try:
-            ''.encode(encoding)
+            "".encode(encoding)
         except LookupError as e:
-            msg = '{} is not a valid Python encoding.'
+            msg = "{} is not a valid Python encoding."
             raise_from(ValueError(msg.format(encoding)), e)
 
         if weight < 0:
-            msg = 'weight should be non-negative but is {}.'
+            msg = "weight should be non-negative but is {}."
             raise ValueError(msg.format(weight))
 
         self.ngram = ngram
@@ -94,11 +95,10 @@ class FieldHashingProperties(object):
             :return: A :class:`FieldHashingProperties` instance.
         """
         return cls(
-            ngram=json_dict['ngram'],
-            positional=json_dict.get(
-                'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
-            weight=json_dict.get(
-                'weight', FieldHashingProperties._DEFAULT_WEIGHT))
+            ngram=json_dict["ngram"],
+            positional=json_dict.get("positional", FieldHashingProperties._DEFAULT_POSITIONAL),
+            weight=json_dict.get("weight", FieldHashingProperties._DEFAULT_WEIGHT),
+        )
 
 
 @add_metaclass(abc.ABCMeta)
@@ -112,11 +112,13 @@ class FieldSpec(object):
         :ivar FieldHashingProperties hashing_properties: The properties
             for hashing.
     """
-    def __init__(self,
-                 identifier,          # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 description=None     # type: Optional[str]
-                 ):
+
+    def __init__(
+        self,
+        identifier,  # type: str
+        hashing_properties,  # type: FieldHashingProperties
+        description=None,  # type: Optional[str]
+    ):
         # type: (...) -> None
         """ Make a FieldSpec object, setting it attributes to values
             specified in keyword arguments.
@@ -138,10 +140,9 @@ class FieldSpec(object):
                 dictionary contains invalid values. Exactly what that
                 means is decided by the subclasses.
         """
-        identifier = field_dict['identifier']
-        description = field_dict['format'].get('description')
-        hashing_properties = FieldHashingProperties.from_json_dict(
-            field_dict['hashing'])
+        identifier = field_dict["identifier"]
+        description = field_dict["format"].get("description")
+        hashing_properties = FieldHashingProperties.from_json_dict(field_dict["hashing"])
 
         result = cls.__new__(cls)  # type: ignore
         result.identifier = identifier
@@ -167,8 +168,9 @@ class FieldSpec(object):
         try:
             str_in.encode(encoding=self.hashing_properties.encoding)
         except UnicodeEncodeError as e:
-            msg = ("Expected entry that can be encoded in {}. Read '{}'."
-                   .format(self.hashing_properties.encoding, str_in))
+            msg = (
+                "Expected entry that can be encoded in {}. Read '{}'.".format(self.hashing_properties.encoding, str_in)
+            )
             raise_from(InvalidEntryError(msg), e)
 
 
@@ -197,47 +199,45 @@ class StringSpec(FieldSpec):
             if there is no maximum length. Present only if the
             specification is not regex-based.
     """
-    _DEFAULT_CASE = 'mixed'
+    _DEFAULT_CASE = "mixed"
     _DEFAULT_MIN_LENGTH = 0
-    _PERMITTED_CASE_STYLES = {'lower', 'upper', 'mixed'}
+    _PERMITTED_CASE_STYLES = {"lower", "upper", "mixed"}
 
-    def __init__(self,
-                 identifier,                      # type: str
-                 hashing_properties,              # type: FieldHashingProperties
-                 description=None,                # type: str
-                 regex=None,                      # type: Optional[str]
-                 case=_DEFAULT_CASE,              # type: str
-                 min_length=_DEFAULT_MIN_LENGTH,  # type: Optional[int]
-                 max_length=None                  # type: Optional[int]
-                 ):
+    def __init__(
+        self,
+        identifier,  # type: str
+        hashing_properties,  # type: FieldHashingProperties
+        description=None,  # type: str
+        regex=None,  # type: Optional[str]
+        case=_DEFAULT_CASE,  # type: str
+        min_length=_DEFAULT_MIN_LENGTH,  # type: Optional[int]
+        max_length=None,  # type: Optional[int]
+    ):
         # type: (...) -> None
         """ Make a StringSpec object, setting it attributes to values
             specified in keyword arguments.
-        """ 
-        super().__init__(identifier=identifier,
-                         description=description,
-                         hashing_properties=hashing_properties)
+        """
+        super().__init__(identifier=identifier, description=description, hashing_properties=hashing_properties)
 
         regex_based = regex is not None
 
-        if regex_based and (case != self._DEFAULT_CASE
-                            or min_length != self._DEFAULT_MIN_LENGTH
-                            or max_length is not None):
-            msg = ('regex cannot be passed along with case, min_length, or'
-                   ' max_length.')
+        if (
+            regex_based
+            and (case != self._DEFAULT_CASE or min_length != self._DEFAULT_MIN_LENGTH or max_length is not None)
+        ):
+            msg = ("regex cannot be passed along with case, min_length, or" " max_length.")
             raise ValueError(msg)
 
         if case not in self._PERMITTED_CASE_STYLES:
-            msg = ("the case is {}, but should be 'lower', 'upper', or"
-                   "'mixed'")
+            msg = ("the case is {}, but should be 'lower', 'upper', or" "'mixed'")
             raise ValueError(msg.format(case))
 
         if regex_based and min_length < 0:
-            msg = ('min_length must be non-negative, but is {}')
+            msg = ("min_length must be non-negative, but is {}")
             raise ValueError(msg.format(min_length))
 
         if regex_based and max_length is not None and max_length <= 0:
-            msg = ('max_length must be positive, but is {}')
+            msg = ("max_length must be positive, but is {}")
             raise ValueError(msg.format(max_length))
 
         if regex_based:
@@ -269,14 +269,13 @@ class StringSpec(FieldSpec):
             :raises InvalidSchemaError: When a regular expression is
                 provided but is not a valid pattern.
         """
-        result = cast(StringSpec,  # Go away, Mypy.
-                      super().from_json_dict(json_dict))
+        result = cast(StringSpec, super().from_json_dict(json_dict))  # Go away, Mypy.
 
-        format_ = json_dict['format']
-        result.hashing_properties.encoding = format_['encoding']
+        format_ = json_dict["format"]
+        result.hashing_properties.encoding = format_["encoding"]
 
-        if 'pattern' in format_:
-            pattern = format_['pattern']
+        if "pattern" in format_:
+            pattern = format_["pattern"]
             try:
                 result.regex = re_compile_full(pattern)
             except (SyntaxError, re.error) as e:
@@ -285,9 +284,9 @@ class StringSpec(FieldSpec):
             result.regex_based = True
 
         else:
-            result.case = format_.get('case', StringSpec._DEFAULT_CASE)
-            result.min_length = format_.get('minLength')
-            result.max_length = format_.get('maxLength')
+            result.case = format_.get("case", StringSpec._DEFAULT_CASE)
+            result.min_length = format_.get("minLength")
+            result.max_length = format_.get("maxLength")
             result.regex_based = False
 
         return result
@@ -315,34 +314,36 @@ class StringSpec(FieldSpec):
             match = self.regex.match(str_in)
             if match is None:
                 raise InvalidEntryError(
-                    'Expected entry that conforms to regular expression '
-                    "'{}'. Read '{}'.".format(self.regex.pattern, str_in))
+                    "Expected entry that conforms to regular expression "
+                    "'{}'. Read '{}'.".format(self.regex.pattern, str_in)
+                )
 
         else:
             str_len = len(str_in)
             if self.min_length is not None and str_len < self.min_length:
                 raise InvalidEntryError(
-                    'Expected string length of at least {}. Read string of '
-                    'length {}.'.format(self.min_length, str_len))
+                    "Expected string length of at least {}. Read string of "
+                    "length {}.".format(self.min_length, str_len)
+                )
 
             if self.max_length is not None and str_len > self.max_length:
                 raise InvalidEntryError(
-                    'Expected string length of at most {}. Read string of '
-                    'length {}.'.format(self.max_length, str_len))
+                    "Expected string length of at most {}. Read string of "
+                    "length {}.".format(self.max_length, str_len)
+                )
 
-            if self.case == 'upper':
+            if self.case == "upper":
                 if str_in.upper() != str_in:
-                    raise InvalidEntryError(
-                        'Expected upper case string. Read {}.'.format(str_in))
-            elif self.case == 'lower':
+                    raise InvalidEntryError("Expected upper case string. Read {}.".format(str_in))
+
+            elif self.case == "lower":
                 if str_in.lower() != str_in:
-                    raise InvalidEntryError(
-                        'Expected lower case string. Read {}.'.format(str_in))
-            elif self.case == 'mixed':
+                    raise InvalidEntryError("Expected lower case string. Read {}.".format(str_in))
+
+            elif self.case == "mixed":
                 pass
             else:
-                raise ValueError(
-                    'Invalid case property {}.'.format(self.case))
+                raise ValueError("Invalid case property {}.".format(self.case))
 
 
 class IntegerSpec(FieldSpec):
@@ -356,21 +357,20 @@ class IntegerSpec(FieldSpec):
 
     _DEFAULT_MINIMUM = 0
 
-    def __init__(self,
-                 identifier,                # type: str
-                 hashing_properties,        # type: FieldHashingProperties
-                 description=None,          # type: str
-                 minimum=_DEFAULT_MINIMUM,  # int
-                 maximum=None,              # Optional[int]
-                 **kwargs                   # Dict[str, Any]
-                 ):
+    def __init__(
+        self,
+        identifier,  # type: str
+        hashing_properties,  # type: FieldHashingProperties
+        description=None,  # type: str
+        minimum=_DEFAULT_MINIMUM,  # int
+        maximum=None,  # Optional[int]
+        **kwargs  # Dict[str, Any]
+    ):
         # type: (...) -> None
         """ Make a IntegerSpec object, setting it attributes to values
             specified in keyword arguments.
         """
-        super().__init__(identifier=identifier,
-                         description=description,
-                         hashing_properties=hashing_properties)
+        super().__init__(identifier=identifier, description=description, hashing_properties=hashing_properties)
 
         self.minimum = minimum
         self.maximum = maximum
@@ -388,12 +388,11 @@ class IntegerSpec(FieldSpec):
 
             :param dict json_dict: The properties dictionary.
         """
-        result = cast(IntegerSpec,  # For Mypy.
-                      super().from_json_dict(json_dict))
+        result = cast(IntegerSpec, super().from_json_dict(json_dict))  # For Mypy.
 
-        format_ = json_dict['format']
-        result.minimum = format_.get('minimum', cls._DEFAULT_MINIMUM)
-        result.maximum = format_.get('maximum')
+        format_ = json_dict["format"]
+        result.minimum = format_.get("minimum", cls._DEFAULT_MINIMUM)
+        result.maximum = format_.get("maximum")
 
         return result
 
@@ -416,17 +415,15 @@ class IntegerSpec(FieldSpec):
         try:
             value = int(str_in, base=10)
         except ValueError as e:
-            msg = 'Invalid integer. Read {}.'.format(str_in)
+            msg = "Invalid integer. Read {}.".format(str_in)
             raise_from(InvalidEntryError(msg), e)
 
         if value < self.minimum:
-            msg = ('Expected integer value of at least {}. Read {}.'
-                   .format(self.minimum, value))
+            msg = ("Expected integer value of at least {}. Read {}.".format(self.minimum, value))
             raise InvalidEntryError(msg)
 
         if self.maximum is not None and value > self.maximum:
-            msg = ('Expected integer value of at most {}. Read {}.'
-                   .format(self.maximum, value))
+            msg = ("Expected integer value of at most {}. Read {}.".format(self.maximum, value))
             raise InvalidEntryError(msg)
 
 
@@ -439,26 +436,25 @@ class DateSpec(FieldSpec):
 
         :ivar str format: The format of the date.
     """
-    _PERMITTED_FORMATS = {'rfc3339'}
-    _RFC3339_REGEX = re_compile_full(r'\d\d\d\d-\d\d-\d\d')
-    _RFC3339_FORMAT = '%Y-%m-%d'
+    _PERMITTED_FORMATS = {"rfc3339"}
+    _RFC3339_REGEX = re_compile_full(r"\d\d\d\d-\d\d-\d\d")
+    _RFC3339_FORMAT = "%Y-%m-%d"
 
-    def __init__(self,
-                 identifier,          # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 format,              # type: str
-                 description=None     # type: str
-                 ):
+    def __init__(
+        self,
+        identifier,  # type: str
+        hashing_properties,  # type: FieldHashingProperties
+        format,  # type: str
+        description=None,  # type: str
+    ):
         # type: (...) -> None
         """ Make a DateSpec object, setting it attributes to values
             specified in keyword arguments.
         """
-        super().__init__(identifier=identifier,
-                         description=description,
-                         hashing_properties=hashing_properties)
+        super().__init__(identifier=identifier, description=description, hashing_properties=hashing_properties)
 
         if format not in self._PERMITTED_FORMATS:
-            msg = 'No validation for date format: {}.'.format(format)
+            msg = "No validation for date format: {}.".format(format)
             raise NotImplementedError(msg)
 
         self.format = format
@@ -476,11 +472,10 @@ class DateSpec(FieldSpec):
 
             :param json_dict: The properties dictionary.
         """
-        result = cast(DateSpec,  # For Mypy.
-                      super().from_json_dict(json_dict))
+        result = cast(DateSpec, super().from_json_dict(json_dict))  # For Mypy.
 
-        format_ = json_dict['format']
-        result.format = format_['format']
+        format_ = json_dict["format"]
+        result.format = format_["format"]
 
         return result
 
@@ -500,19 +495,19 @@ class DateSpec(FieldSpec):
         """
         super().validate(str_in)
 
-        if self.format == 'rfc3339':
+        if self.format == "rfc3339":
             if self._RFC3339_REGEX.match(str_in) is None:
-                msg = ('Date expected to conform to RFC3339. Read {}.'
-                       .format(str_in))
+                msg = ("Date expected to conform to RFC3339. Read {}.".format(str_in))
                 raise InvalidEntryError(msg)
+
             try:
                 datetime.strptime(str_in, self._RFC3339_FORMAT)
             except ValueError as e:
-                msg = 'Invalid date. Read {}.'.format(str_in)
+                msg = "Invalid date. Read {}.".format(str_in)
                 raise_from(InvalidEntryError(msg), e)
 
         else:
-            msg = 'No validation for date format: {}.'.format(self.format)
+            msg = "No validation for date format: {}.".format(self.format)
             raise NotImplementedError(msg)
 
 
@@ -523,19 +518,19 @@ class EnumSpec(FieldSpec):
 
         :ivar values: The set of permitted values.
     """
-    def __init__(self,
-                 identifier,          # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 values,              # type: Iterable[str]
-                 description=None     # type: str
-                 ):
+
+    def __init__(
+        self,
+        identifier,  # type: str
+        hashing_properties,  # type: FieldHashingProperties
+        values,  # type: Iterable[str]
+        description=None,  # type: str
+    ):
         # type: (...) -> None
         """ Make a EnumSpec object, setting it attributes to values
             specified in keyword arguments.
         """
-        super().__init__(identifier=identifier,
-                         description=description,
-                         hashing_properties=hashing_properties)
+        super().__init__(identifier=identifier, description=description, hashing_properties=hashing_properties)
 
         self.values = set(values)
 
@@ -550,11 +545,10 @@ class EnumSpec(FieldSpec):
                 addition, it must contain a `'hashing'` key, whose
                 contents are passed to :class:`FieldHashingProperties`.
         """
-        result = cast(EnumSpec,  # Appease the gods of Mypy.
-                      super().from_json_dict(json_dict))
+        result = cast(EnumSpec, super().from_json_dict(json_dict))  # Appease the gods of Mypy.
 
-        format_ = json_dict['format']
-        result.values = set(format_['values'])
+        format_ = json_dict["format"]
+        result.values = set(format_["values"])
 
         return result
 
@@ -573,8 +567,7 @@ class EnumSpec(FieldSpec):
         super().validate(str_in)
 
         if str_in not in self.values:
-            msg = ('Expected enum value is one of {}. Read {}.'
-                   .format(self.values, str_in))
+            msg = ("Expected enum value is one of {}. Read {}.".format(self.values, str_in))
             raise InvalidEntryError(msg)
 
 
@@ -582,9 +575,8 @@ class Ignore(FieldSpec):
     """
     represent a field which will be ignored throughout the clk processing.
     """
-    def __init__(self,
-                 identifier=None  # type: str
-                 ):
+
+    def __init__(self, identifier=None):  # type: str
         # type: (...) -> None
         super().__init__(identifier, FieldHashingProperties(ngram=0, weight=0))
 
@@ -593,12 +585,7 @@ class Ignore(FieldSpec):
 
 
 # Map type string (as defined in master schema) to
-FIELD_TYPE_MAP = {
-    'string': StringSpec,
-    'integer': IntegerSpec,
-    'date': DateSpec,
-    'enum': EnumSpec,
-}
+FIELD_TYPE_MAP = {"string": StringSpec, "integer": IntegerSpec, "date": DateSpec, "enum": EnumSpec}
 
 
 def spec_from_json_dict(json_dict):
@@ -609,8 +596,9 @@ def spec_from_json_dict(json_dict):
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
-    if 'ignored' in json_dict:
-        return Ignore(json_dict['identifier'])
-    type_str = json_dict['format']['type']
+    if "ignored" in json_dict:
+        return Ignore(json_dict["identifier"])
+
+    type_str = json_dict["format"]["type"]
     spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
     return spec_type.from_json_dict(json_dict)

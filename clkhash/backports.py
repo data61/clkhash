@@ -22,28 +22,25 @@ except AttributeError:
             :param byteorder: Either `'big'` or `'little'`.
         """
         if signed:
-            raise NotImplementedError(
-                "Signed integers are not currently supported in this "
-                "backport.")
+            raise NotImplementedError("Signed integers are not currently supported in this " "backport.")
 
-        if byteorder == 'big':
+        if byteorder == "big":
             pass
-        elif byteorder == 'little':
+        elif byteorder == "little":
             bytes = bytes[::-1]
         else:
             raise ValueError("byteorder must be either 'little' or 'big'")
 
-        hex_str = codecs.encode(bytes, 'hex')  # type: ignore
+        hex_str = codecs.encode(bytes, "hex")  # type: ignore
         return int(hex_str, 16)
 
     # Make this cast since Python 2 doesn't have syntax for default
     # named arguments. Hence, must cast so Mypy thinks it matches the
     # original function.
-    int_from_bytes = cast(Callable[[Arg(Sequence[int], 'bytes'),
-                                Arg(str, 'byteorder'),
-                                DefaultNamedArg(bool, 'signed')],
-                               int],
-                      __int_from_bytes)
+    int_from_bytes = cast(
+        Callable[[Arg(Sequence[int], "bytes"), Arg(str, "byteorder"), DefaultNamedArg(bool, "signed")], int],
+        __int_from_bytes,
+    )
 
 
 def re_compile_full(pattern, flags=0):
@@ -65,11 +62,11 @@ def re_compile_full(pattern, flags=0):
     # A pattern of type bytes doesn't make sense in Python 3.
     assert type(pattern) is not bytes or str is bytes
 
-    return re.compile('(?:{})\Z'.format(pattern), flags=flags)
+    return re.compile("(?:{})\Z".format(pattern), flags=flags)
 
 
 def _utf_8_encoder(unicode_csv_data):
-    return (line.encode('utf-8') for line in unicode_csv_data)
+    return (line.encode("utf-8") for line in unicode_csv_data)
 
 
 def _p2_unicode_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
@@ -92,9 +89,9 @@ def _p2_unicode_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
     csv_reader = csv.reader(utf8_csv_data, dialect=dialect, **kwargs)
 
     # Decode UTF-8 back to Unicode, cell by cell:
-    return ([unicode(cell, 'utf-8') for cell in row] for row in csv_reader)
+    return ([unicode(cell, "utf-8") for cell in row] for row in csv_reader)
 
 
-unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
-                  if sys.version_info < (3,0)
-                  else csv.reader)  # Py3 with native Unicode support.
+unicode_reader = (
+    _p2_unicode_reader if sys.version_info < (3, 0) else csv.reader  # Python 2 with hacky workarounds.
+)  # Py3 with native Unicode support.
