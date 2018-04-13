@@ -166,11 +166,18 @@ def generate_key_lists(
             else:
                 keys.append(key.encode("UTF-8"))
     except AttributeError:
-        raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
+        raise TypeError(
+            "provided 'master_secrets' have to be either of type bytes or strings."
+        )
 
     if kdf == "HKDF":
         key_lists = [
-            hkdf(HKDFconfig(key, salt=salt, info=info, hash_algo=hash_algo), num_identifier, key_size) for key in keys
+            hkdf(
+                HKDFconfig(key, salt=salt, info=info, hash_algo=hash_algo),
+                num_identifier,
+                key_size,
+            )
+            for key in keys
         ]
         # regroup such that we get a tuple of keys for each identifier
         return tuple(zip(*key_lists))

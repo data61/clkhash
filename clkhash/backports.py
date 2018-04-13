@@ -22,7 +22,9 @@ except AttributeError:
             :param byteorder: Either `'big'` or `'little'`.
         """
         if signed:
-            raise NotImplementedError("Signed integers are not currently supported in this " "backport.")
+            raise NotImplementedError(
+                "Signed integers are not currently supported in this " "backport."
+            )
 
         if byteorder == "big":
             pass
@@ -38,7 +40,14 @@ except AttributeError:
     # named arguments. Hence, must cast so Mypy thinks it matches the
     # original function.
     int_from_bytes = cast(
-        Callable[[Arg(Sequence[int], "bytes"), Arg(str, "byteorder"), DefaultNamedArg(bool, "signed")], int],
+        Callable[
+            [
+                Arg(Sequence[int], "bytes"),
+                Arg(str, "byteorder"),
+                DefaultNamedArg(bool, "signed"),
+            ],
+            int,
+        ],
         __int_from_bytes,
     )
 
@@ -93,5 +102,6 @@ def _p2_unicode_reader(unicode_csv_data, dialect=csv.excel, **kwargs):
 
 
 unicode_reader = (
-    _p2_unicode_reader if sys.version_info < (3, 0) else csv.reader  # Python 2 with hacky workarounds.
+    _p2_unicode_reader if sys.version_info
+    < (3, 0) else csv.reader  # Python 2 with hacky workarounds.
 )  # Py3 with native Unicode support.

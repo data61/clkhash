@@ -5,7 +5,9 @@ Generate CLK from data.
 import concurrent.futures
 import logging
 import time
-from typing import AnyStr, Callable, Iterable, List, Optional, Sequence, TextIO, Tuple, TypeVar
+from typing import (
+    AnyStr, Callable, Iterable, List, Optional, Sequence, TextIO, Tuple, TypeVar
+)
 
 from tqdm import tqdm
 
@@ -23,7 +25,9 @@ CHUNK_SIZE = 1000
 
 
 def hash_and_serialize_chunk(
-    chunk_pii_data, keys, schema  # type: Sequence[Sequence[str]]  # type: Sequence[Sequence[bytes]]  # type: Schema
+    chunk_pii_data,
+    keys,
+    schema,  # type: Sequence[Sequence[str]]  # type: Sequence[Sequence[bytes]]  # type: Schema
 ):
     # type: (...) -> Tuple[List[str], Sequence[int]]
     """
@@ -91,7 +95,9 @@ def generate_clk_from_csv(
                 pbar.set_postfix(mean=stats.mean(), std=stats.std(), refresh=False)
                 pbar.update(tics)
 
-            results = generate_clks(pii_data, schema, keys, validate=validate, callback=callback)
+            results = generate_clks(
+                pii_data, schema, keys, validate=validate, callback=callback
+            )
     else:
         results = generate_clks(pii_data, schema, keys, validate=validate)
 
@@ -132,7 +138,9 @@ def generate_clks(
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(hash_and_serialize_chunk, chunk, key_lists, schema)
             if callback is not None:
-                future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
+                future.add_done_callback(
+                    lambda f: callback(len(f.result()[0]), f.result()[1])
+                )
             futures.append(future)
 
         results = []

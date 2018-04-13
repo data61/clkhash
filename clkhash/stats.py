@@ -22,7 +22,9 @@ class OnlineMeanVariance(object):
         :return: nothing
         """
         if any(math.isnan(float(i)) or math.isinf(float(i)) for i in x):
-            raise ValueError('input contains non-finite numbers like "nan" or "+/- inf"')
+            raise ValueError(
+                'input contains non-finite numbers like "nan" or "+/- inf"'
+            )
 
         t = sum(x)
         m = float(len(x))
@@ -31,7 +33,9 @@ class OnlineMeanVariance(object):
         if self.n == 0:
             self.S = self.S + S
         else:
-            self.S = self.S + S + self.n / (m * (m + self.n)) * (m / self.n * self.t - t) ** 2
+            self.S = self.S + S + self.n / (m * (m + self.n)) * (
+                m / self.n * self.t - t
+            ) ** 2
         self.t = self.t + t
         self.n = self.n + len(x)
 

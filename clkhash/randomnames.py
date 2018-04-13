@@ -42,7 +42,9 @@ def load_csv_data(resource_name):
         return [row[0] for row in reader]
 
 
-def save_csv(data, headers, file):  # type: Iterable[Tuple[Union[str, int], ...]]  # type: Iterable[str]  # type: TextIO
+def save_csv(
+    data, headers, file
+):  # type: Iterable[Tuple[Union[str, int], ...]]  # type: Iterable[str]  # type: TextIO
     # type: (...) -> None
     """
     Output generated data to file as CSV with header.
@@ -76,7 +78,9 @@ class NameList:
     """ List of randomly generated names.
     """
 
-    with open(os.path.join(os.path.dirname(__file__), "data", "randomnames-schema.json")) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "data", "randomnames-schema.json")
+    ) as f:
         SCHEMA = Schema.from_json_file(f)
     del f
 
@@ -104,8 +108,12 @@ class NameList:
         """
         for i in range(n):
             sex = "M" if random.random() > 0.5 else "F"
-            dob = random_date(self.earliest_birthday, self.latest_birthday).strftime("%Y/%m/%d")
-            first_name = random.choice(self.all_male_first_names) if sex == "M" else random.choice(
+            dob = random_date(self.earliest_birthday, self.latest_birthday).strftime(
+                "%Y/%m/%d"
+            )
+            first_name = random.choice(
+                self.all_male_first_names
+            ) if sex == "M" else random.choice(
                 self.all_female_first_names
             )
             last_name = random.choice(self.all_last_names)
@@ -140,7 +148,10 @@ class NameList:
         notoverlap = sz - int(math.floor(overlap * sz))
         total_sz = sz + notoverlap
         if total_sz > len(self.names):
-            raise ValueError("Requested subset size and overlap demands more " + "than the number of available names")
+            raise ValueError(
+                "Requested subset size and overlap demands more "
+                + "than the number of available names"
+            )
 
         sset = random.sample(self.names, total_sz)
         return sset[:sz], sset[notoverlap:]

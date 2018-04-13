@@ -31,7 +31,11 @@ except ImportError:
 
 
 def double_hash_encode_ngrams(
-    ngrams, keys, k, l, encoding  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
+    ngrams,
+    keys,
+    k,
+    l,
+    encoding,  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
 ):
     # type: (...) -> bitarray
     """
@@ -52,8 +56,12 @@ def double_hash_encode_ngrams(
     bf = bitarray(l)
     bf.setall(False)
     for m in ngrams:
-        sha1hm = int(hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(), 16) % l
-        md5hm = int(hmac.new(key_md5, m.encode(encoding=encoding), md5).hexdigest(), 16) % l
+        sha1hm = int(
+            hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(), 16
+        ) % l
+        md5hm = int(
+            hmac.new(key_md5, m.encode(encoding=encoding), md5).hexdigest(), 16
+        ) % l
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
             bf[gi] = 1
@@ -61,7 +69,11 @@ def double_hash_encode_ngrams(
 
 
 def double_hash_encode_ngrams_non_singular(
-    ngrams, keys, k, l, encoding  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
+    ngrams,
+    keys,
+    k,
+    l,
+    encoding,  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
 ):
     # type: (...) -> bitarray.bitarray
     """
@@ -124,7 +136,11 @@ def double_hash_encode_ngrams_non_singular(
 
 
 def blake_encode_ngrams(
-    ngrams, keys, k, l, encoding  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
+    ngrams,
+    keys,
+    k,
+    l,
+    encoding,  # type: Iterable[str]  # type: Sequence[bytes]  # type: int  # type: int  # type: str
 ):
     # type: (...) -> bitarray.bitarray
     """
@@ -180,7 +196,11 @@ def blake_encode_ngrams(
 
     log_l = int(math.log(l, 2))
     if not 2 ** log_l == l:
-        raise ValueError('parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(l))
+        raise ValueError(
+            'parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(
+                l
+            )
+        )
 
     bf = bitarray(l)
     bf.setall(False)
@@ -192,8 +212,12 @@ def blake_encode_ngrams(
     for m in ngrams:
         random_shorts = []  # type: List[int]
         for i in range(num_macs):
-            hash_bytes = blake2b(m.encode(encoding=encoding), key=key, salt=str(i).encode()).digest()
-            random_shorts.extend(struct.unpack("32H", hash_bytes))  # interpret hash bytes as 32 unsigned shorts.
+            hash_bytes = blake2b(
+                m.encode(encoding=encoding), key=key, salt=str(i).encode()
+            ).digest()
+            random_shorts.extend(
+                struct.unpack("32H", hash_bytes)
+            )  # interpret hash bytes as 32 unsigned shorts.
         for i in range(k):
             idx = random_shorts[i] % l
             bf[idx] = 1
@@ -316,7 +340,9 @@ def crypto_bloom_filter(
 
 
 def stream_bloom_filters(
-    dataset, keys, schema  # type: Iterable[Sequence[Text]]  # type: Sequence[Sequence[bytes]]  # type: Schema
+    dataset,
+    keys,
+    schema,  # type: Iterable[Sequence[Text]]  # type: Sequence[Sequence[bytes]]  # type: Schema
 ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
     """
@@ -328,11 +354,16 @@ def stream_bloom_filters(
     :param xor_folds: number of XOR folds to perform
     :return: Yields bloom filters as 3-tuples
     """
-    tokenizers = [tokenizer.get_tokenizer(field.hashing_properties) for field in schema.fields]
+    tokenizers = [
+        tokenizer.get_tokenizer(field.hashing_properties) for field in schema.fields
+    ]
     field_hashing = [field.hashing_properties for field in schema.fields]
     hash_properties = schema.hashing_globals
 
-    return (crypto_bloom_filter(s, tokenizers, field_hashing, keys, hash_properties) for s in dataset)
+    return (
+        crypto_bloom_filter(s, tokenizers, field_hashing, keys, hash_properties)
+        for s in dataset
+    )
 
 
 def serialize_bitarray(ba):
