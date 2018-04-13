@@ -6,7 +6,7 @@ import concurrent.futures
 import logging
 import time
 from typing import (AnyStr, Callable, Iterable, List, Optional,
-                    Sequence, TextIO, Tuple, TypeVar)
+                    Sequence, TextIO, Tuple, TypeVar, Union)
 
 from tqdm import tqdm
 
@@ -15,7 +15,8 @@ from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
-from clkhash.validate_data import validate_data, validate_header
+from clkhash.validate_data import (validate_entries, validate_header,
+                                   validate_row_lengths)
 
 
 log = logging.getLogger('clkhash.clk')
@@ -34,7 +35,8 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
-    :param schema_types: An iterable of identifier type names.
+    :param Schema schema: Schema specifying the entry formats and
+            hashing settings.
     :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: A list of serialized Bloom filters and a list of corresponding popcounts
     """
@@ -46,14 +48,41 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     return clk_data, clk_popcounts
 
 
-def generate_clk_from_csv(input_f,           # type: TextIO
-                          keys,              # type: Tuple[AnyStr, AnyStr]
-                          schema,            # type: Schema
-                          validate=True,     # type: bool
-                          header=True,       # type: bool
-                          progress_bar=True  # type: bool
+def generate_clk_from_csv(input_f,             # type: TextIO
+                          keys,                # type: Tuple[AnyStr, AnyStr]
+                          schema,              # type: Schema
+                          validate=True,       # type: bool
+                          header=True,         # type: Union[bool, AnyStr]
+                          progress_bar=True    # type: bool
                           ):
     # type: (...) -> List[str]
+    """ Generate Bloom filters from CSV file, then serialise them.
+
+        This function also computes and outputs the Hamming weight
+        (a.k.a popcount -- the number of bits set to high) of the
+        generated Bloom filters.
+
+        :param input_f: The CSV file to hash, as stream.
+        :param keys: A tuple of two lists of secret keys used in the
+            HMAC.
+        :param Schema schema: Schema specifying the entry formats and
+            hashing settings.
+        :param bool validate: Set to `False` to disable validation of
+            data against the schama. Note that this will silence
+            warnings whose aim is to keep the hashes consistent between
+            data sources; this may affect linkage accuracy.
+        :param bool header: Set to `False` if the CSV file does not have
+            a header. Set to `'ignore'` if the CSV file does have a
+            header but it should not be checked against the schema.
+        :param bool progress_bar: Set to `False` to disable the progress
+            bar.
+        :return: A list of serialized Bloom filters and a list of
+            corresponding popcounts.
+    """
+    if header not in {False, True, 'ignore'}:
+        raise ValueError("header must be False, True or 'ignore' but is {}."
+                         .format(header))
+
     log.info("Hashing data")
 
     # Read from CSV file
@@ -61,7 +90,7 @@ def generate_clk_from_csv(input_f,           # type: TextIO
 
     if header:
         column_names = next(reader)
-        if validate:
+        if header != 'ignore':
             validate_header(schema.fields, column_names)
 
     start_time = time.time()
@@ -70,6 +99,8 @@ def generate_clk_from_csv(input_f,           # type: TextIO
     pii_data = []
     for line in reader:
         pii_data.append(tuple([element.strip() for element in line]))
+
+    validate_row_lengths(schema.fields, pii_data)
 
     if progress_bar:
         stats = OnlineMeanVariance()
@@ -114,7 +145,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         hash_algo=schema.hashing_globals.kdf_hash)
 
     if validate:
-        validate_data(schema.fields, pii_data)
+        validate_entries(schema.fields, pii_data)
 
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
