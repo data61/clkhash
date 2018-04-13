@@ -148,8 +148,8 @@ def create(type, schema, server, output, threshold, verbose):
     log("Server Status: {}".format(status))
 
     if schema is not None:
-        schema_object = load_schema(schema)
-        schema_json = json.dumps(schema_object)
+        schema_json = json.load(schema)
+        clkhash.schema.Schema.from_json_dict(schema_json)
     else:
         schema_json = 'NOT PROVIDED'
 
