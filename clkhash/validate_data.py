@@ -62,7 +62,7 @@ def validate_entries(fields,  # type: Sequence[FieldSpec]
     """
     validators = [f.validate for f in fields]
 
-    for row in data:
+    for i, row in enumerate(data):
         for entry, v in zip(row, validators):
             try:
                 v(entry)
