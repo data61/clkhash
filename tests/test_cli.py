@@ -412,7 +412,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
-        # Make sure we don't succeed with mad schema.
+        # Make sure we don't succeed with bad schema.
         runner = CliRunner()
         with temporary_file() as output_filename:
             cli_result = runner.invoke(
