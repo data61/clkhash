@@ -26,7 +26,7 @@ Table of Contents
 .. toctree::
    :maxdepth: 1
 
-   tutorial.ipynb
+   tutorials
    cli
    schema
    development
