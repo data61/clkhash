@@ -40,12 +40,11 @@ def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
         :raises FormatError: When the number of entries in a row does
             not match expectation.
     """
-    for row in data:
+    for i, row in enumerate(data):
         if len(fields) != len(row):
-            msg = 'Row has {} entries when {} are expected.'.format(
-                len(row), len(fields))
+            msg = 'Row {} has {} entries when {} are expected.'.format(
+                i, len(row), len(fields))
             raise FormatError(msg)
-
 
 
 def validate_entries(fields,  # type: Sequence[FieldSpec]
