@@ -14,6 +14,7 @@ from future.utils import raise_from
 import jsonschema
 
 from clkhash.field_formats import FieldSpec, spec_from_json_dict
+from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
@@ -105,12 +106,17 @@ class GlobalHashingProperties(object):
             'prevent_singularity')
 
         result.kdf_type = properties_dict['kdf']['type']
-        result.kdf_hash = properties_dict['kdf']['hash']
-        result.kdf_info = base64.b64decode(
-            properties_dict['kdf']['info'])
-        result.kdf_salt = base64.b64decode(
-            properties_dict['kdf']['salt'])
-        result.kdf_key_size = properties_dict['kdf']['keySize']
+        result.kdf_hash = properties_dict['kdf'].get('hash', 'SHA256')
+        kdf_info_string = properties_dict['kdf'].get('info')
+        result.kdf_info = (base64.b64decode(kdf_info_string)
+                           if kdf_info_string is not None
+                           else None)
+        kdf_salt_string = properties_dict['kdf'].get('salt')
+        result.kdf_salt = (base64.b64decode(kdf_salt_string)
+                           if kdf_salt_string is not None
+                           else None)
+        result.kdf_key_size = properties_dict['kdf'].get('keySize',
+                                                         DEFAULT_KDF_KEY_SIZE)
 
         return result
 

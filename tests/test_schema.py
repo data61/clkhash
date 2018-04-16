@@ -67,3 +67,103 @@ class TestSchemaValidation(unittest.TestCase):
             schema.validate_schema_dict({'version': 1})
 
         schema.MASTER_SCHEMA_FILE_NAMES = original_paths
+
+
+class TestSchemaLoading(unittest.TestCase):
+    def test_issue_111(self):
+        schema_dict = {
+            'version': 1,
+            'clkConfig': {
+                'l': 1024,
+                'k': 20,
+                'hash': {
+                    'type': 'doubleHash'},
+                'kdf': {
+                    'type': 'HKDF'}},
+            'features': [
+                {
+                    'identifier': 'rec_id',
+                    'ignored': True},
+                {
+                    'identifier': 'given_name',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8'},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'surname',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8'},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'street_number',
+                    'format': {
+                        'type': 'integer'},
+                    'hashing': {
+                        'ngram': 1,
+                        'positional': True,
+                        'weight': 1 }},
+                {
+                    'identifier': 'address_1',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8'},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'address_2',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8'},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'suburb',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8'},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'postcode',
+                    'format': {
+                        'type': 'integer',
+                        'minimum': 1000,
+                        'maximum': 9999},
+                    'hashing': {
+                        'ngram': 1,
+                        'positional': True,
+                        'weight': 1}},
+                {
+                    'identifier': 'state',
+                    'format': {
+                        'type': 'string',
+                        'encoding': 'utf-8',
+                        'maxLength': 3},
+                    'hashing': {
+                        'ngram': 2,
+                        'weight': 1}},
+                {
+                    'identifier': 'day_of_birth',
+                    'format': {
+                        'type': 'integer'},
+                    'hashing': {
+                        'ngram': 1,
+                        'positional': True,
+                        'weight': 1}},
+                {
+                    'identifier': 'soc_sec_id',
+                    'ignored': True}
+            ]
+        }
+
+        # This fails in #111. Now it shouldn't.
+        schema.Schema.from_json_dict(schema_dict)
