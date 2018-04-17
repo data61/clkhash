@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 import abc
 from datetime import datetime
 import re
+import string
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
 from future.builtins import super
@@ -492,6 +493,13 @@ class IntegerSpec(FieldSpec):
         super().validate(str_in)
         if self.is_missing_value(str_in):
             return
+
+        if any(d not in string.digits for d in str_in):
+            msg = ('An integer cannot contain non-digit characters. '
+                   "Read '{}'.".format(str_in))
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise e_new
 
         try:
             value = int(str_in, base=10)
