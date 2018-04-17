@@ -396,6 +396,34 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
+    def test_create_with_schema(self):
+        out = self.run_command_load_json_output(
+            ['create',
+             '--schema',
+             os.path.join(os.path.dirname(__file__),
+                          'testdata',
+                          'good-schema-v1.json')])
+
+        self.assertIn('resource_id', out)
+        self.assertIn('result_token', out)
+        self.assertIn('update_tokens', out)
+
+        self.assertGreaterEqual(len(out['resource_id']), 16)
+        self.assertGreaterEqual(len(out['result_token']), 16)
+        self.assertGreaterEqual(len(out['update_tokens']), 2)
+
+        # Make sure we don't succeed with bad schema.
+        runner = CliRunner()
+        with temporary_file() as output_filename:
+            cli_result = runner.invoke(
+                clkhash.cli.cli,
+                ['create',
+                 '--schema',
+                 os.path.join(os.path.dirname(__file__),
+                              'testdata',
+                              'bad-schema-v1.json')])
+        self.assertNotEqual(cli_result, 0)
+
     def test_single_upload(self):
         mapping = self.run_command_load_json_output(['create'])
 
