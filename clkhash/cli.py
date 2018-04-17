@@ -10,7 +10,7 @@ import click
 import requests
 
 import clkhash
-from clkhash import benchmark as bench, clk, randomnames
+from clkhash import benchmark as bench, clk, randomnames, validate_data
 
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
@@ -76,14 +76,20 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
     if no_header:
         header = False
 
-    clk_data = clk.generate_clk_from_csv(
-        input, keys, schema_object,
-        validate=validate,
-        header=header,
-        progress_bar=not quiet)
-    json.dump({'clks': clk_data}, output)
-    if hasattr(output, 'name'):
-        log("CLK data written to {}".format(output.name))
+    try:
+        clk_data = clk.generate_clk_from_csv(
+            input, keys, schema_object,
+            validate=validate,
+            header=header,
+            progress_bar=not quiet)
+    except (validate_data.EntryError, validate_data.FormatError) as e:
+        msg, = e.args
+        log(msg)
+        log('Hashing failed.')
+    else:
+        json.dump({'clks': clk_data}, output)
+        if hasattr(output, 'name'):
+            log("CLK data written to {}".format(output.name))
 
 
 @cli.command('status', short_help='Get status of entity service')
@@ -148,8 +154,8 @@ def create(type, schema, server, output, threshold, verbose):
     log("Server Status: {}".format(status))
 
     if schema is not None:
-        schema_object = load_schema(schema)
-        schema_json = json.dumps(schema_object)
+        schema_json = json.load(schema)
+        clkhash.schema.Schema.from_json_dict(schema_json)
     else:
         schema_json = 'NOT PROVIDED'
 
