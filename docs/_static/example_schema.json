@@ -16,6 +16,10 @@
     }
   },
   "features": [
+        {
+      "identifier": "index",
+      "ignored": true
+    },
     {
       "identifier": "firstName",
       "format": {
@@ -38,7 +42,11 @@
         "description": "comma separated list of middle names"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "missingValue": {
+          "sentinel": "NA",
+          "replaceWith": ""
+        }
       }
     },
     {
@@ -148,7 +156,10 @@
       },
       "hashing": {
         "ngram": 1,
-        "positional": true
+        "positional": true,
+        "missingValue": {
+          "sentinel": ""
+        }
       }
     }
   ]
