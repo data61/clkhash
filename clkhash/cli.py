@@ -84,8 +84,8 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
             progress_bar=not quiet)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
-        print(msg)
-        print('Hashing failed.')
+        log(msg)
+        log('Hashing failed.')
     else:
         json.dump({'clks': clk_data}, output)
         if hasattr(output, 'name'):
