@@ -52,6 +52,10 @@ Example Schema
       },
       "features": [
         {
+          "identifier": "index",
+          "ignored": true
+        },
+        {
           "identifier": "full name",
           "format": {
             "type": "string",
@@ -75,7 +79,14 @@ Example Schema
             "minimum": 1000,
             "maximum": 9999
           },
-          "hashing": { "ngram": 1, "positional": true }
+          "hashing":{
+            "ngram": 1,
+            "positional": true,
+            "missingValue": {
+              "sentinel": "N/A",
+              "replaceWith": ""
+            }
+          }
         }
       ]
     }
@@ -207,13 +218,30 @@ format      one of:                no       describes the expected format of the
 hashingConfig
 ^^^^^^^^^^^^^
 
-=========== =====================  ======== ===========
-name        type                   optional description
-=========== =====================  ======== ===========
-ngram       integer                no       specifies the n in n-gram (the tokenization of the input values).
-positional  boolean                yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
-weight      float                  yes      positive number, which adjusts the number of hash functions (k) used for encoding. Thus giving this feature more or less importance compared to others.
-=========== =====================  ======== ===========
+===========  =====================   ======== ===========
+name         type                    optional description
+===========  =====================   ======== ===========
+ngram        integer                 no       specifies the n in n-gram (the tokenization of the input values).
+positional   boolean                 yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
+weight       float                   yes      positive number, which adjusts the number of hash functions (k) used for encoding. Thus giving this feature more or less importance compared to others.
+missingValue :ref:`schema/missingV` yes      allows to define how missing values are handled
+===========  =====================   ======== ===========
+
+
+.. _schema/missingV:
+
+missingValue
+^^^^^^^^^^^^^^
+Data sets are not always complete -- they can contain missing values.
+If specified, then clkhash will not check the format for these missing values, and will optionally replace them with the
+'replaceWith' value.
+This can be useful if the data
+
+===========  =====================   ======== ===========
+name         type                    optional description
+===========  =====================   ======== ===========
+sentinel     string                  no       the sentinel value indicates missing data, e.g. 'Null', 'N/A', '', ...
+replaceWith  string                  yes      specifies the value clkhash should use instead of the sentinel value.
 
 
 .. _schema/tfo:
