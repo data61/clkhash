@@ -22,6 +22,7 @@ from clkhash.backports import re_compile_full
 class InvalidEntryError(ValueError):
     """ An entry in the data file does not conform to the schema.
     """
+    field_spec = None  # type: Optional[FieldSpec]
 
 
 class InvalidSchemaError(ValueError):
@@ -169,7 +170,9 @@ class FieldSpec(object):
         except UnicodeEncodeError as e:
             msg = ("Expected entry that can be encoded in {}. Read '{}'."
                    .format(self.hashing_properties.encoding, str_in))
-            raise_from(InvalidEntryError(msg), e)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise_from(e_new, e)
 
 
 class StringSpec(FieldSpec):
@@ -245,7 +248,9 @@ class StringSpec(FieldSpec):
                 compiled_regex = re_compile_full(regex)
             except (SyntaxError, re.error) as e:
                 msg = "invalid regular expression '{}.'".format(regex)
-                raise_from(InvalidSchemaError(msg), e)
+                e_new = InvalidEntryError(msg)
+                e_new.field_spec = self
+                raise_from(e_new, e)
             self.regex = compiled_regex
         else:
             self.case = case
@@ -281,7 +286,8 @@ class StringSpec(FieldSpec):
                 result.regex = re_compile_full(pattern)
             except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
-                raise_from(InvalidSchemaError(msg), e)
+                e_new = InvalidSchemaError(msg)
+                raise_from(e_new, e)
             result.regex_based = True
 
         else:
@@ -314,30 +320,42 @@ class StringSpec(FieldSpec):
         if self.regex_based:
             match = self.regex.match(str_in)
             if match is None:
-                raise InvalidEntryError(
+                e = InvalidEntryError(
                     'Expected entry that conforms to regular expression '
                     "'{}'. Read '{}'.".format(self.regex.pattern, str_in))
+                e.field_spec = self
+                raise e
 
         else:
             str_len = len(str_in)
             if self.min_length is not None and str_len < self.min_length:
-                raise InvalidEntryError(
-                    'Expected string length of at least {}. Read string of '
-                    'length {}.'.format(self.min_length, str_len))
+                e = InvalidEntryError(
+                    "Expected string length of at least {}. Read string '{}' "
+                    'of length {}.'.format(self.min_length, str_in, str_len))
+                e.field_spec = self
+                raise e
 
             if self.max_length is not None and str_len > self.max_length:
-                raise InvalidEntryError(
-                    'Expected string length of at most {}. Read string of '
-                    'length {}.'.format(self.max_length, str_len))
+                e =  InvalidEntryError(
+                    "Expected string length of at most {}. Read string '{}' "
+                    'of length {}.'.format(self.max_length, str_in, str_len))
+                e.field_spec = self
+                raise e
 
             if self.case == 'upper':
                 if str_in.upper() != str_in:
-                    raise InvalidEntryError(
-                        'Expected upper case string. Read {}.'.format(str_in))
+                    msg = "Expected upper case string. Read '{}'.".format(
+                        str_in)
+                    e = InvalidEntryError(msg)
+                    e.field_spec = self
+                    raise e
             elif self.case == 'lower':
                 if str_in.lower() != str_in:
-                    raise InvalidEntryError(
-                        'Expected lower case string. Read {}.'.format(str_in))
+                    msg = "Expected lower case string. Read '{}'.".format(
+                        str_in)
+                    e = InvalidEntryError(msg)
+                    e.field_spec = self
+                    raise e
             elif self.case == 'mixed':
                 pass
             else:
@@ -416,18 +434,24 @@ class IntegerSpec(FieldSpec):
         try:
             value = int(str_in, base=10)
         except ValueError as e:
-            msg = 'Invalid integer. Read {}.'.format(str_in)
-            raise_from(InvalidEntryError(msg), e)
+            msg = "Invalid integer. Read '{}'.".format(str_in)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise_from(e_new, e)
 
         if value < self.minimum:
-            msg = ('Expected integer value of at least {}. Read {}.'
+            msg = ("Expected integer value of at least {}. Read '{}'."
                    .format(self.minimum, value))
-            raise InvalidEntryError(msg)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise e_new
 
         if self.maximum is not None and value > self.maximum:
-            msg = ('Expected integer value of at most {}. Read {}.'
+            msg = ("Expected integer value of at most {}. Read '{}'."
                    .format(self.maximum, value))
-            raise InvalidEntryError(msg)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise e_new
 
 
 class DateSpec(FieldSpec):
@@ -502,14 +526,18 @@ class DateSpec(FieldSpec):
 
         if self.format == 'rfc3339':
             if self._RFC3339_REGEX.match(str_in) is None:
-                msg = ('Date expected to conform to RFC3339. Read {}.'
+                msg = ("Date expected to conform to RFC3339. Read '{}'."
                        .format(str_in))
-                raise InvalidEntryError(msg)
+                e = InvalidEntryError(msg)
+                e.field_spec = self
+                raise e
             try:
                 datetime.strptime(str_in, self._RFC3339_FORMAT)
             except ValueError as e:
-                msg = 'Invalid date. Read {}.'.format(str_in)
-                raise_from(InvalidEntryError(msg), e)
+                msg = "Invalid date. Read '{}'.".format(str_in)
+                e_new = InvalidEntryError(msg)
+                e_new.field_spec = self
+                raise_from(e_new, e)
 
         else:
             msg = 'No validation for date format: {}.'.format(self.format)
@@ -573,9 +601,11 @@ class EnumSpec(FieldSpec):
         super().validate(str_in)
 
         if str_in not in self.values:
-            msg = ('Expected enum value is one of {}. Read {}.'
-                   .format(self.values, str_in))
-            raise InvalidEntryError(msg)
+            msg = ("Expected enum value to be one of {}. Read '{}'."
+                   .format(list(self.values), str_in))
+            e = InvalidEntryError(msg)
+            e.field_spec = self
+            raise e
 
 
 class Ignore(FieldSpec):
