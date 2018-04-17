@@ -169,6 +169,14 @@ class TestFieldFormats(unittest.TestCase):
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(-math.pi))
 
+        # int() may accept these, but we don't.
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('  10')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('10  ')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('+10')
+
         # Ok, let's put a 'minimum' and 'maximum' in.
         regex_spec['format']['minimum'] = 8
         regex_spec['format']['maximum'] = 12
