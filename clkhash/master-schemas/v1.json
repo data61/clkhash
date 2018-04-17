@@ -177,8 +177,8 @@
       "type": "object",
       "required": ["sentinel"],
       "properties": {
-        "sentinel": {"type": ["string", "number"]},
-        "replaceWith": {"type": ["string", "number"]}
+        "sentinel": {"type": "string"},
+        "replaceWith": {"type": "string"}
       }
     }
   }
