@@ -99,13 +99,13 @@
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
         "description": {"type": "string"},
         "format": {"oneOf": [
-            {"$ref": "#definitions/textFormat"},
-            {"$ref": "#definitions/textPatternFormat"},
-            {"$ref": "#definitions/numberFormat"},
-            {"$ref": "#definitions/dateFormat"},
-            {"$ref": "#definitions/enumFormat"}
+            {"$ref": "#/definitions/textFormat"},
+            {"$ref": "#/definitions/textPatternFormat"},
+            {"$ref": "#/definitions/numberFormat"},
+            {"$ref": "#/definitions/dateFormat"},
+            {"$ref": "#/definitions/enumFormat"}
           ]},
-        "hashing": {"$ref": "#definitions/hashingConfig"}
+        "hashing": {"$ref": "#/definitions/hashingConfig"}
       }
     },
     "textFormat": {
@@ -169,7 +169,16 @@
       "properties": {
         "ngram": {"type": "integer", "minimum": 0, "default": 2},
         "positional": {"type": "boolean", "default": false},
-        "weight": {"type": "number", "minimum": 0, "default": 1}
+        "weight": {"type": "number", "minimum": 0, "default": 1},
+        "missingValue": {"$ref": "#/definitions/missingValue"}
+      }
+    },
+    "missingValue": {
+      "type": "object",
+      "required": ["sentinel"],
+      "properties": {
+        "sentinel": {"type": ["string", "number"]},
+        "replaceWith": {"type": ["string", "number"]}
       }
     }
   }
