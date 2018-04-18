@@ -57,8 +57,9 @@ class MissingValueSpec(object):
         # type: (Dict[str, Any]) -> MissingValueSpec
         return cls(
             sentinel=json_dict['sentinel'],
-            replace_with=json_dict.get('replaceWith', None)
+            replace_with=json_dict.get('replaceWith')
         )
+
 
 class FieldHashingProperties(object):
     """ Stores the settings used to hash a field. This includes the
@@ -374,9 +375,9 @@ class StringSpec(FieldSpec):
             :raises ValueError: When self.case is not one of the
                 permitted values (`'lower'`, `'upper'`, or `'mixed'`).
         """
-        super().validate(str_in)  # Validate encoding.
         if self.is_missing_value(str_in):
             return
+        super().validate(str_in)  # Validate encoding.
 
         if self.regex_based:
             match = self.regex.match(str_in)
@@ -490,9 +491,9 @@ class IntegerSpec(FieldSpec):
             :param str str_in: String to validate.
             :raises InvalidEntryError: When entry is invalid.
         """
-        super().validate(str_in)
         if self.is_missing_value(str_in):
             return
+        super().validate(str_in)
 
         if any(d not in string.digits for d in str_in):
             msg = ('An integer cannot contain non-digit characters. '
@@ -592,9 +593,9 @@ class DateSpec(FieldSpec):
             :raises InvalidEntryError: Iff entry is invalid.
             :raises ValueError: When self.format is unrecognised.
         """
-        super().validate(str_in)
         if self.is_missing_value(str_in):
             return
+        super().validate(str_in)
 
         if self.format == 'rfc3339':
             if self._RFC3339_REGEX.match(str_in) is None:
@@ -670,9 +671,9 @@ class EnumSpec(FieldSpec):
             :param str str_in: String to validate.
             :raises InvalidEntryError: When entry is invalid.
         """
-        super().validate(str_in)
         if self.is_missing_value(str_in):
             return
+        super().validate(str_in)
 
         if str_in not in self.values:
             msg = ("Expected enum value to be one of {}. Read '{}'."
