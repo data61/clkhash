@@ -34,6 +34,33 @@ class InvalidSchemaError(ValueError):
     """
 
 
+class MissingValueSpec(object):
+    """ Stores the information about how to find and treat missing values.
+
+        :ivar str sentinel: sentinel is the string that identifies a missing value e.g.: 'N/A', ''.
+                            the sentinel will not be validated against the feature format definition
+        :ivar str replaceWith: defines the string which replaces the sentinel whenever present,
+                               can be 'None', then sentinel will not be replaced.
+
+    """
+
+    def __init__(self,
+                 sentinel,          # type: str
+                 replace_with=None  # type: str
+                ):
+        # type: (...) -> None
+        self.sentinel = sentinel
+        self.replace_with = replace_with if replace_with is not None else sentinel
+
+    @classmethod
+    def from_json_dict(cls, json_dict):
+        # type: (Dict[str, Any]) -> MissingValueSpec
+        return cls(
+            sentinel=json_dict['sentinel'],
+            replace_with=json_dict.get('replaceWith')
+        )
+
+
 class FieldHashingProperties(object):
     """ Stores the settings used to hash a field. This includes the
         encoding and tokenisation parameters.
@@ -54,10 +81,11 @@ class FieldHashingProperties(object):
     _DEFAULT_WEIGHT = 1
 
     def __init__(self,
-                 ngram,                          # type: int
-                 encoding=_DEFAULT_ENCODING,     # type: str
-                 weight=_DEFAULT_WEIGHT,         # type: Union[int, float]
-                 positional=_DEFAULT_POSITIONAL  # type: bool
+                 ngram,                           # type: int
+                 encoding=_DEFAULT_ENCODING,      # type: str
+                 weight=_DEFAULT_WEIGHT,          # type: Union[int, float]
+                 positional=_DEFAULT_POSITIONAL,  # type: bool
+                 missing_value=None               # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
@@ -81,6 +109,23 @@ class FieldHashingProperties(object):
         self.encoding = encoding
         self.positional = positional
         self.weight = weight
+        self.missing_value = missing_value
+
+    def replace_missing_value(self, str_in):
+        # type: (Text) -> Text
+        """ returns 'str_in' if it is not equals to the 'sentinel' as defined in the missingValue section of
+        the schema. Else it will return the 'replaceWith' value.
+
+        :param str_in:
+        :return: str_in or the missingValue replacement value
+        """
+        if self.missing_value is None:
+            return str_in
+        elif self.missing_value.sentinel == str_in:
+            return self.missing_value.replace_with
+        else:
+            return str_in
+
 
     @classmethod
     def from_json_dict(cls, json_dict):
@@ -100,7 +145,8 @@ class FieldHashingProperties(object):
             positional=json_dict.get(
                 'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
             weight=json_dict.get(
-                'weight', FieldHashingProperties._DEFAULT_WEIGHT))
+                'weight', FieldHashingProperties._DEFAULT_WEIGHT),
+            missing_value=MissingValueSpec.from_json_dict(json_dict['missingValue']) if 'missingValue' in json_dict else None)
 
 
 @add_metaclass(abc.ABCMeta)
@@ -174,6 +220,19 @@ class FieldSpec(object):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
+
+    def is_missing_value(self, str_in):
+        # type: (Text) -> bool
+        """ tests if 'str_in' is the sentinel value for this field
+
+            :param str str_in: String to test if it stands for missing value
+            :returns True if a missing value is defined for this field and str_in matches this value
+
+        """
+        if self.hashing_properties.missing_value is not None:
+            if self.hashing_properties.missing_value.sentinel == str_in:
+                return True
+        return False
 
 
 class StringSpec(FieldSpec):
@@ -316,6 +375,8 @@ class StringSpec(FieldSpec):
             :raises ValueError: When self.case is not one of the
                 permitted values (`'lower'`, `'upper'`, or `'mixed'`).
         """
+        if self.is_missing_value(str_in):
+            return
         super().validate(str_in)  # Validate encoding.
 
         if self.regex_based:
@@ -430,6 +491,8 @@ class IntegerSpec(FieldSpec):
             :param str str_in: String to validate.
             :raises InvalidEntryError: When entry is invalid.
         """
+        if self.is_missing_value(str_in):
+            return
         super().validate(str_in)
 
         if any(d not in string.digits for d in str_in):
@@ -530,6 +593,8 @@ class DateSpec(FieldSpec):
             :raises InvalidEntryError: Iff entry is invalid.
             :raises ValueError: When self.format is unrecognised.
         """
+        if self.is_missing_value(str_in):
+            return
         super().validate(str_in)
 
         if self.format == 'rfc3339':
@@ -606,6 +671,8 @@ class EnumSpec(FieldSpec):
             :param str str_in: String to validate.
             :raises InvalidEntryError: When entry is invalid.
         """
+        if self.is_missing_value(str_in):
+            return
         super().validate(str_in)
 
         if str_in not in self.values:

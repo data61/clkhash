@@ -52,6 +52,20 @@ class TestFieldFormats(unittest.TestCase):
         self.assertIs(spec.hashing_properties.positional, False)
         self.assertEqual(spec.hashing_properties.weight, 1)
 
+        # check with missing values
+        regex_spec['hashing']['missingValue'] = dict(sentinel='null')
+        spec = field_formats.spec_from_json_dict(regex_spec)
+        # validating the sentinel should work
+        spec.validate('null')
+        self.assertTrue(spec.is_missing_value('null'))
+        self.assertFalse(spec.is_missing_value('dog'))
+        self.assertEqual('null', spec.hashing_properties.replace_missing_value('null'))
+        self.assertEqual('dog', spec.hashing_properties.replace_missing_value('dog'))
+        # now with replaceWith value
+        regex_spec['hashing']['missingValue']['replaceWith'] = 'cat'
+        spec = field_formats.spec_from_json_dict(regex_spec)
+        self.assertEqual('cat', spec.hashing_properties.replace_missing_value('null'))
+
     def test_string_nonregex_from_json_dict(self):
         spec_dict = dict(
             identifier='noRegex',
@@ -106,6 +120,12 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
         self.assertEqual(spec.hashing_properties.weight, 0)
+
+        # check with missing values
+        spec_dict['hashing']['missingValue'] = dict(sentinel='N/A')
+        spec = field_formats.spec_from_json_dict(spec_dict)
+        # validating the sentinel should work
+        spec.validate('N/A')
 
     def test_string_nonregex_init(self):
         hashing_properties = field_formats.FieldHashingProperties(
@@ -210,6 +230,13 @@ class TestFieldFormats(unittest.TestCase):
         self.assertIs(spec.hashing_properties.positional, True)
         self.assertEqual(spec.hashing_properties.weight, 1)
 
+        # check with missing values
+        regex_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
+        spec = field_formats.spec_from_json_dict(regex_spec)
+        # validating the sentinel should work
+        spec.validate('None')
+        self.assertEqual('42', spec.hashing_properties.replace_missing_value('None'))
+
     def test_date(self):
         regex_spec = dict(
             identifier='dates',
@@ -295,7 +322,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.weight, 1)
 
     def test_enum(self):
-        regex_spec = dict(
+        spec_dict = dict(
             identifier='testingAllTheEnums',
             format=dict(
                 type='enum',
@@ -306,7 +333,7 @@ class TestFieldFormats(unittest.TestCase):
                 positional=False,
                 weight=2.57))
 
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are fine.
         spec.validate('dogs')
@@ -331,3 +358,14 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.ngram, 2)
         self.assertIs(spec.hashing_properties.positional, False)
         self.assertEqual(spec.hashing_properties.weight, 2.57)
+
+        # check missing values
+        spec_dict['hashing']['missingValue']=dict(sentinel='', replaceWith='omg')
+        spec = field_formats.spec_from_json_dict(spec_dict)
+        # that's the sentinel for missing values
+        spec.validate('')
+        # check the missing value related functions in spec
+        self.assertTrue(spec.is_missing_value(''))
+        self.assertFalse(spec.is_missing_value('no WAY'))
+        self.assertEqual(spec.hashing_properties.missing_value.replace_with,
+                         spec.hashing_properties.replace_missing_value(''))
