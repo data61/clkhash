@@ -280,7 +280,7 @@ def fold_xor(bloomfilter,  # type: bitarray
 
 def crypto_bloom_filter(record,          # type: Sequence[Text]
                         tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
-                        fields,          # type: List[FieldSpec]
+                        fields,          # type: Sequence[FieldSpec]
                         keys,            # type: Sequence[Sequence[bytes]]
                         hash_properties  # type: GlobalHashingProperties
                         ):

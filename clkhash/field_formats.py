@@ -646,6 +646,8 @@ class DateSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
+            raise None  # otherwise mypy complains about missing return statement. It can't understand 'raise_from'
+
 
 
 class EnumSpec(FieldSpec):

@@ -3,6 +3,8 @@ from typing import AnyStr, Callable, cast, Pattern, Sequence
 import re
 import sys
 import time
+from datetime import datetime
+from typing import Text
 
 from mypy_extensions import Arg, DefaultNamedArg
 
@@ -103,6 +105,7 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
 
 if sys.version_info > (3, 2):
     def strftime(dt, fmt):
+        # type: (datetime, Text) -> Text
         return dt.strftime(fmt)
 else:
     # remove the unsupposed "%s" command.  But don't
@@ -128,6 +131,7 @@ else:
         return sites
 
     def strftime(dt, fmt):
+        # type: (datetime, Text) -> Text
         """ sensible version of strftime for python < 3.2. The one from the standard library does not support years < 1900.
         Kudos: https://github.com/ActiveState/code/blob/master/recipes/Python/306860_proleptic_Gregoridates_strftime_before/recipe-306860.py
 
