@@ -7,6 +7,7 @@ import io
 import unittest
 
 from clkhash import clk, schema, randomnames, validate_data
+from future.builtins import range
 
 
 class TestChunks(unittest.TestCase):

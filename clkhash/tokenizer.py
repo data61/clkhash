@@ -8,6 +8,8 @@ from __future__ import unicode_literals
 import functools
 from typing import AnyStr, Callable, Iterable, Optional, Text
 
+from future.builtins import range
+
 from clkhash import field_formats
 
 

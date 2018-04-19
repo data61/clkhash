@@ -1,4 +1,6 @@
 import random
+
+from future.builtins import range
 from pytest import approx, raises
 
 from clkhash.stats import OnlineMeanVariance
