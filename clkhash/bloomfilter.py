@@ -313,6 +313,7 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
 
     for (entry, tokenizer, field, key) \
             in zip(record, tokenizers, field_hashing, keys):
+        entry = field.replace_missing_value(entry)
         ngrams = tokenizer(entry)
         adjusted_k = int(round(field.weight * k))
 

@@ -10,7 +10,7 @@ class TestJsonSchema(unittest.TestCase):
 
     def test_example_validation(self):
         clkhash_path = os.path.abspath(os.path.dirname(__file__) + '/..')
-        with open(os.path.join(clkhash_path, 'docs/_static/schema.json')) as schema_file, \
+        with open(os.path.join(clkhash_path, 'clkhash/master-schemas/v1.json')) as schema_file, \
                 open(os.path.join(clkhash_path, 'docs/_static/example_schema.json')) as example_file:
             schema = json.load(schema_file)
             example = json.load(example_file)
