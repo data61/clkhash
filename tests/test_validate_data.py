@@ -39,7 +39,7 @@ class FieldsMaker(unittest.TestCase):
             ),
             DateSpec(
                 identifier='join date',
-                format='rfc3339',
+                format='%Y-%m-%d',
                 hashing_properties=ascii_hashing
             ),
             EnumSpec(
