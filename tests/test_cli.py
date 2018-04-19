@@ -10,6 +10,7 @@ import time
 import unittest
 
 from click.testing import CliRunner
+from future.builtins import range
 
 import clkhash
 import clkhash.cli
@@ -108,7 +109,7 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, [])
-        for expected_command in set(['hash', 'upload', 'create', 'results', 'generate', 'benchmark']):
+        for expected_command in 'hash', 'upload', 'create', 'results', 'generate', 'benchmark':
             assert expected_command in result.output
 
     def test_version(self):

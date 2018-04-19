@@ -1,7 +1,9 @@
-import unittest
-import math
-import pytest
 from datetime import datetime
+import math
+import unittest
+
+from future.builtins import range
+import pytest
 
 from clkhash import randomnames as rn
 

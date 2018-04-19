@@ -13,7 +13,7 @@ import re
 import string
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
-from future.builtins import super
+from future.builtins import range, super
 from future.utils import raise_from
 from six import add_metaclass
 

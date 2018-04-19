@@ -10,6 +10,7 @@ import json
 import pkgutil
 from typing import Any, Dict, Hashable, List, Sequence, Text, TextIO
 
+from future.builtins import map
 from future.utils import raise_from
 import jsonschema
 
