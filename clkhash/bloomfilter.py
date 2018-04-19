@@ -19,7 +19,7 @@ from future.builtins import range, zip
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
 from clkhash.schema import Schema, GlobalHashingProperties
-from clkhash.field_formats import FieldHashingProperties
+from clkhash.field_formats import FieldSpec
 
 try:
     from hashlib import blake2b
