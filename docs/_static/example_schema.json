@@ -135,6 +135,18 @@
       }
     },
     {
+      "identifier": "dob",
+      "format": {
+        "type": "date",
+        "format": "%Y-%m-%d",
+        "description": "The full date of birth (eg: 1965-12-24)"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
       "identifier": "addressKey",
       "format": {
         "type": "string",
