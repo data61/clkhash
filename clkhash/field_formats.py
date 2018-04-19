@@ -18,6 +18,7 @@ from future.utils import raise_from
 from six import add_metaclass
 
 from clkhash.backports import re_compile_full
+from clkhash.backports import strftime
 
 
 class InvalidEntryError(ValueError):
@@ -639,9 +640,9 @@ class DateSpec(FieldSpec):
         """
         try:
             dt = datetime.strptime(str_in, self.format)
-            return dt.date().strftime(DateSpec.OUTPUT_FORMAT)
+            return strftime(dt, DateSpec.OUTPUT_FORMAT)
         except ValueError as e:
-            msg = "Date does not conform to specification '{}'. Read '{}'.".format(self.format, str_in)
+            msg = "Unable to format date value '{}'. Reason: {}".format(str_in, e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
