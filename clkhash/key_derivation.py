@@ -3,6 +3,7 @@ from typing import cast, Tuple, Union, Optional, Sequence, Any
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
+from future.builtins import range, zip
 
 
 """
@@ -115,7 +116,7 @@ def hkdf(hkdf_config, num_keys, key_size=DEFAULT_KEY_SIZE):
     # hkdf.derive returns a block of num_keys * key_size bytes which we divide up into num_keys chunks,
     # each of size key_size
     keybytes = hkdf.derive(hkdf_config.master_secret)
-    keys = tuple([keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys)])
+    keys = tuple(keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys))
     return keys
 
 
@@ -166,5 +167,5 @@ def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes
         # regroup such that we get a tuple of keys for each identifier
         return tuple(zip(*key_lists))
     if kdf == 'legacy':
-        return tuple([tuple(keys) for _ in range(num_identifier)])
+        return tuple(tuple(keys) for _ in range(num_identifier))
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))

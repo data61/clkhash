@@ -14,7 +14,7 @@ import struct
 from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
 from bitarray import bitarray
-from future.builtins import range
+from future.builtins import range, zip
 
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes

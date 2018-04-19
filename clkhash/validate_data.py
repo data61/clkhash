@@ -8,6 +8,7 @@
 
 from typing import Optional, Sequence
 
+from future.builtins import zip
 from future.utils import raise_from
 
 from clkhash.field_formats import (FieldSpec, InvalidEntryError,
