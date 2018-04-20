@@ -138,8 +138,8 @@
       "additionalProperties": false,
       "properties": {
         "type": {"enum": ["integer"]},
-        "minimum": {"type": "integer", "minimum": 0},
-        "maximum": {"type": "integer", "minimum": 1},
+        "minimum": {"type": "integer"},
+        "maximum": {"type": "integer"},
         "description": {"type": "string"}
       }
     },
