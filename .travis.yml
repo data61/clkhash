@@ -13,7 +13,9 @@ python:
 
 matrix:
   allow_failures:
-    - python: 'nightly'  'pypy3'
+    - python: 'nightly'
+    - python: 'pypy3'
+
   include:
     - python: '3.6'
       env:
