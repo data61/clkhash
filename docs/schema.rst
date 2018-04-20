@@ -3,11 +3,6 @@
 Hashing Schema
 ==============
 
-.. caution::
-
-   This document and the referenced ``schema.json`` file are still in a draft status.
-
-
 As CLKs are usually used for privacy preserving linkage, it is important that participating organisations agree on how
 raw personally identifiable information is hashed to create the CLKs.
 
@@ -20,7 +15,7 @@ and create identical CLKS given the same data.
 The hashing-schema is a detailed description of exactly what is fed to the hashing operation,
 along with any configuration for the hashing itself.
 
-The format of the hashing schema is defined in a separate ``JSON Schema`` document `hashing-schema.json <_static/schema.json>`_.
+The format of the hashing schema is defined in a separate ``JSON Schema`` document `master-schemas/v1.json <https://github.com/n1analytics/clkhash/blob/master/clkhash/master-schemas/v1.json>`_.
 
 
 Basic Structure
