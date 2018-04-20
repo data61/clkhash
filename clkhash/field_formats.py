@@ -557,7 +557,7 @@ class IntegerSpec(FieldSpec):
         """
         try:
             value = int(str_in, base=10)
-            return '{}'.format(value)
+            return str(value)
         except ValueError as e:
             msg = "Invalid integer. Read '{}'.".format(str_in)
             e_new = InvalidEntryError(msg)
