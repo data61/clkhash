@@ -286,8 +286,8 @@ numberFormat
 name        type                   optional description
 =========== =====================  ======== ===========
 type        string                 no       has to be "integer"
-minimum     integer                yes      positive integer describing the lower bound of the input values.
-maximum     integer                yes      positive integer describing the upper bound of the input values.
+minimum     integer                yes      integer describing the lower bound of the input values.
+maximum     integer                yes      integer describing the upper bound of the input values.
 description string                 yes      free text, ignored by clkhash.
 =========== =====================  ======== ===========
 
