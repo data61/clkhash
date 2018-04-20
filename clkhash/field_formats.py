@@ -14,11 +14,9 @@ import string
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
 from future.builtins import range, super
-from future.utils import raise_from
 from six import add_metaclass
 
-from clkhash.backports import re_compile_full
-from clkhash.backports import strftime
+from clkhash.backports import re_compile_full, strftime, raise_from
 
 
 class InvalidEntryError(ValueError):
@@ -646,7 +644,6 @@ class DateSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
-            raise None  # otherwise mypy complains about missing return statement. It can't understand 'raise_from'
 
 
 

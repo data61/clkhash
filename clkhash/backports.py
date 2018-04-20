@@ -6,7 +6,8 @@ import time
 from datetime import datetime
 from typing import Text
 
-from mypy_extensions import Arg, DefaultNamedArg
+from future.utils import raise_from as __raise_from
+from mypy_extensions import Arg, DefaultNamedArg, NoReturn
 
 
 try:
@@ -170,3 +171,7 @@ else:
         for site in sites:
             s = s[:site] + syear + s[site + 4:]
         return s
+
+
+# Help MyPy understand that this always throws.
+raise_from = cast(Callable[[Exception, Exception], NoReturn], __raise_from)
