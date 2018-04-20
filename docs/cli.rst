@@ -9,6 +9,37 @@ The command line tool can be accessed in two ways:
 - directly running the python module ``clkhash.cli`` with ``python -m clkhash.cli``.
 
 
+Help
+-----
+
+The ``clkutil`` tool has help pages for all commands built in.::
+
+    $ clkutil hash --help
+    Usage: clkutil hash [OPTIONS] INPUT KEYS... SCHEMA OUTPUT
+
+      Process data to create CLKs
+
+      Given a file containing csv data as INPUT, and a json document defining
+      the expected schema, verify the schema, then hash the data to create CLKs
+      writing to OUTPUT. Note the CSV file should contain a header row - however
+      this row is not used by this tool.
+
+      It is important that the keys are only known by the two data providers.
+      Two words should be provided. For example:
+
+      $clkutil hash input.txt horse staple output.txt
+
+      Use "-" to output to stdout.
+
+    Options:
+      -q, --quiet             Quiet any progress messaging
+      --no-header             Don't skip the first row
+      --check-header BOOLEAN  If true, check the header against the schema
+      --validate BOOLEAN      If true, validate the entries against the schema
+      --help                  Show this message and exit.
+
+
+
 Hashing
 -------
 
@@ -53,13 +84,77 @@ The cli tool has an option for generating fake pii data.
     1,Garold Staten,1928/11/23,M
     2,Yaritza Edman,1972/11/30,F
 
-The yaml schema used for the generated data is the following::
+A corresponding hashing schema can be generated as well::
 
-    - identifier: "INDEX"
-      notes: "Ignored"
-    - identifier: "NAME freetext"
-    - identifier: "DOB YYYY/MM/DD"
-    - identifier: "GENDER M or F"
+    $ clkutil generate-default-schema schema.json
+    $ cat schema.json
+    {
+      "version": 1,
+      "clkConfig": {
+        "l": 1024,
+        "k": 30,
+        "hash": {
+          "type": "doubleHash"
+        },
+        "kdf": {
+          "type": "HKDF",
+          "hash": "SHA256",
+          "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+          "info": "c2NoZW1hX2V4YW1wbGU=",
+          "keySize": 64
+        }
+      },
+      "features": [
+        {
+          "identifier": "INDEX",
+          "format": {
+            "type": "integer"
+          },
+          "hashing": {
+            "ngram": 1,
+            "weight": 0
+          }
+        },
+        {
+          "identifier": "NAME freetext",
+          "format": {
+            "type": "string",
+            "encoding": "utf-8",
+            "case": "mixed",
+            "minLength": 3
+          },
+          "hashing": {
+            "ngram": 2,
+            "weight": 0.5
+          }
+        },
+        {
+          "identifier": "DOB YYYY/MM/DD",
+          "format": {
+            "type": "string",
+            "encoding": "ascii",
+            "description": "Numbers separated by slashes, in the year, month, day order",
+            "pattern": "(?:\\d\\d\\d\\d/\\d\\d/\\d\\d)\\Z"
+          },
+          "hashing": {
+            "ngram": 1,
+            "positional": true
+          }
+        },
+        {
+          "identifier": "GENDER M or F",
+          "format": {
+            "type": "enum",
+            "values": ["M", "F"]
+          },
+          "hashing": {
+            "ngram": 1,
+            "weight": 2
+          }
+        }
+      ]
+    }
+
 
 Benchmark
 ---------
@@ -93,3 +188,5 @@ These commands are:
 - create
 - upload
 - results
+
+See also the :doc:`Tutorial for CLI<tutorials>`.
