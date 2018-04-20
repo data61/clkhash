@@ -1,7 +1,15 @@
 ## 0.11.0
 
-* Introduced a new schema system that permits you to (a) change the settings for hashing, such as the hash length and the number of bits set per token, (b) change the tokenisation settings for each field, and (c) provide a spec against which the input is validated, so you know that whatever you're hashing has been formatted correctly.
+* Introduced a new schema system that permits you to 
+    
+    1. change the settings for hashing, such as the hash length and the number of bits set per token, 
+    2. change the tokenisation settings for each field, 
+    3. provide a spec against which the input is validated, so you know that whatever you're hashing has been formatted correctly,
+    4. define sentinels for missing values with then will be exempt from validation and can optionally be replaced with another value (e.g.: 'Null' -> ''),
+    5. choose between three different hashing schemes.
 
+  The [hashing schema documentation](http://clkhash.readthedocs.io/en/latest/schema.html) provides more details.
+  
 ### Breaking changes
 * With the new schema, the old schema format will no longer be accepted. This is fine since the previous schema didn't do much.
 * You must now provide a schema to perform hashing.
