@@ -14,10 +14,9 @@ import string
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
 from future.builtins import range, super
-from future.utils import raise_from
 from six import add_metaclass
 
-from clkhash.backports import re_compile_full
+from clkhash.backports import re_compile_full, strftime, raise_from
 
 
 class InvalidEntryError(ValueError):
@@ -226,13 +225,43 @@ class FieldSpec(object):
         """ tests if 'str_in' is the sentinel value for this field
 
             :param str str_in: String to test if it stands for missing value
-            :returns True if a missing value is defined for this field and str_in matches this value
+            :return: True if a missing value is defined for this field and str_in matches this value
 
         """
         if self.hashing_properties.missing_value is not None:
             if self.hashing_properties.missing_value.sentinel == str_in:
                 return True
         return False
+
+    def format_value(self, str_in):
+        # type: (Text) -> Text
+        """ formats the value 'str_in' for hashing according to this field's spec.
+
+            There are several reasons why this might be necessary:
+
+            1. This field contains missing values which have to be replaced by some other string
+            2. There are several different ways to describe a specific value for this field, e.g.: all of '+65', ' 65',
+               '65' are valid representations of the integer 65.
+            3. Entries of this field might contain elements with no entropy, e.g. dates might be formatted as
+               yyyy-mm-dd, thus all dates will have '-' at the same place. These artifacts have no value for entity
+               resolution and should be removed.
+
+            :param str str_in: the string to format
+            :return: a string representation of 'str_in' which is ready to be hashed
+        """
+        if self.is_missing_value(str_in):
+            return self.hashing_properties.replace_missing_value(str_in)
+        else:
+            return self._format_regular_value(str_in)
+
+    def _format_regular_value(self, str_in):
+        # type: (Text) -> Text
+        """ overwrite this if you want to modify 'str_in' before hashing.
+
+            :param str_in:
+            :return: a string representation of 'str_in' which is ready to be hashed
+        """
+        return str_in
 
 
 class StringSpec(FieldSpec):
@@ -528,15 +557,14 @@ class IntegerSpec(FieldSpec):
 class DateSpec(FieldSpec):
     """ Represents a field that holds dates.
 
-       Dates are specified as full-dates as defined in
-       `RFC3339 <https://tools.ietf.org/html/rfc3339>`_ E.g.,
-       ``1996-12-19``
+       Dates are specified as full-dates in a format that can be described as a *strptime()* (C89 standard) compatible
+       format string.
+       E.g.: the format for the standard internet format `RFC3339 <https://tools.ietf.org/html/rfc3339>`_
+       (e.g. 1996-12-19) is '%Y-%m-%d'.
 
         :ivar str format: The format of the date.
     """
-    _PERMITTED_FORMATS = {'rfc3339'}
-    _RFC3339_REGEX = re_compile_full(r'\d\d\d\d-\d\d-\d\d')
-    _RFC3339_FORMAT = '%Y-%m-%d'
+    OUTPUT_FORMAT = '%Y%m%d'
 
     def __init__(self,
                  identifier,          # type: str
@@ -552,11 +580,8 @@ class DateSpec(FieldSpec):
                          description=description,
                          hashing_properties=hashing_properties)
 
-        if format not in self._PERMITTED_FORMATS:
-            msg = 'No validation for date format: {}.'.format(format)
-            raise NotImplementedError(msg)
-
         self.format = format
+
 
     @classmethod
     def from_json_dict(cls, json_dict):
@@ -596,25 +621,30 @@ class DateSpec(FieldSpec):
         if self.is_missing_value(str_in):
             return
         super().validate(str_in)
+        try:
+            datetime.strptime(str_in, self.format)
+        except ValueError as e:
+            msg = "Validation error for date type: {}".format(e)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise_from(e_new, e)
 
-        if self.format == 'rfc3339':
-            if self._RFC3339_REGEX.match(str_in) is None:
-                msg = ("Date expected to conform to RFC3339. Read '{}'."
-                       .format(str_in))
-                e = InvalidEntryError(msg)
-                e.field_spec = self
-                raise e
-            try:
-                datetime.strptime(str_in, self._RFC3339_FORMAT)
-            except ValueError as e:
-                msg = "Invalid date. Read '{}'.".format(str_in)
-                e_new = InvalidEntryError(msg)
-                e_new.field_spec = self
-                raise_from(e_new, e)
+    def _format_regular_value(self, str_in):
+        # type: (Text) -> Text
+        """ we overwrite default behaviour as we want to hash the numbers only, no fillers like '-', or '/'
 
-        else:
-            msg = 'No validation for date format: {}.'.format(self.format)
-            raise NotImplementedError(msg)
+        :param str str_in: date string
+        :return: str date string with format DateSpec.OUTPUT_FORMAT
+        """
+        try:
+            dt = datetime.strptime(str_in, self.format)
+            return strftime(dt, DateSpec.OUTPUT_FORMAT)
+        except ValueError as e:
+            msg = "Unable to format date value '{}'. Reason: {}".format(str_in, e)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise_from(e_new, e)
+
 
 
 class EnumSpec(FieldSpec):

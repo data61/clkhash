@@ -69,7 +69,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
                     identifier='dob',
                     format=dict(
                         type='date',
-                        format='rfc3339',
+                        format='%Y-%m-%d',
                         description='When were ya born?'),
                     hashing=dict(
                         ngram=2,

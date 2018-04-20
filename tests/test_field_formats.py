@@ -242,7 +242,7 @@ class TestFieldFormats(unittest.TestCase):
             identifier='dates',
             format=dict(
                 type='date',
-                format='rfc3339',
+                format='%Y-%m-%d',
                 description='phoenix dactylifera'),
             hashing=dict(
                 ngram=0,
@@ -270,10 +270,6 @@ class TestFieldFormats(unittest.TestCase):
             spec.validate('2006-03-52')
 
         # These formats are incorrect.
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('2006-3-20')
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('1946-06-1')
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('194-06-14')
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -320,6 +316,25 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.ngram, 0)
         self.assertIs(spec.hashing_properties.positional, False)
         self.assertEqual(spec.hashing_properties.weight, 1)
+
+        # check for graceful fail if format spec is invalid
+        spec.format = 'invalid%'
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('2018-01-23')
+
+    def test_date_output_formatting(self):
+        regex_spec = dict(
+            identifier='dates',
+            format=dict(
+                type='date',
+                format='%Y:%m-%d'),
+            hashing=dict(ngram=0))
+
+        spec = field_formats.spec_from_json_dict(regex_spec)
+        from datetime import date
+        from clkhash.field_formats import DateSpec
+        d = date.today()
+        assert spec.format_value(d.strftime(regex_spec['format']['format'])) == d.strftime(DateSpec.OUTPUT_FORMAT)
 
     def test_enum(self):
         spec_dict = dict(

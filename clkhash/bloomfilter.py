@@ -19,7 +19,7 @@ from future.builtins import range, zip
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
 from clkhash.schema import Schema, GlobalHashingProperties
-from clkhash.field_formats import FieldHashingProperties
+from clkhash.field_formats import FieldSpec
 
 try:
     from hashlib import blake2b
@@ -280,7 +280,7 @@ def fold_xor(bloomfilter,  # type: bitarray
 
 def crypto_bloom_filter(record,          # type: Sequence[Text]
                         tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
-                        field_hashing,   # type: List[FieldHashingProperties]
+                        fields,          # type: Sequence[FieldSpec]
                         keys,            # type: Sequence[Sequence[bytes]]
                         hash_properties  # type: GlobalHashingProperties
                         ):
@@ -292,9 +292,9 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
     http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
-    :param tokenizers: A tokenizers. A tokenizer is a function that
+    :param tokenizers: A list of tokenizers. A tokenizer is a function that
         returns tokens from a string.
-    :param field_hashing: Hashing properties for each field.
+    :param fields: A list of FieldSpec. One for each field.
     :param keys: Keys for the hash functions as a tuple of lists of bytes.
     :param hash_properties: Global hashing properties.
 
@@ -311,14 +311,16 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
     bloomfilter = bitarray(l)
     bloomfilter.setall(False)
 
-    for (entry, tokenizer, field, key) \
-            in zip(record, tokenizers, field_hashing, keys):
-        entry = field.replace_missing_value(entry)
-        ngrams = tokenizer(entry)
-        adjusted_k = int(round(field.weight * k))
+    for (entry, tokenize, field, key) \
+            in zip(record, tokenizers, fields, keys):
+        hash_props = field.hashing_properties
+
+        ngrams = tokenize(field.format_value(entry))
+
+        adjusted_k = int(round(hash_props.weight * k))
 
         bloomfilter |= hash_function(
-            ngrams, key, adjusted_k, l, field.encoding)
+            ngrams, key, adjusted_k, l, hash_props.encoding)
 
     bloomfilter = fold_xor(bloomfilter, xor_folds)
 
@@ -341,10 +343,9 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
     """
     tokenizers = [tokenizer.get_tokenizer(field.hashing_properties)
                   for field in schema.fields]
-    field_hashing = [field.hashing_properties for field in schema.fields]
     hash_properties = schema.hashing_globals
 
-    return (crypto_bloom_filter(s, tokenizers, field_hashing,
+    return (crypto_bloom_filter(s, tokenizers, schema.fields,
                                 keys, hash_properties)
             for s in dataset)
 
