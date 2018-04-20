@@ -165,54 +165,43 @@ class TestFieldFormats(unittest.TestCase):
 
         spec = field_formats.spec_from_json_dict(regex_spec)
 
-        # `minimum` should be 0. `maximum` should be None.
-        self.assertEqual(spec.minimum, 0)
+        # `minimum` and `maximum` should be None.
+        self.assertIsNone(spec.minimum)
         self.assertIsNone(spec.maximum)
 
         # There are no bounds so these should be fine.
+        spec.validate('-31')
         spec.validate('0')
         spec.validate('1')
         spec.validate('10')
         spec.validate(str(10 ** 321))
 
-        # Ok, I lied. We can't have negative numbers.
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('-1')
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('-10')
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate(str(-10 ** 321))
-
-        # We also don't like floats.
+        # We don't like floats.
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(math.pi))
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(-math.pi))
 
-        # int() may accept these, but we don't.
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('  10')
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('10  ')
-        with self.assertRaises(field_formats.InvalidEntryError):
-            spec.validate('+10')
+        # There are several valid integer strings for one integer
+        for int_str in ['  10', '10  ', '+10', ' +10 ']:
+            spec.validate(int_str)
+            self.assertEqual('10', spec.format_value(int_str))
 
         # Ok, let's put a 'minimum' and 'maximum' in.
         regex_spec['format']['minimum'] = 8
         regex_spec['format']['maximum'] = 12
         spec = field_formats.spec_from_json_dict(regex_spec)
 
-        # This remains invalid.
+        # These are too small, thus invalid.
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('-1')
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(-math.pi))
-
-        # These are not fine anymore.
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('0')
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('1')
+        # too big, I assume
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(10 ** 321))
 

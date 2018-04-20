@@ -465,13 +465,12 @@ class IntegerSpec(FieldSpec):
         :ivar int maximum: The maximum permitted value or None.
     """
 
-    _DEFAULT_MINIMUM = 0
 
     def __init__(self,
                  identifier,                # type: str
                  hashing_properties,        # type: FieldHashingProperties
                  description=None,          # type: str
-                 minimum=_DEFAULT_MINIMUM,  # int
+                 minimum=None,              # Optional[int]
                  maximum=None,              # Optional[int]
                  **kwargs                   # Dict[str, Any]
                  ):
@@ -503,7 +502,7 @@ class IntegerSpec(FieldSpec):
                       super().from_json_dict(json_dict))
 
         format_ = json_dict['format']
-        result.minimum = format_.get('minimum', cls._DEFAULT_MINIMUM)
+        result.minimum = format_.get('minimum')
         result.maximum = format_.get('maximum')
 
         return result
@@ -526,13 +525,6 @@ class IntegerSpec(FieldSpec):
             return
         super().validate(str_in)
 
-        if any(d not in string.digits for d in str_in):
-            msg = ('An integer cannot contain non-digit characters. '
-                   "Read '{}'.".format(str_in))
-            e_new = InvalidEntryError(msg)
-            e_new.field_spec = self
-            raise e_new
-
         try:
             value = int(str_in, base=10)
         except ValueError as e:
@@ -541,7 +533,7 @@ class IntegerSpec(FieldSpec):
             e_new.field_spec = self
             raise_from(e_new, e)
 
-        if value < self.minimum:
+        if self.minimum is not None and value < self.minimum:
             msg = ("Expected integer value of at least {}. Read '{}'."
                    .format(self.minimum, value))
             e_new = InvalidEntryError(msg)
@@ -554,6 +546,25 @@ class IntegerSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise e_new
+
+    def _format_regular_value(self, str_in):
+        # type: (Text) -> Text
+        """ we need to reformat integer strings, as there can be different strings for the same integer. The
+            strategy of unification here is to first parse the integer string to an Integer type. Thus all of
+            '+13', ' 13', '13' will be parsed to 13. We then convert the integer value to an unambiguous string
+            (no whitespaces, leading '-' for negative numbers, no leading '+').
+
+            :param str_in: integer string
+            :return: integer string without whitespaces, leading '-' for negative numbers, no leading '+'
+        """
+        try:
+            value = int(str_in, base=10)
+            return '{}'.format(value)
+        except ValueError as e:
+            msg = "Invalid integer. Read '{}'.".format(str_in)
+            e_new = InvalidEntryError(msg)
+            e_new.field_spec = self
+            raise_from(e_new, e)
 
 
 class DateSpec(FieldSpec):
