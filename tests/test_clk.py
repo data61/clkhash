@@ -7,6 +7,7 @@ import io
 import unittest
 
 from clkhash import clk, schema, randomnames, validate_data
+from future.builtins import range
 
 
 class TestChunks(unittest.TestCase):
@@ -68,7 +69,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
                     identifier='dob',
                     format=dict(
                         type='date',
-                        format='rfc3339',
+                        format='%Y-%m-%d',
                         description='When were ya born?'),
                     hashing=dict(
                         ngram=2,

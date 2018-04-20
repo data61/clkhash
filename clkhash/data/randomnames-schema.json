@@ -42,10 +42,9 @@
     {
       "identifier": "DOB YYYY/MM/DD",
       "format": {
-        "type": "string",
-        "encoding": "ascii",
+        "type": "date",
         "description": "Numbers separated by slashes, in the year, month, day order",
-        "pattern": "(?:\\d\\d\\d\\d/\\d\\d/\\d\\d)\\Z"
+        "format": "%Y/%m/%d"
       },
       "hashing": {
         "ngram": 1,

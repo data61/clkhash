@@ -10,9 +10,10 @@ import json
 import pkgutil
 from typing import Any, Dict, Hashable, List, Sequence, Text, TextIO
 
-from future.utils import raise_from
+from future.builtins import map
 import jsonschema
 
+from clkhash.backports import raise_from
 from clkhash.field_formats import FieldSpec, spec_from_json_dict
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 

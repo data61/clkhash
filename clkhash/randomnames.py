@@ -23,6 +23,8 @@ import random
 import re
 from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
 
+from future.builtins import range
+
 from clkhash.schema import Schema
 from clkhash.field_formats import FieldSpec
 

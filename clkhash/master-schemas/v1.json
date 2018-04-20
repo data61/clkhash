@@ -149,7 +149,7 @@
       "additionalProperties": false,
       "properties": {
         "type": {"enum": ["date"]},
-        "format": {"enum": ["rfc3339"], "description": "standard internet format: yyyy-mm-dd"},
+        "format": {"type": "string", "description": "describes the format of the date in 'strptime' format"},
         "description": {"type": "string"}
       }
     },

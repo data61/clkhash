@@ -8,6 +8,7 @@ import time
 from typing import (AnyStr, Callable, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
 
+from future.builtins import range
 from tqdm import tqdm
 
 from clkhash.backports import unicode_reader
@@ -98,7 +99,7 @@ def generate_clk_from_csv(input_f,             # type: TextIO
     # Read the lines in CSV file and add it to PII
     pii_data = []
     for line in reader:
-        pii_data.append(tuple([element.strip() for element in line]))
+        pii_data.append(tuple(element.strip() for element in line))
 
     validate_row_lengths(schema.fields, pii_data)
 

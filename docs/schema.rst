@@ -296,14 +296,29 @@ description string                 yes      free text, ignored by clkhash.
 
 dateFormat
 ^^^^^^^^^^^^^
+A date is described by an ISO C89 compatible strftime() format string. For example, the format string for the internet
+date format as described in rfc3339, would be '%Y-%m-%d'.
+The clkhash library will convert the given date to the '%Y%m%d' representation for hashing, as any fill character like
+'-' or '/' do not add to the uniqueness of an entity.
 
 =========== =====================  ======== ===========
 name        type                   optional description
 =========== =====================  ======== ===========
 type        string                 no       has to be "date"
-format      enum                   no       one of ["rfc3339"]. That's the standard internet format: yyyy-mm-dd.
+format      string                 no       ISO C89 compatible format string, eg: for 1989-11-09 the format is '%Y-%m-%d'
 description string                 yes      free text, ignored by clkhash.
 =========== =====================  ======== ===========
+
+The following subset contains the most useful format codes:
+
+========= ======================================== ==================
+directive meaning                                  example
+========= ======================================== ==================
+%Y        Year with century as a decimal number    1984, 3210, 0001
+%y        Year without century, zero-padded        00, 09, 99
+%m        Month as a zero-padded decimal number    01, 12
+%d        Day of the month, zero-padded            01, 25, 31
+========= ======================================== ==================
 
 
 .. _schema/efo:
