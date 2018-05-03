@@ -45,7 +45,7 @@ class MissingValueSpec(object):
 
     def __init__(self,
                  sentinel,          # type: str
-                 replace_with=None  # type: str
+                 replace_with=None  # type: Optional[str]
                 ):
         # type: (...) -> None
         self.sentinel = sentinel
@@ -56,7 +56,7 @@ class MissingValueSpec(object):
         # type: (Dict[str, Any]) -> MissingValueSpec
         return cls(
             sentinel=json_dict['sentinel'],
-            replace_with=json_dict.get('replaceWith')
+            replace_with=cast(Optional[str], json_dict.get('replaceWith'))
         )
 
 
@@ -296,10 +296,10 @@ class StringSpec(FieldSpec):
     def __init__(self,
                  identifier,                      # type: str
                  hashing_properties,              # type: FieldHashingProperties
-                 description=None,                # type: str
+                 description=None,                # type: Optional[str]
                  regex=None,                      # type: Optional[str]
                  case=_DEFAULT_CASE,              # type: str
-                 min_length=_DEFAULT_MIN_LENGTH,  # type: Optional[int]
+                 min_length=_DEFAULT_MIN_LENGTH,  # type: int
                  max_length=None                  # type: Optional[int]
                  ):
         # type: (...) -> None
@@ -333,10 +333,11 @@ class StringSpec(FieldSpec):
             raise ValueError(msg.format(max_length))
 
         if regex_based:
+            regex_str = cast(str, regex)
             try:
-                compiled_regex = re_compile_full(regex)
+                compiled_regex = re_compile_full(regex_str)
             except (SyntaxError, re.error) as e:
-                msg = "invalid regular expression '{}.'".format(regex)
+                msg = "invalid regular expression '{}.'".format(regex_str)
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
                 raise_from(e_new, e)
@@ -467,10 +468,10 @@ class IntegerSpec(FieldSpec):
     def __init__(self,
                  identifier,                # type: str
                  hashing_properties,        # type: FieldHashingProperties
-                 description=None,          # type: str
-                 minimum=None,              # Optional[int]
-                 maximum=None,              # Optional[int]
-                 **kwargs                   # Dict[str, Any]
+                 description=None,          # type: Optional[str]
+                 minimum=None,              # type: Optional[int]
+                 maximum=None,              # type: Optional[int]
+                 **kwargs                   # type: Dict[str, Any]
                  ):
         # type: (...) -> None
         """ Make a IntegerSpec object, setting it attributes to values
@@ -581,7 +582,7 @@ class DateSpec(FieldSpec):
                  identifier,          # type: str
                  hashing_properties,  # type: FieldHashingProperties
                  format,              # type: str
-                 description=None     # type: str
+                 description=None     # type: Optional[str]
                  ):
         # type: (...) -> None
         """ Make a DateSpec object, setting it attributes to values
@@ -669,7 +670,7 @@ class EnumSpec(FieldSpec):
                  identifier,          # type: str
                  hashing_properties,  # type: FieldHashingProperties
                  values,              # type: Iterable[str]
-                 description=None     # type: str
+                 description=None     # type: Optional[str]
                  ):
         # type: (...) -> None
         """ Make a EnumSpec object, setting it attributes to values
@@ -729,10 +730,11 @@ class Ignore(FieldSpec):
     represent a field which will be ignored throughout the clk processing.
     """
     def __init__(self,
-                 identifier=None  # type: str
+                 identifier=None  # type: Optional[str]
                  ):
         # type: (...) -> None
-        super().__init__(identifier, FieldHashingProperties(ngram=0, weight=0))
+        super().__init__('' if identifier is None else identifier,
+                         FieldHashingProperties(ngram=0, weight=0))
 
     def validate(self, str_in):
         pass

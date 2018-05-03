@@ -6,7 +6,7 @@
     specified schema.
 """
 
-from typing import Optional, Sequence
+from typing import cast, Optional, Sequence
 
 from future.builtins import zip
 
@@ -73,7 +73,7 @@ def validate_entries(fields,  # type: Sequence[FieldSpec]
                     "'{column_name}'. {original_message}"
                 ).format(
                     row_index=i,
-                    column_name=e.field_spec.identifier,
+                    column_name=cast(FieldSpec, e.field_spec).identifier,
                     original_message=e.args[0])
                 e_invalid_entry = EntryError(msg)
                 e_invalid_entry.field_spec = e.field_spec
