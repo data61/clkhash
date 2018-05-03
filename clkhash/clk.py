@@ -5,7 +5,7 @@ Generate CLK from data.
 import concurrent.futures
 import logging
 import time
-from typing import (AnyStr, Callable, Iterable, List, Optional,
+from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
 
 from future.builtins import range
@@ -160,7 +160,11 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
                 hash_and_serialize_chunk,
                 chunk, key_lists, schema,)
             if callback is not None:
-                future.add_done_callback(lambda f: callback(len(f.result()[0]), f.result()[1]))
+                unpacked_callback = cast(Callable[[int, Sequence[int]], None],
+                                         callback)
+                future.add_done_callback(
+                    lambda f: unpacked_callback(len(f.result()[0]),
+                                                f.result()[1]))
             futures.append(future)
 
         results = []
