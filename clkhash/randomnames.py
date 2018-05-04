@@ -134,21 +134,43 @@ class NameList:
         self.all_female_first_names = load_csv_data('female-first-names.csv')
         self.all_last_names = load_csv_data('CSV_Database_of_Last_Names.csv')
 
-    def generate_subsets(self, sz, overlap=0.8):
-        """
-        Return a pair of random subsets of the name list with a specified
-        proportion of elements in common.
+    def generate_subsets(self, sz, overlap=0.8, subsets=2):
+        # type: (int, float, int) -> Tuple[List, ...]
+        """ Return random subsets with nonempty intersection.
 
-        :param sz: length of subsets to generate
-        :param overlap: fraction of the subsets that should have the same names in them
-        :raises ValueError: if there aren't sufficiently many names in the list to satisfy
-            the request; more precisely, raises if sz + (1 - overlap)*sz > n = len(self.names)
-        :return: pair of subsets
+            The random subsets are of specified size. If an element is
+            common to two subsets, then it is common to all subsets.
+            This overlap is controlled by a parameter.
+
+            :param sz: size of subsets to generate
+            :param overlap: size of the intersection, as fraction of the
+                subset length
+            :param subsets: number of subsets to generate
+
+            :raises ValueError: if there aren't sufficiently many names
+                in the list to satisfy the request; more precisely,
+                raises if (1 - subsets) * floor(overlap * sz)
+                              + subsets * sz > len(self.names).
+
+            :return: tuple of subsets
         """
-        notoverlap = sz - int(math.floor(overlap * sz))
-        total_sz = sz + notoverlap
+        overlap_sz = int(math.floor(overlap * sz))
+        unique_sz = sz - overlap_sz  # Unique names per subset
+        total_unique_sz = unique_sz * subsets  # Uniques in all subsets
+        total_sz = overlap_sz + total_unique_sz
+
         if total_sz > len(self.names):
-            raise ValueError('Requested subset size and overlap demands more '
-                             + 'than the number of available names')
+            msg = 'insufficient names for requested size and overlap'
+            raise ValueError(msg)
+
         sset = random.sample(self.names, total_sz)
-        return sset[:sz], sset[notoverlap:]
+
+        # Overlapping subset, pool of unique names
+        sset_overlap, sset_unique = sset[:overlap_sz], sset[overlap_sz:]
+        assert len(sset_unique) == subsets * unique_sz
+
+        # Split pool of unique names into `subsets` chunks
+        uniques = (sset_unique[p*unique_sz : (p+1)*unique_sz]
+                   for p in range(subsets))
+
+        return tuple(sset_overlap + u for u in uniques)
