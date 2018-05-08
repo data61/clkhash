@@ -3,11 +3,13 @@
 from __future__ import unicode_literals
 
 from base64 import b64decode
+from datetime import datetime
 import io
 import itertools
 import unittest
 
-from clkhash.backports import int_from_bytes, re_compile_full, unicode_reader
+from clkhash.backports import (int_from_bytes, re_compile_full,
+                               unicode_reader, strftime)
 
 
 class TestIntBackports(unittest.TestCase):
@@ -91,3 +93,21 @@ class TestUnicodeReader(unittest.TestCase):
         reader = unicode_reader(f)
         read_data = list(reader)
         self.assertEqual(read_data, data)
+
+
+class TestStrftime(unittest.TestCase):
+    def test_recent_years(self):
+        self.assertEqual(
+            strftime(datetime(1995, 12, 23), '%Y/%m/%d'),
+            '1995/12/23')
+        self.assertEqual(
+            strftime(datetime(2004, 5, 1), '%d-%m-%Y'),
+            '01-05-2004')
+
+    def test_nonnative_years(self):
+        self.assertEqual(
+            strftime(datetime(1884, 2, 29), '%Y/%m/%d'),
+            '1884/02/29')
+        self.assertEqual(
+            strftime(datetime(1000, 1, 2), '%d-%m-%Y'),
+            '02-01-1000')
