@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from typing import Text
 
-from future.utils import raise_from as __raise_from
+from future.utils import raise_from as _raise_from
 from mypy_extensions import Arg, DefaultNamedArg, NoReturn
 
 
@@ -15,7 +15,7 @@ try:
 except AttributeError:
     import codecs
 
-    def __int_from_bytes(bytes, byteorder, signed=False):
+    def _int_from_bytes(bytes, byteorder, signed=False):
         # type: (Sequence[int], str, bool) -> int
         """ Emulate Python 3's `int.from_bytes`.
 
@@ -44,10 +44,10 @@ except AttributeError:
     # named arguments. Hence, must cast so Mypy thinks it matches the
     # original function.
     int_from_bytes = cast(Callable[[Arg(Sequence[int], 'bytes'),
-                                Arg(str, 'byteorder'),
-                                DefaultNamedArg(bool, 'signed')],
-                               int],
-                      __int_from_bytes)
+                                    Arg(str, 'byteorder'),
+                                    DefaultNamedArg(bool, 'signed')],
+                                   int],
+                          _int_from_bytes)
 
 
 def re_compile_full(pattern, flags=0):
@@ -66,10 +66,10 @@ def re_compile_full(pattern, flags=0):
 
         :returns: A compiled regular expression.
     """
-    # A pattern of type bytes doesn't make sense in Python 3.
-    assert type(pattern) is not bytes or str is bytes
+    # Don't worry, this short-circuits.
+    assert type(pattern) is str or type(pattern) is unicode  # type: ignore
 
-    return re.compile('(?:{})\Z'.format(pattern), flags=flags)
+    return re.compile(r'(?:{})\Z'.format(pattern), flags=flags)
 
 
 def _utf_8_encoder(unicode_csv_data):
@@ -105,73 +105,80 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
 
 
 if sys.version_info > (3, 2):
-    def strftime(dt, fmt):
-        # type: (datetime, Text) -> Text
-        return dt.strftime(fmt)
-else:
-    # remove the unsupposed "%s" command.  But don't
-    # do it if there's an even number of %s before the s
-    # because those are all escaped.  Can't simply
-    # remove the s because the result of
-    #  %sY
-    # should be %Y if %s isn't supported, not the
-    # 4 digit year.
-    _illegal_s = re.compile(r"((^|[^%])(%%)*%s)")
+    strftime = datetime.strftime
 
+else:
+    _YEAR_LEN = 4
+
+    # Detect the unsupported '%s' format. But don't match if there's an
+    # even number of '%'s before the 's' because those are all escaped.
+    _illegal_s = re.compile(r'((^|[^%])(%%)*%s)')
 
     def _findall(text, substr):
         # Also finds overlaps
-        sites = []
         i = 0
-        while 1:
+        while True:
             j = text.find(substr, i)
             if j == -1:
-                break
-            sites.append(j)
+                return
+            
+            yield j
             i = j + 1
-        return sites
 
     def strftime(dt, fmt):
         # type: (datetime, Text) -> Text
-        """ sensible version of strftime for python < 3.2. The one from the standard library does not support years < 1900.
-        Kudos: https://github.com/ActiveState/code/blob/master/recipes/Python/306860_proleptic_Gregoridates_strftime_before/recipe-306860.py
+        """ strftime that support years < 1900 in Python < 3.2.
 
-        # Every 28 years the calendar repeats, except through century leap
-        # years where it's 6 years.  But only if you're using the Gregorian
-        # calendar.  ;)
+            Kudos: https://github.com/ActiveState/code/blob/master/recipes/Python/306860_proleptic_Gregoridates_strftime_before/recipe-306860.py
         """
         if _illegal_s.search(fmt):
-            raise TypeError("This strftime implementation does not handle %s")
+            msg = "this strftime implementation does not handle '%s'"
+            raise ValueError()
         if dt.year > 1900:
             return dt.strftime(fmt)
 
         year = dt.year
+        timetuple = dt.timetuple()
+        timetuple_without_year = timetuple[1:]
+
+        # Every 28 years the calendar repeats, except through century
+        # leap years where it's 6 years.
         # For every non-leap year century, advance by
         # 6 years to get into the 28-year repeat cycle
         delta = 2000 - year
         off = 6 * (delta // 100 + delta // 400)
         year = year + off
 
-        # Move to around the year 2000
-        year = year + ((2000 - year) // 28) * 28
-        timetuple = dt.timetuple()
-        s1 = time.strftime(fmt, (year,) + timetuple[1:])
-        sites1 = _findall(s1, str(year))
+        # `year` and `year + (2000 - year) // 28 * 28` have the same
+        # layout
+        year = year + (2000 - year) // 28 * 28
+        # Format with a supported year and look for all occurences of
+        # said year.
+        year_str = str(year)
+        assert len(year_str) == _YEAR_LEN
+        s1 = time.strftime(fmt, (year,) + timetuple_without_year)
+        sites1 = set(_findall(s1, year_str))
 
-        s2 = time.strftime(fmt, (year + 28,) + timetuple[1:])
-        sites2 = _findall(s2, str(year + 28))
+        # Format with another supported year and look again for all
+        # occurences of that year.
+        year_p28_str = str(year + 28)
+        assert len(year_p28_str) == _YEAR_LEN
+        s2 = time.strftime(fmt, (year + 28,) + timetuple_without_year)
+        sites2 = set(_findall(s2, year_p28_str))
 
-        sites = []
-        for site in sites1:
-            if site in sites2:
-                sites.append(site)
+        # Where those coincide is where the year goes according to our
+        # format.
+        sites = sites1 & sites2
 
+        # We found the year. Now we replace.
         s = s1
-        syear = "%4d" % (dt.year,)
+        syear = '{:04}'.format(dt.year)
+        assert len(syear) == _YEAR_LEN
         for site in sites:
-            s = s[:site] + syear + s[site + 4:]
+            s = s[:site] + syear + s[site + _YEAR_LEN:]
         return s
 
 
 # Help MyPy understand that this always throws.
-raise_from = cast(Callable[[Exception, Exception], NoReturn], __raise_from)
+raise_from = cast(Callable[[BaseException, BaseException], NoReturn],
+                  _raise_from)
