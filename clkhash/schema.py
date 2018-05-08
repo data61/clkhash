@@ -49,9 +49,9 @@ class GlobalHashingProperties(object):
         :param kdf_hash: The hash function to use in key derivation. The
             options are 'SHA256' and 'SHA512'.
         :param kdf_info: The info for key derivation. See documentation
-            of :class:`HKDFconfig` for details.
+            of :ref:`hkdf` for details.
         :param kdf_salt: The salt for key derivation. See documentation
-            of :class:`HKDFconfig` for details.
+            of :ref:`hkdf` for details.
         :param kdf_key_size: The size of the derived keys in bytes.
     """
     def __init__(self,
