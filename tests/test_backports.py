@@ -111,14 +111,3 @@ class TestStrftime(unittest.TestCase):
         self.assertEqual(
             strftime(datetime(1000, 1, 2), '%d-%m-%Y'),
             '02-01-1000')
-
-    def test_short_years(self):
-        self.assertEqual(
-            strftime(datetime(942, 2, 12), '%Y/%m/%d'),
-            '0942/02/12')
-        self.assertEqual(
-            strftime(datetime(43, 1, 2), '%d-%m-%Y'),
-            '02-01-0043')
-        self.assertEqual(
-            strftime(datetime(1, 3, 16), '%d-%m-%Y'),
-            '16-03-0001')
