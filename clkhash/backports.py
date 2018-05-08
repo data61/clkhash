@@ -1,10 +1,9 @@
 import csv
-from typing import AnyStr, Callable, cast, Pattern, Sequence
+from datetime import datetime
 import re
 import sys
 import time
-from datetime import datetime
-from typing import Text
+from typing import AnyStr, Callable, cast, Pattern, Sequence, Text
 
 from future.utils import raise_from as _raise_from
 from mypy_extensions import Arg, DefaultNamedArg, NoReturn
