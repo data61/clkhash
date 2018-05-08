@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import base64
 import json
 import pkgutil
-from typing import Any, Dict, Hashable, List, Sequence, Text, TextIO
+from typing import Any, Dict, Hashable, List, Optional, Sequence, Text, TextIO
 
 from future.builtins import map
 import jsonschema
@@ -54,34 +54,36 @@ class GlobalHashingProperties(object):
             of :class:`HKDFconfig` for details.
         :param kdf_key_size: The size of the derived keys in bytes.
     """
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 k,                                 # type: int
+                 l,                                 # type: int
+                 hash_type,                         # type: str
+                 kdf_type,                          # type: str
+                 xor_folds=0,                       # type: int
+                 hash_prevent_singularity=None,     # type: Optional[bool]
+                 kdf_hash='SHA256',                 # type: str
+                 kdf_info=None,                     # type: Optional[bytes]
+                 kdf_salt=None,                     # type: Optional[bytes]
+                 kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
+                 ):
         # type: (...) -> None
         """ Make a GlobalHashingProperties object from keyword
             arguments.
         """
-        if 'k' in kwargs:
-            self.k = kwargs['k']
-        if 'l' in kwargs:
-            self.l = kwargs['l']
-        if 'xor_folds' in kwargs:
-            self.xor_folds = kwargs['xor_folds']
-
-        if 'hash_type' in kwargs:
-            self.hash_type = kwargs['hash_type']
-        if 'hash_prevent_singularity' in kwargs:
-            self.hash_prevent_singularity = kwargs['hash_prevent_singularity']
-
-        if 'kdf_type' in kwargs:
-            self.kdf_type = kwargs['kdf_type']
-        if 'kdf_hash' in kwargs:
-            self.kdf_hash = kwargs['kdf_hash']
-        if 'kdf_info' in kwargs:
-            self.kdf_info = kwargs['kdf_info']
-        if 'kdf_salt' in kwargs:
-            self.kdf_salt = kwargs['kdf_salt']
-        if 'kdf_key_size' in kwargs:
-            self.kdf_key_size = kwargs['kdf_key_size']
-
+        self.k = k
+        self.l = l
+        self.hash_type = hash_type
+        self.kdf_type = kdf_type
+        self.xor_folds = xor_folds
+        self.hash_prevent_singularity = (
+            False
+            if hash_prevent_singularity is None and hash_type == 'doubleHash'
+            else hash_prevent_singularity)
+        self.kdf_type = kdf_type
+        self.kdf_hash = kdf_hash
+        self.kdf_info = kdf_info
+        self.kdf_salt = kdf_salt
+        self.kdf_key_size = kdf_key_size
 
     @classmethod
     def from_json_dict(cls, properties_dict):
@@ -96,7 +98,7 @@ class GlobalHashingProperties(object):
                 `'keySize'`, `'salt'`, and `'type'` keys.
             :return: The resulting :class:`GlobalHashingProperties` object.
         """
-        result = cls()
+        result = cls.__new__(cls)  # type: ignore
 
         result.k = properties_dict['k']
         result.l = properties_dict['l']
@@ -194,7 +196,6 @@ class Schema(object):
             raise_from(SchemaError(msg), e)
 
         return cls.from_json_dict(schema_dict, validate=validate)
-
 
 
 def get_master_schema(version):
