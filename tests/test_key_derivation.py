@@ -4,7 +4,7 @@ import unittest
 from future.builtins import zip
 
 from clkhash.bloomfilter import stream_bloom_filters
-from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE, HKDFconfig
+from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE
 from clkhash.schema import GlobalHashingProperties, Schema
 from clkhash.field_formats import FieldHashingProperties, StringSpec
 
@@ -13,11 +13,11 @@ class TestKeyDerivation(unittest.TestCase):
     def test_kdf(self):
         master_secret = 'No, I am your father'.encode()
         for num_keys in (1, 10, 50):
-            for key_length in (2, 20):
-                keys = hkdf(HKDFconfig(master_secret), num_keys, key_length)
+            for key_size in (2, 20):
+                keys = hkdf(master_secret, num_keys, key_size=key_size)
                 self.assertEqual(len(keys), num_keys)
                 for key in keys:
-                    self.assertEqual(len(key), key_length)
+                    self.assertEqual(len(key), key_size)
 
     def test_generate_key_lists(self):
         master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
@@ -35,8 +35,8 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_nacl(self):
         master_secret = 'No, I am your father'.encode()
-        keys_1 = hkdf(HKDFconfig(master_secret, salt=b'and pepper'), 5)
-        keys_2 = hkdf(HKDFconfig(master_secret, salt=b'and vinegar'), 5)
+        keys_1 = hkdf(master_secret, 5, salt=b'and pepper')
+        keys_2 = hkdf(master_secret, 5, salt=b'and vinegar')
         for k1, k2 in zip(keys_1, keys_2):
             self.assertNotEqual(k1, k2, msg='using different salts should result in different keys')
 
@@ -129,14 +129,8 @@ class TestKeyDerivation(unittest.TestCase):
         with self.assertRaises(ValueError):
             generate_key_lists([b'0'], 1, kdf='breakMe')
 
-    def test_HKDFconfig_wrong_hash(self):
+    def test_wrong_hash_function(self):
         with self.assertRaises(ValueError):
-            HKDFconfig(b'', hash_algo='SHA0815')
-
-    def test_HKDFconfig_wrong_type(self):
-        with self.assertRaises(TypeError):
-            HKDFconfig(42)
-
-    def test_hkdf_wrong_config_type(self):
-        with self.assertRaises(TypeError):
-            hkdf('not your type', 1)
+            hkdf('foo'.encode('ascii'),
+                 3,
+                 hash_algo='obviously_unsupported')
