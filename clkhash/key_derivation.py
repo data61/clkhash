@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from future.builtins import range, zip
+from future.utils import raise_from
 
 
 """
@@ -64,7 +65,14 @@ def hkdf(master_secret,             # type: bytes
     :param key_size: the size of the produced keys
     :return: Derived keys
     """
-    hkdf = HKDF(algorithm=_HASH_FUNCTIONS[hash_algo](),
+    try:
+        hash_function = _HASH_FUNCTIONS[hash_algo]
+    except KeyError:
+        msg = "unsupported hash function '{}'".format(hash_algo)
+        raise_from(ValueError(msg), None)
+
+
+    hkdf = HKDF(algorithm=hash_function(),
                 length=num_keys * key_size,
                 salt=salt,
                 info=info,

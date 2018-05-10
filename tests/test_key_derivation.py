@@ -129,3 +129,8 @@ class TestKeyDerivation(unittest.TestCase):
         with self.assertRaises(ValueError):
             generate_key_lists([b'0'], 1, kdf='breakMe')
 
+    def test_wrong_hash_function(self):
+        with self.assertRaises(ValueError):
+            hkdf('foo'.encode('ascii'),
+                 3,
+                 hash_algo='obviously_unsupported')
