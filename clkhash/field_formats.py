@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 import abc
 from datetime import datetime
 import re
-import string
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
 from future.builtins import range, super
@@ -305,7 +304,8 @@ class StringSpec(FieldSpec):
         # type: (...) -> None
         """ Make a StringSpec object, setting it attributes to values
             specified in keyword arguments.
-        """ 
+        """
+        # noinspection PyCompatibility,PyArgumentList
         super().__init__(identifier=identifier,
                          description=description,
                          hashing_properties=hashing_properties)
@@ -325,23 +325,25 @@ class StringSpec(FieldSpec):
             raise ValueError(msg.format(case))
 
         if regex_based and min_length < 0:
-            msg = ('min_length must be non-negative, but is {}')
+            msg = 'min_length must be non-negative, but is {}'
             raise ValueError(msg.format(min_length))
 
+        # type checker thinks max_length is of type None
+        # noinspection PyTypeChecker
         if regex_based and max_length is not None and max_length <= 0:
-            msg = ('max_length must be positive, but is {}')
+            msg = 'max_length must be positive, but is {}'
             raise ValueError(msg.format(max_length))
 
         if regex_based:
             regex_str = cast(str, regex)
             try:
                 compiled_regex = re_compile_full(regex_str)
+                self.regex = compiled_regex
             except (SyntaxError, re.error) as e:
                 msg = "invalid regular expression '{}.'".format(regex_str)
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
                 raise_from(e_new, e)
-            self.regex = compiled_regex
         else:
             self.case = case
             self.min_length = min_length
@@ -364,6 +366,7 @@ class StringSpec(FieldSpec):
             :raises InvalidSchemaError: When a regular expression is
                 provided but is not a valid pattern.
         """
+        # noinspection PyCompatibility
         result = cast(StringSpec,  # Go away, Mypy.
                       super().from_json_dict(json_dict))
 
@@ -477,6 +480,7 @@ class IntegerSpec(FieldSpec):
         """ Make a IntegerSpec object, setting it attributes to values
             specified in keyword arguments.
         """
+        # noinspection PyCompatibility,PyArgumentList
         super().__init__(identifier=identifier,
                          description=description,
                          hashing_properties=hashing_properties)
@@ -531,6 +535,7 @@ class IntegerSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
+            return              # to stop PyCharm thinking that value might be undefined later
 
         if self.minimum is not None and value < self.minimum:
             msg = ("Expected integer value of at least {}. Read '{}'."
@@ -588,6 +593,7 @@ class DateSpec(FieldSpec):
         """ Make a DateSpec object, setting it attributes to values
             specified in keyword arguments.
         """
+        # noinspection PyCompatibility,PyArgumentList
         super().__init__(identifier=identifier,
                          description=description,
                          hashing_properties=hashing_properties)
@@ -676,6 +682,7 @@ class EnumSpec(FieldSpec):
         """ Make a EnumSpec object, setting it attributes to values
             specified in keyword arguments.
         """
+        # noinspection PyCompatibility,PyArgumentList
         super().__init__(identifier=identifier,
                          description=description,
                          hashing_properties=hashing_properties)

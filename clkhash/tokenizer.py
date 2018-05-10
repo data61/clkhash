@@ -6,7 +6,7 @@ Functions to tokenize words (PII)
 from __future__ import unicode_literals
 
 import functools
-from typing import AnyStr, Callable, Iterable, Optional, Text
+from typing import Callable, Iterable, Optional, Text
 
 from future.builtins import range
 
@@ -41,7 +41,6 @@ def tokenize(n, positional, word, ignore=None):
                 for i in range(len(word) - n + 1))
     else:
         return (word[i:i+n] for i in range(len(word) - n + 1))
-
 
 
 def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties
