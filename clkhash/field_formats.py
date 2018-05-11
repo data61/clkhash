@@ -8,8 +8,8 @@
 from __future__ import unicode_literals
 
 import abc
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
 from future.builtins import range, super
@@ -45,7 +45,7 @@ class MissingValueSpec(object):
     def __init__(self,
                  sentinel,          # type: str
                  replace_with=None  # type: Optional[str]
-                ):
+                 ):
         # type: (...) -> None
         self.sentinel = sentinel
         self.replace_with = replace_with if replace_with is not None else sentinel
@@ -124,7 +124,6 @@ class FieldHashingProperties(object):
         else:
             return str_in
 
-
     @classmethod
     def from_json_dict(cls, json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
@@ -144,7 +143,8 @@ class FieldHashingProperties(object):
                 'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
             weight=json_dict.get(
                 'weight', FieldHashingProperties._DEFAULT_WEIGHT),
-            missing_value=MissingValueSpec.from_json_dict(json_dict['missingValue']) if 'missingValue' in json_dict else None)
+            missing_value=MissingValueSpec.from_json_dict(
+                json_dict['missingValue']) if 'missingValue' in json_dict else None)
 
 
 @add_metaclass(abc.ABCMeta)
@@ -179,7 +179,7 @@ class FieldSpec(object):
 
             :param dict field_dict: The properties dictionary to use. Must
                 contain a `'hashing'` key that meets the requirements of
-                :class:`FieldHashingProperties`. Subclasses may requrire
+                :class:`FieldHashingProperties`. Subclasses may require
             :raises InvalidSchemaError: When the `properties`
                 dictionary contains invalid values. Exactly what that
                 means is decided by the subclasses.
@@ -410,6 +410,7 @@ class StringSpec(FieldSpec):
         """
         if self.is_missing_value(str_in):
             return
+        # noinspection PyCompatibility
         super().validate(str_in)  # Validate encoding.
 
         if self.regex_based:
@@ -431,7 +432,7 @@ class StringSpec(FieldSpec):
                 raise e
 
             if self.max_length is not None and str_len > self.max_length:
-                e =  InvalidEntryError(
+                e = InvalidEntryError(
                     "Expected string length of at most {}. Read string '{}' "
                     'of length {}.'.format(self.max_length, str_in, str_len))
                 e.field_spec = self
@@ -467,7 +468,6 @@ class IntegerSpec(FieldSpec):
         :ivar int maximum: The maximum permitted value or None.
     """
 
-
     def __init__(self,
                  identifier,                # type: str
                  hashing_properties,        # type: FieldHashingProperties
@@ -501,6 +501,7 @@ class IntegerSpec(FieldSpec):
 
             :param dict json_dict: The properties dictionary.
         """
+        # noinspection PyCompatibility
         result = cast(IntegerSpec,  # For Mypy.
                       super().from_json_dict(json_dict))
 
@@ -526,6 +527,7 @@ class IntegerSpec(FieldSpec):
         """
         if self.is_missing_value(str_in):
             return
+        # noinspection PyCompatibility
         super().validate(str_in)
 
         try:
@@ -600,7 +602,6 @@ class DateSpec(FieldSpec):
 
         self.format = format
 
-
     @classmethod
     def from_json_dict(cls, json_dict):
         # type: (Dict[str, Any]) -> DateSpec
@@ -614,6 +615,7 @@ class DateSpec(FieldSpec):
 
             :param json_dict: The properties dictionary.
         """
+        # noinspection PyCompatibility
         result = cast(DateSpec,  # For Mypy.
                       super().from_json_dict(json_dict))
 
@@ -638,6 +640,7 @@ class DateSpec(FieldSpec):
         """
         if self.is_missing_value(str_in):
             return
+        # noinspection PyCompatibility
         super().validate(str_in)
         try:
             datetime.strptime(str_in, self.format)
@@ -662,7 +665,6 @@ class DateSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
-
 
 
 class EnumSpec(FieldSpec):
@@ -700,6 +702,7 @@ class EnumSpec(FieldSpec):
                 addition, it must contain a `'hashing'` key, whose
                 contents are passed to :class:`FieldHashingProperties`.
         """
+        # noinspection PyCompatibility
         result = cast(EnumSpec,  # Appease the gods of Mypy.
                       super().from_json_dict(json_dict))
 
@@ -722,6 +725,7 @@ class EnumSpec(FieldSpec):
         """
         if self.is_missing_value(str_in):
             return
+        # noinspection PyCompatibility
         super().validate(str_in)
 
         if str_in not in self.values:
@@ -740,6 +744,7 @@ class Ignore(FieldSpec):
                  identifier=None  # type: Optional[str]
                  ):
         # type: (...) -> None
+        # noinspection PyCompatibility
         super().__init__('' if identifier is None else identifier,
                          FieldHashingProperties(ngram=0, weight=0))
 
