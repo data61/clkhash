@@ -52,7 +52,7 @@ def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
     Output generated data to file as CSV with header.
 
     :param data: An iterable of tuples containing raw data.
-    :param schema: Iterable of schema definition dicts
+    :param headers: Iterable of feature names
     :param file: A writeable stream in which to write the CSV
     """
 
