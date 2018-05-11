@@ -21,7 +21,8 @@ import os
 import pkgutil
 import random
 import re
-from typing import Dict, Iterable, List, Sequence, TextIO, Tuple, Union
+from typing import (Dict, Iterable, List, Optional,
+                    Sequence, TextIO, Tuple, Union)
 
 from future.builtins import range
 
@@ -94,6 +95,10 @@ class NameList:
 
         self.names = [person for person in self.generate_random_person(n)]
 
+        self.all_male_first_names = None  # type: Optional[Sequence[str]]
+        self.all_female_first_names = None  # type: Optional[Sequence[str]]
+        self.all_last_names = None  # type: Optional[Sequence[str]]
+
     @property
     def schema_types(self):
         # type: () -> Sequence[FieldSpec]
@@ -107,6 +112,9 @@ class NameList:
         :yields: Generated data for one person
             tuple - (id: int, name: str('First Last'), birthdate: str('DD/MM/YYYY'), sex: str('M' | 'F') )
         """
+        assert self.all_male_first_names is not None
+        assert self.all_female_first_names is not None
+        assert self.all_last_names is not None
         for i in range(n):
             sex = 'M' if random.random() > 0.5 else 'F'
             dob = random_date(self.earliest_birthday, self.latest_birthday).strftime("%Y/%m/%d")
