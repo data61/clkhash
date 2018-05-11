@@ -184,6 +184,8 @@ class Schema(object):
         """ Load a Schema object from a json file.
 
             :param schema_file: A JSON file containing the schema.
+            :param validate: (default True) Raise an exception if the
+                schema does not conform to the master schema.
             :raises SchemaError: When the schema is invalid.
             :return: The resulting :class:`Schema` object.
         """
