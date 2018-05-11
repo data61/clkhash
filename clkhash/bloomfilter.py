@@ -22,7 +22,6 @@ from clkhash.schema import Schema, GlobalHashingProperties
 from clkhash.field_formats import FieldSpec
 
 try:
-    # noinspection PyProtectedMember
     from hashlib import blake2b
 except ImportError:
     # We are in Python older than 3.6.
@@ -55,8 +54,7 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
-    # PyCharm incorrectly reports that Iterable[str] isn't a collections.Iterable
-    # noinspection PyTypeChecker
+
     for m in ngrams:
         sha1hm = int(hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(), 16) % l
         md5hm = int(hmac.new(key_md5, m.encode(encoding=encoding), md5).hexdigest(), 16) % l
@@ -111,8 +109,6 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
     key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
-    # PyCharm incorrectly reports that Iterable[str] isn't a collections.Iterable
-    # noinspection PyTypeChecker
     for m in ngrams:
         m_bytes = m.encode(encoding=encoding)
 
@@ -202,8 +198,6 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
         return bf
     num_macs = (k+31) // 32
 
-    # PyCharm incorrectly reports that Iterable[str] isn't a collections.Iterable
-    # noinspection PyTypeChecker
     for m in ngrams:
         random_shorts = []  # type: List[int]
         for i in range(num_macs):
@@ -351,8 +345,6 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
                   for field in schema.fields]
     hash_properties = schema.hashing_globals
 
-    # PyCharm incorrectly reports that Iterable isn't a collections.Iterable
-    # noinspection PyTypeChecker
     return (crypto_bloom_filter(s, tokenizers, schema.fields,
                                 keys, hash_properties)
             for s in dataset)
