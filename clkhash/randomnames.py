@@ -13,21 +13,20 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 """
 from __future__ import print_function
 
-import base64
 import csv
-from datetime import datetime, timedelta
 import math
 import os
 import pkgutil
 import random
-import re
-from typing import (Dict, Iterable, List, Optional,
+from datetime import datetime, timedelta
+from typing import (Iterable, List, Optional,
                     Sequence, TextIO, Tuple, Union)
 
 from future.builtins import range
 
-from clkhash.schema import Schema
 from clkhash.field_formats import FieldSpec
+from clkhash.schema import Schema
+
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
@@ -43,9 +42,9 @@ def load_csv_data(resource_name):
         return [row[0] for row in reader]
 
 
-def save_csv(data,      # type: Iterable[Tuple[Union[str, int], ...]]
-             headers,   # type: Iterable[str]
-             file       # type: TextIO
+def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
+             headers,  # type: Iterable[str]
+             file  # type: TextIO
              ):
     # type: (...) -> None
     """
@@ -118,7 +117,8 @@ class NameList:
         for i in range(n):
             sex = 'M' if random.random() > 0.5 else 'F'
             dob = random_date(self.earliest_birthday, self.latest_birthday).strftime("%Y/%m/%d")
-            first_name = random.choice(self.all_male_first_names) if sex == 'M' else random.choice(self.all_female_first_names)
+            first_name = random.choice(self.all_male_first_names) if sex == 'M' else random.choice(
+                self.all_female_first_names)
             last_name = random.choice(self.all_last_names)
 
             yield (
@@ -178,7 +178,7 @@ class NameList:
         assert len(sset_unique) == subsets * unique_sz
 
         # Split pool of unique names into `subsets` chunks
-        uniques = (sset_unique[p*unique_sz : (p+1)*unique_sz]
+        uniques = (sset_unique[p * unique_sz: (p + 1) * unique_sz]
                    for p in range(subsets))
 
         return tuple(sset_overlap + u for u in uniques)

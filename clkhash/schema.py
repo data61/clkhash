@@ -8,15 +8,14 @@ from __future__ import unicode_literals
 import base64
 import json
 import pkgutil
-from typing import Any, Dict, Hashable, List, Optional, Sequence, Text, TextIO
+from typing import Any, Dict, Hashable, Optional, Sequence, Text, TextIO
 
-from future.builtins import map
 import jsonschema
+from future.builtins import map
 
 from clkhash.backports import raise_from
 from clkhash.field_formats import FieldSpec, spec_from_json_dict
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
-
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json'}  # type: Dict[Hashable, Text]
 
@@ -54,16 +53,17 @@ class GlobalHashingProperties(object):
             of :ref:`hkdf` for details.
         :param kdf_key_size: The size of the derived keys in bytes.
     """
+
     def __init__(self,
-                 k,                                 # type: int
-                 l,                                 # type: int
-                 hash_type,                         # type: str
-                 kdf_type,                          # type: str
-                 xor_folds=0,                       # type: int
-                 hash_prevent_singularity=None,     # type: Optional[bool]
-                 kdf_hash='SHA256',                 # type: str
-                 kdf_info=None,                     # type: Optional[bytes]
-                 kdf_salt=None,                     # type: Optional[bytes]
+                 k,  # type: int
+                 l,  # type: int
+                 hash_type,  # type: str
+                 kdf_type,  # type: str
+                 xor_folds=0,  # type: int
+                 hash_prevent_singularity=None,  # type: Optional[bool]
+                 kdf_hash='SHA256',  # type: str
+                 kdf_info=None,  # type: Optional[bytes]
+                 kdf_salt=None,  # type: Optional[bytes]
                  kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
                  ):
         # type: (...) -> None
@@ -137,10 +137,11 @@ class Schema(object):
             field. For example how to validate and tokenize a phone
             number.
     """
+
     def __init__(self,
-                 version,          # type: Hashable
+                 version,  # type: Hashable
                  hashing_globals,  # type: GlobalHashingProperties
-                 fields            # type: Sequence[FieldSpec]
+                 fields  # type: Sequence[FieldSpec]
                  ):
         # type: (...) -> None
         self.version = version
@@ -192,8 +193,8 @@ class Schema(object):
         try:
             schema_dict = json.load(schema_file)
         except ValueError as e:  # In Python 3 we can be more specific
-                                 # with json.decoder.JSONDecodeError,
-                                 # but that doesn't exist in Python 2.
+            # with json.decoder.JSONDecodeError,
+            # but that doesn't exist in Python 2.
             msg = 'The schema is not a valid JSON file.'
             raise_from(SchemaError(msg), e)
 
@@ -220,14 +221,14 @@ def get_master_schema(version):
 
     try:
         schema_bytes = pkgutil.get_data('clkhash',
-            'master-schemas/{}'.format(file_name))
+                                        'master-schemas/{}'.format(file_name))
     except IOError as e:  # In Python 3 we can be more specific with
-                          # FileNotFoundError, but that doesn't exist in
-                          # Python 2.
+        # FileNotFoundError, but that doesn't exist in
+        # Python 2.
         msg = ('The master schema could not be found. The schema cannot be '
                'validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)
-    
+
     if schema_bytes is None:
         msg = ('The master schema could not be loaded. The schema cannot be '
                'validated. Please file a bug report.')
@@ -261,8 +262,8 @@ def validate_schema_dict(schema):
     try:
         master_schema = json.loads(master_schema_bytes.decode('utf-8'))
     except ValueError as e:  # In Python 3 we can be more specific with
-                             # json.decoder.JSONDecodeError, but that
-                             # doesn't exist in Python 2.
+        # json.decoder.JSONDecodeError, but that
+        # doesn't exist in Python 2.
         msg = ('The master schema is not a valid JSON file. The schema cannot '
                'be validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)

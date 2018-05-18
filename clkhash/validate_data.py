@@ -11,8 +11,7 @@ from typing import cast, Optional, Sequence
 from future.builtins import zip
 
 from clkhash.backports import raise_from
-from clkhash.field_formats import (FieldSpec, InvalidEntryError,
-                                   InvalidSchemaError)
+from clkhash.field_formats import (FieldSpec, InvalidEntryError)
 
 
 class EntryError(ValueError):
@@ -29,7 +28,7 @@ class FormatError(ValueError):
 
 
 def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
-                         data     # type: Sequence[Sequence[str]]
+                         data  # type: Sequence[Sequence[str]]
                          ):
     # type: (...) -> None
     """ Validate the `data` row lengths according to the specification
@@ -49,7 +48,7 @@ def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
 
 
 def validate_entries(fields,  # type: Sequence[FieldSpec]
-                     data     # type: Sequence[Sequence[str]]
+                     data  # type: Sequence[Sequence[str]]
                      ):
     # type: (...) -> None
     """ Validate the `data` entries according to the specification in
@@ -81,7 +80,7 @@ def validate_entries(fields,  # type: Sequence[FieldSpec]
                 raise_from(e_invalid_entry, e)
 
 
-def validate_header(fields,       # type: Sequence[FieldSpec]
+def validate_header(fields,  # type: Sequence[FieldSpec]
                     column_names  # type: Sequence[str]
                     ):
     # type: (...) -> None

@@ -37,10 +37,10 @@ def tokenize(n, positional, word, ignore=None):
 
     if positional:
         # These are 1-indexed.
-        return ('{} {}'.format(i + 1, word[i:i+n])
+        return ('{} {}'.format(i + 1, word[i:i + n])
                 for i in range(len(word) - n + 1))
     else:
-        return (word[i:i+n] for i in range(len(word) - n + 1))
+        return (word[i:i + n] for i in range(len(word) - n + 1))
 
 
 def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties

@@ -43,7 +43,7 @@ class MissingValueSpec(object):
     """
 
     def __init__(self,
-                 sentinel,          # type: str
+                 sentinel,  # type: str
                  replace_with=None  # type: Optional[str]
                  ):
         # type: (...) -> None
@@ -79,11 +79,11 @@ class FieldHashingProperties(object):
     _DEFAULT_WEIGHT = 1
 
     def __init__(self,
-                 ngram,                           # type: int
-                 encoding=_DEFAULT_ENCODING,      # type: str
-                 weight=_DEFAULT_WEIGHT,          # type: Union[int, float]
+                 ngram,  # type: int
+                 encoding=_DEFAULT_ENCODING,  # type: str
+                 weight=_DEFAULT_WEIGHT,  # type: Union[int, float]
                  positional=_DEFAULT_POSITIONAL,  # type: bool
-                 missing_value=None               # type: Optional[MissingValueSpec]
+                 missing_value=None  # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
@@ -158,10 +158,11 @@ class FieldSpec(object):
         :ivar FieldHashingProperties hashing_properties: The properties
             for hashing.
     """
+
     def __init__(self,
-                 identifier,          # type: str
+                 identifier,  # type: str
                  hashing_properties,  # type: FieldHashingProperties
-                 description=None     # type: Optional[str]
+                 description=None  # type: Optional[str]
                  ):
         # type: (...) -> None
         """ Make a FieldSpec object, setting it attributes to values
@@ -293,13 +294,13 @@ class StringSpec(FieldSpec):
     _PERMITTED_CASE_STYLES = {'lower', 'upper', 'mixed'}
 
     def __init__(self,
-                 identifier,                      # type: str
-                 hashing_properties,              # type: FieldHashingProperties
-                 description=None,                # type: Optional[str]
-                 regex=None,                      # type: Optional[str]
-                 case=_DEFAULT_CASE,              # type: str
+                 identifier,  # type: str
+                 hashing_properties,  # type: FieldHashingProperties
+                 description=None,  # type: Optional[str]
+                 regex=None,  # type: Optional[str]
+                 case=_DEFAULT_CASE,  # type: str
                  min_length=_DEFAULT_MIN_LENGTH,  # type: int
-                 max_length=None                  # type: Optional[int]
+                 max_length=None  # type: Optional[int]
                  ):
         # type: (...) -> None
         """ Make a StringSpec object, setting it attributes to values
@@ -469,12 +470,12 @@ class IntegerSpec(FieldSpec):
     """
 
     def __init__(self,
-                 identifier,                # type: str
-                 hashing_properties,        # type: FieldHashingProperties
-                 description=None,          # type: Optional[str]
-                 minimum=None,              # type: Optional[int]
-                 maximum=None,              # type: Optional[int]
-                 **kwargs                   # type: Dict[str, Any]
+                 identifier,  # type: str
+                 hashing_properties,  # type: FieldHashingProperties
+                 description=None,  # type: Optional[str]
+                 minimum=None,  # type: Optional[int]
+                 maximum=None,  # type: Optional[int]
+                 **kwargs  # type: Dict[str, Any]
                  ):
         # type: (...) -> None
         """ Make a IntegerSpec object, setting it attributes to values
@@ -537,7 +538,7 @@ class IntegerSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
-            return              # to stop PyCharm thinking that value might be undefined later
+            return  # to stop PyCharm thinking that value might be undefined later
 
         if self.minimum is not None and value < self.minimum:
             msg = ("Expected integer value of at least {}. Read '{}'."
@@ -586,10 +587,10 @@ class DateSpec(FieldSpec):
     OUTPUT_FORMAT = '%Y%m%d'
 
     def __init__(self,
-                 identifier,          # type: str
+                 identifier,  # type: str
                  hashing_properties,  # type: FieldHashingProperties
-                 format,              # type: str
-                 description=None     # type: Optional[str]
+                 format,  # type: str
+                 description=None  # type: Optional[str]
                  ):
         # type: (...) -> None
         """ Make a DateSpec object, setting it attributes to values
@@ -674,11 +675,12 @@ class EnumSpec(FieldSpec):
 
         :ivar values: The set of permitted values.
     """
+
     def __init__(self,
-                 identifier,          # type: str
+                 identifier,  # type: str
                  hashing_properties,  # type: FieldHashingProperties
-                 values,              # type: Iterable[str]
-                 description=None     # type: Optional[str]
+                 values,  # type: Iterable[str]
+                 description=None  # type: Optional[str]
                  ):
         # type: (...) -> None
         """ Make a EnumSpec object, setting it attributes to values
@@ -740,6 +742,7 @@ class Ignore(FieldSpec):
     """
     represent a field which will be ignored throughout the clk processing.
     """
+
     def __init__(self,
                  identifier=None  # type: Optional[str]
                  ):

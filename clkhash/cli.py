@@ -12,7 +12,6 @@ import requests
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames, validate_data
 
-
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
 
@@ -41,7 +40,6 @@ def cli(verbose=False):
 
     All rights reserved Confidential Computing 2016.
     """
-
 
 
 @cli.command('hash', short_help="generate hashes from local PII data")
@@ -94,7 +92,7 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
 
 @cli.command('status', short_help='Get status of entity service')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def status(server, output, verbose):
     """Connect to an entity matching server and check the service status.
@@ -130,13 +128,14 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 """
 
+
 @cli.command('create', short_help="create a mapping on the entity service")
 @click.option('--type', default='permutation_unencrypted_mask',
               help='Alternative protocol/view type of the mapping. Default is unencrypted permutation and mask.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-t','--threshold', type=float, default=0.95)
+@click.option('-o', '--output', type=click.File('w'), default='-')
+@click.option('-t', '--threshold', type=float, default=0.95)
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def create(type, schema, server, output, threshold, verbose):
     """Create a new mapping on an entity matching server.
@@ -187,7 +186,7 @@ def create(type, schema, server, output, threshold, verbose):
 @click.option('--mapping', help='Server identifier of the mapping')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def upload(input, mapping, apikey, server, output, verbose):
     """Upload CLK data to entity matching server.
@@ -221,9 +220,7 @@ def upload(input, mapping, apikey, server, output, verbose):
         log(response.text)
         log("When the other party has uploaded their CLKS, you should be able to watch for results")
 
-
     print(response.text, file=output)
-
 
 
 @cli.command('results', short_help="fetch results from entity service")
@@ -232,7 +229,7 @@ def upload(input, mapping, apikey, server, output, verbose):
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 def results(mapping, apikey, watch, server, output):
     """
     Check to see if results are available for a particular mapping
