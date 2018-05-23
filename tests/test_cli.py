@@ -85,7 +85,7 @@ class CLITestHelper(unittest.TestCase):
         with temporary_file() as output_filename:
             command.extend(['-o', output_filename])
             cli_result = runner.invoke(clkhash.cli.cli, command)
-            assert cli_result.exit_code == 0
+            assert cli_result.exit_code == 0, cli_result.output
             with open(output_filename, 'rt') as output:
                 return output.read()
 
@@ -372,86 +372,105 @@ class TestCliInteractionWithService(CLITestHelper):
         os.remove(self.clk_file.name)
         os.remove(self.clk_file_2.name)
 
+    def _create_project(self, project_args=None):
+        command = ['create-project', '--server', self.url, '--schema', SIMPLE_SCHEMA_PATH]
+        if project_args is not None:
+            for key in project_args:
+                command.append('--{}'.format(key))
+                command.append(project_args[key])
+
+        return self.run_command_load_json_output(
+            command
+        )
+
+    def _create_project_and_run(self, project_args=None, run_args=None):
+        project = self._create_project(project_args)
+
+        command = [
+            'create',
+            '--server', self.url,
+            '--project', project['project_id'],
+            '--apikey', project['result_token'],
+        ]
+
+        if run_args is not None:
+            for key in run_args:
+                command.append('--{}'.format(key))
+                command.append(run_args[key])
+
+        run = self.run_command_load_json_output(command)
+        return project, run
+
     def test_status(self):
-        self.run_command_load_json_output(['status'])
+        self.run_command_load_json_output(['status', '--server', self.url])
 
-    def test_create(self):
-        out = self.run_command_load_json_output(['create'])
+    def test_create_project(self):
+        out = self._create_project()
 
-        self.assertIn('resource_id', out)
+        self.assertIn('project_id', out)
         self.assertIn('result_token', out)
         self.assertIn('update_tokens', out)
 
-        self.assertGreaterEqual(len(out['resource_id']), 16)
+        self.assertGreaterEqual(len(out['project_id']), 16)
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
-    def test_create_with_threshold(self):
-        out = self.run_command_load_json_output(['create', '--threshold', '0.50'])
+    def test_create_project_and_run(self):
+        project, run = self._create_project_and_run()
 
-        self.assertIn('resource_id', out)
+        self.assertIn('project_id', project)
+        self.assertIn('run_id', run)
+
+    def test_create_with_optional_name(self):
+        out = self._create_project({'name': 'testprojectname'})
+
+        self.assertIn('project_id', out)
         self.assertIn('result_token', out)
         self.assertIn('update_tokens', out)
 
-        self.assertGreaterEqual(len(out['resource_id']), 16)
+        self.assertGreaterEqual(len(out['project_id']), 16)
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
-    def test_create_with_schema(self):
-        out = self.run_command_load_json_output(
-            ['create',
-             '--schema',
-             os.path.join(os.path.dirname(__file__),
-                          'testdata',
-                          'good-schema-v1.json')])
-
-        self.assertIn('resource_id', out)
-        self.assertIn('result_token', out)
-        self.assertIn('update_tokens', out)
-
-        self.assertGreaterEqual(len(out['resource_id']), 16)
-        self.assertGreaterEqual(len(out['result_token']), 16)
-        self.assertGreaterEqual(len(out['update_tokens']), 2)
-
+    def test_create_with_bad_schema(self):
         # Make sure we don't succeed with bad schema.
         runner = CliRunner()
         with temporary_file() as output_filename:
+            schema_path = os.path.join(os.path.dirname(__file__), 'testdata', 'bad-schema-v1.json')
             cli_result = runner.invoke(
                 clkhash.cli.cli,
-                ['create',
-                 '--schema',
-                 os.path.join(os.path.dirname(__file__),
-                              'testdata',
-                              'bad-schema-v1.json')])
+                ['create-project',
+                 '--server', self.url,
+                 '--schema', schema_path
+                 ])
         self.assertNotEqual(cli_result, 0)
 
     def test_single_upload(self):
-        mapping = self.run_command_load_json_output(['create'])
+        project = self._create_project()
 
         # Upload
         self.run_command_load_json_output(
             [
                 'upload',
-                '--mapping',
-                mapping['resource_id'],
-                '--apikey',
-                mapping['update_tokens'][0],
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][0],
                 self.clk_file.name
             ]
         )
 
     def test_2_party_upload_and_results(self):
-        mapping = self.run_command_load_json_output(['create'])
+        project, run = self._create_project_and_run()
 
         def get_coord_results():
             # Get results from coordinator
             return self.run_command_capture_output(
                 [
                     'results',
-                    '--mapping',
-                    mapping['resource_id'],
-                    '--apikey',
-                    mapping['result_token']
+                    '--server', self.url,
+                    '--project', project['project_id'],
+                    '--run', run['run_id'],
+                    '--apikey', project['result_token']
                 ]
             )
 
@@ -459,33 +478,35 @@ class TestCliInteractionWithService(CLITestHelper):
         alice_upload = self.run_command_load_json_output(
             [
                 'upload',
-                '--mapping',
-                mapping['resource_id'],
-                '--apikey',
-                mapping['update_tokens'][0],
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][0],
                 self.clk_file.name
             ]
         )
+        self.assertIn('receipt_token', alice_upload)
 
         out_early = get_coord_results()
-        self.assertEqual("", out_early)
+        self.assertEquals("", out_early)
 
         # Upload Bob (subset of clks uploaded)
         bob_upload = self.run_command_load_json_output(
             [
                 'upload',
-                '--mapping',
-                mapping['resource_id'],
-                '--apikey',
-                mapping['update_tokens'][1],
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][1],
                 self.clk_file_2.name
             ]
         )
 
-        # Give the server a small amount of time to process
-        time.sleep(3.0)
+        self.assertIn('receipt_token', bob_upload)
 
-        res = json.loads(get_coord_results())
+        # Give the server a small amount of time to process
+        time.sleep(5.0)
+
+        results_raw = get_coord_results()
+        res = json.loads(results_raw)
         self.assertIn('mask', res)
 
         # Should be close to half ones. This is really just testing the service
@@ -498,10 +519,10 @@ class TestCliInteractionWithService(CLITestHelper):
         alice_res = self.run_command_load_json_output(
             [
                 'results',
-                '--mapping',
-                mapping['resource_id'],
-                '--apikey',
-                alice_upload['receipt-token']
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--run', run['run_id'],
+                '--apikey', alice_upload['receipt_token']
             ]
         )
 
