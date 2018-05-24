@@ -22,9 +22,7 @@ def log(m, color='red'):
 
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-@click.option('--verbose', '-v', is_flag=True,
-              help='Enables verbose mode.')
-def cli(verbose=False):
+def cli():
     """
     This command line application allows a user to hash their
     data into cryptographic longterm keys for use in
