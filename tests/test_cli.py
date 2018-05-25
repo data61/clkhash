@@ -8,7 +8,6 @@ import os
 import random
 import time
 import unittest
-from json import JSONDecodeError
 
 import pytest
 from click.testing import CliRunner
@@ -448,7 +447,6 @@ class TestCliInteractionWithService(CLITestHelper):
                     '--schema', schema_path
                 ]
             )
-
 
     def test_single_upload(self):
         project = self._create_project()
