@@ -10,6 +10,7 @@ import time
 import unittest
 from json import JSONDecodeError
 
+import pytest
 from click.testing import CliRunner
 from future.builtins import range
 
@@ -439,15 +440,15 @@ class TestCliInteractionWithService(CLITestHelper):
     def test_create_with_bad_schema(self):
         # Make sure we don't succeed with bad schema.
         schema_path = os.path.join(os.path.dirname(__file__), 'testdata', 'bad-schema-v1.json')
-        out = self.run_command_load_json_output(
-            [
-                'create-project',
-                '--server', self.url,
-                '--schema', schema_path
-            ]
-        )
+        with pytest.raises(AssertionError):
+            self.run_command_load_json_output(
+                [
+                    'create-project',
+                    '--server', self.url,
+                    '--schema', schema_path
+                ]
+            )
 
-        assert 'project_id' in out
 
     def test_single_upload(self):
         project = self._create_project()
