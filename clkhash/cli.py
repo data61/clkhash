@@ -133,26 +133,26 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
 @click.option('--type', default='permutations',
-              help='Alternative protocol/view type of the mapping. Default is unencrypted permutation and mask.')
+              type=click.Choice(['mapping', 'permutations', 'similarity_scores']),
+              help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this project")
 @click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+@click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
 def create_project(type, schema, server, name, output, verbose):
     """Create a new project on an entity matching server.
 
     See entity matching service documentation for details on mapping type and schema
     Returns authentication details for the created project.
     """
-    log("Entity Matching Server: {}".format(server))
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Server Status: {}".format(status))
+    if verbose:
+        log("Entity Matching Server: {}".format(server))
 
     if schema is not None:
         schema_json = json.load(schema)
-        clkhash.schema.Schema.from_json_dict(schema_json)
+        # Validate the schema
+        clkhash.schema.validate_schema_dict(schema_json)
     else:
         raise ValueError("Schema must be provided when creating new linkage project")
 
@@ -174,6 +174,8 @@ def create_project(type, schema, server, name, output, verbose):
         log("Unexpected response - {}".format(response.status_code))
         log(response.text)
         raise SystemExit
+    else:
+        log("Project created")
 
     # Parse project created response
     project_creation_reply = response.json()
@@ -183,10 +185,10 @@ def create_project(type, schema, server, name, output, verbose):
 @cli.command('create', short_help="create a run on the entity service")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this run", default='')
-@click.option('--project', type=str, help="Project ID")
+@click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
 @click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-t','--threshold', type=float, default=0.95)
+@click.option('-t','--threshold', type=float)
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def create(server, name, project, apikey, output, threshold, verbose):
     """Create a new run on an entity matching server.
@@ -195,13 +197,8 @@ def create(server, name, project, apikey, output, threshold, verbose):
 
     Returns details for the created run.
     """
-
     if verbose:
         log("Entity Matching Server: {}".format(server))
-
-        log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Server Status: {}".format(status))
 
     # Create a new run
     response = requests.post(
@@ -223,7 +220,7 @@ def create(server, name, project, apikey, output, threshold, verbose):
 
 @cli.command('upload', short_help='upload hashes to entity service')
 @click.argument('input', type=click.File('r'))
-@click.option('--project', help='Server identifier of the mapping')
+@click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o','--output', type=click.File('w'), default='-')
@@ -236,16 +233,11 @@ def upload(input, project, apikey, server, output, verbose):
 
     Use "-" to read from stdin.
     """
-
-    log("Uploading CLK data from {}".format(input.name))
-    log("To Entity Matching Server: {}".format(server))
-    log("Project ID: {}".format(project))
-
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Status: {}".format(status))
-
-    log("Uploading CLK data to the server")
+    if verbose:
+        log("Uploading CLK data from {}".format(input.name))
+        log("To Entity Matching Server: {}".format(server))
+        log("Project ID: {}".format(project))
+        log("Uploading CLK data to the server")
 
     response = requests.post(
         '{}/api/v1/projects/{}/clks'.format(server, project),
@@ -258,15 +250,12 @@ def upload(input, project, apikey, server, output, verbose):
 
     if verbose:
         log(response.text)
-        log("When the other party has uploaded their CLKS, you should be able to watch for results")
 
     print(response.text, file=output)
 
 
-
 @cli.command('results', short_help="fetch results from entity service")
-@click.option('--project',
-              help='Project identifier')
+@click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
@@ -283,10 +272,6 @@ def results(project, apikey, run, watch, server, output):
     the entity service documentation for details.
     """
 
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Status: {}".format(status))
-
     def get_result():
         return requests.get(
             '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
@@ -297,7 +282,7 @@ def results(project, apikey, run, watch, server, output):
     log("Response code: {}".format(response.status_code))
 
     if watch:
-        while response.status_code != 200:
+        while response.status_code == 404:
             time.sleep(1)
             response = get_result()
 
