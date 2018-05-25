@@ -2,17 +2,18 @@ from __future__ import print_function
 
 import os
 import tempfile
+# noinspection PyProtectedMember
 from timeit import default_timer as timer
 
 from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
 
-def compute_hash_speed(n, quiet=False):
+def compute_hash_speed(num, quiet=False):
     # type: (int, bool) -> float
     """ Hash time.
     """
-    namelist = NameList(n)
+    namelist = NameList(num)
 
     os_fd, tmpfile_name = tempfile.mkstemp(text=True)
 
@@ -35,10 +36,10 @@ def compute_hash_speed(n, quiet=False):
 
     elapsed_time = end - start
     if not quiet:
-        print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(n, elapsed_time, n/(1000*elapsed_time)))
-    return n / elapsed_time
+        print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(num, elapsed_time, num / (1000 * elapsed_time)))
+    return num / elapsed_time
 
 
 if __name__ == '__main__':
     for n in [100, 1000, 10000, 50000, 100000]:
-        compute_hash_speed(n, quiet=n<=10000)
+        compute_hash_speed(n, quiet=n <= 10000)

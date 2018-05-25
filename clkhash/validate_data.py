@@ -90,7 +90,7 @@ def validate_header(fields,       # type: Sequence[FieldSpec]
 
         :param fields: The `FieldSpec` objects forming the
             specification.
-        :param data: The data to validate.
+        :param column_names: A sequence of column identifier.
         :raises FormatError: When the number of columns or the column
             identifiers don't match the specification.
     """
