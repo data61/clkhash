@@ -200,6 +200,9 @@ def create(server, name, project, apikey, output, threshold, verbose):
     if verbose:
         log("Entity Matching Server: {}".format(server))
 
+    if threshold is None:
+        raise ValueError("Please provide a threshold")
+
     # Create a new run
     response = requests.post(
         "{}/api/v1/projects/{}/runs".format(server, project),
@@ -260,7 +263,7 @@ def upload(input, project, apikey, server, output, verbose):
 @click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 def results(project, apikey, run, watch, server, output):
     """
     Check to see if results are available for a particular mapping

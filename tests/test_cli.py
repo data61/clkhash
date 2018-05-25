@@ -8,6 +8,7 @@ import os
 import random
 import time
 import unittest
+from json import JSONDecodeError
 
 from click.testing import CliRunner
 from future.builtins import range
@@ -386,9 +387,12 @@ class TestCliInteractionWithService(CLITestHelper):
     def _create_project_and_run(self, project_args=None, run_args=None):
         project = self._create_project(project_args)
 
+        threshold = run_args['threshold'] if run_args is not None and 'threshold' in run_args else 0.99
+
         command = [
             'create',
             '--server', self.url,
+            '--threshold', str(threshold),
             '--project', project['project_id'],
             '--apikey', project['result_token'],
         ]
