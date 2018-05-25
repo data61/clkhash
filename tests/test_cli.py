@@ -434,16 +434,16 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def test_create_with_bad_schema(self):
         # Make sure we don't succeed with bad schema.
-        runner = CliRunner()
-        with temporary_file() as output_filename:
-            schema_path = os.path.join(os.path.dirname(__file__), 'testdata', 'bad-schema-v1.json')
-            cli_result = runner.invoke(
-                clkhash.cli.cli,
-                ['create-project',
-                 '--server', self.url,
-                 '--schema', schema_path
-                 ])
-        self.assertNotEqual(cli_result, 0)
+        schema_path = os.path.join(os.path.dirname(__file__), 'testdata', 'bad-schema-v1.json')
+        out = self.run_command_load_json_output(
+            [
+                'create-project',
+                '--server', self.url,
+                '--schema', schema_path
+            ]
+        )
+
+        assert 'project_id' in out
 
     def test_single_upload(self):
         project = self._create_project()
