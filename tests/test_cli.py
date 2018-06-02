@@ -293,7 +293,6 @@ class TestHasherDefaultSchema(unittest.TestCase):
                  'pii-schema.json', 'pii-hashes.json'])
             self.assertEqual(hash_result.exit_code, 0, msg=hash_result.output)
 
-
     def test_basic_hashing(self):
         runner = CliRunner()
         with temporary_file() as output_filename:
