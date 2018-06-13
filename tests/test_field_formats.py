@@ -151,6 +151,48 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertTrue(hasattr(spec, 'hashing_properties'))
 
+    def test_string_default_encoding_nonregex(self):
+        spec_dict = dict(
+            identifier='stringWithoutEncoding',
+            format=dict(type='string'),
+            hashing=dict(
+                ngram=1,
+                positional=True,
+                weight=0))
+
+        spec = field_formats.spec_from_json_dict(spec_dict)
+
+        # These are fine since the default encoding is utf-8.
+        spec.validate('dogs')
+        spec.validate('cats')
+        spec.validate(u'fërrets')  # Test Unicode.
+
+        self.assertEqual(spec.hashing_properties.encoding, 'utf-8')
+
+    def test_string_default_encoding_regex(self):
+        spec_dict = dict(
+            identifier='stringWithoutEncoding',
+            format=dict(
+                type='string',
+                pattern='f.+'),
+            hashing=dict(
+                ngram=1,
+                positional=True,
+                weight=0))
+
+        spec = field_formats.spec_from_json_dict(spec_dict)
+
+        # These are fine since the default encoding is utf-8.
+        spec.validate('fur')
+        spec.validate(u'fërrets')  # Test Unicode.
+
+        # These don't match the pattern.
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('cats')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('dogs')
+
+        self.assertEqual(spec.hashing_properties.encoding, 'utf-8')
 
     def test_integer(self):
         regex_spec = dict(
@@ -373,3 +415,4 @@ class TestFieldFormats(unittest.TestCase):
         self.assertFalse(spec.is_missing_value('no WAY'))
         self.assertEqual(spec.hashing_properties.missing_value.replace_with,
                          spec.hashing_properties.replace_missing_value(''))
+
