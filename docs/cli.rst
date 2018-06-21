@@ -185,6 +185,7 @@ There are several commands that interact with a REST api for carrying out privac
 These commands are:
 
 - status
+- create-project
 - create
 - upload
 - results
