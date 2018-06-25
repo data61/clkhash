@@ -19,12 +19,12 @@ matrix:
   include:
     - python: '3.6'
       env:
-        - TEST_ENTITY_SERVICE=1
+        - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - MYPY_TYPING=1
         - INCLUDE_CLI=1
     - python: '2.7'
       env:
-        - TEST_ENTITY_SERVICE=1
+        - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
 
 

@@ -1,3 +1,13 @@
+## 0.11.1
+
+Changes to the clkhash command line tool to support new entity service api.
+
+### Minor changes
+
+- Code format update and general cleanup following internal review.
+- Tutorial's schema was missing value definitions.
+- Removal of `HKDFConfig`
+
 ## 0.11.0
 
 Introduced a new schema system that permits you to: 

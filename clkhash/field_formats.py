@@ -372,7 +372,8 @@ class StringSpec(FieldSpec):
                       super().from_json_dict(json_dict))
 
         format_ = json_dict['format']
-        result.hashing_properties.encoding = format_['encoding']
+        if 'encoding' in format_:
+            result.hashing_properties.encoding = format_['encoding']
 
         if 'pattern' in format_:
             pattern = format_['pattern']

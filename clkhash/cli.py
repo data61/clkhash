@@ -21,9 +21,7 @@ def log(m, color='red'):
 
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-@click.option('--verbose', '-v', is_flag=True,
-              help='Enables verbose mode.')
-def cli(verbose=False):
+def cli():
     """
     This command line application allows a user to hash their
     data into cryptographic longterm keys for use in
@@ -99,12 +97,14 @@ def status(server, output, verbose):
 
     Use "-" to output status to stdout.
     """
-    log("Connecting to Entity Matching Server: {}".format(server))
+    if verbose:
+        log("Connecting to Entity Matching Server: {}".format(server))
 
     response = requests.get(server + "/api/v1/status")
     server_status = response.json()
-    log("Response: {}".format(response.status_code))
-    log("Status: {}".format(server_status['status']))
+    if verbose:
+        log("Response: {}".format(response.status_code))
+        log("Status: {}".format(server_status['status']))
     print(json.dumps(server_status), file=output)
 
 
@@ -115,80 +115,119 @@ fetch the resulting linkage table from the service.
 To upload using the cli tool for entity A:
 
     clkutil hash a_people.csv key1 key2 schema.json A_HASHED_FILE.json
-    clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[0]}"  A_HASHED_FILE.json
+    clkutil upload --project="{project_id}" --apikey="{update_tokens[0]}"  A_HASHED_FILE.json
 
 To upload using the cli tool for entity B:
 
     clkutil hash b_people.csv key1 key2 schema.json B_HASHED_FILE.json
-    clkutil upload --mapping="{resource_id}" --apikey="{update_tokens[1]}" B_HASHED_FILE.json
+    clkutil upload --project="{project_id}" --apikey="{update_tokens[1]}" B_HASHED_FILE.json
 
 After both users have uploaded their data one can watch for and retrieve the results:
 
-    clkutil results -w --mapping="{resource_id}" --apikey="{result_token}" --output results.txt
+    clkutil results -w --project="{project_id}" --run="{run_id}" --apikey="{result_token}" --output results.txt
 
 """
 
 
-@cli.command('create', short_help="create a mapping on the entity service")
-@click.option('--type', default='permutation_unencrypted_mask',
-              help='Alternative protocol/view type of the mapping. Default is unencrypted permutation and mask.')
+
+@cli.command('create-project', short_help="create a linkage project on the entity service")
+@click.option('--type', default='permutations',
+              type=click.Choice(['mapping', 'permutations', 'similarity_scores']),
+              help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-t', '--threshold', type=float, default=0.95)
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def create(type, schema, server, output, threshold, verbose):
-    """Create a new mapping on an entity matching server.
+@click.option('--name', type=str, help="Name to give this project")
+@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
+def create_project(type, schema, server, name, output, verbose):
+    """Create a new project on an entity matching server.
 
-    See entity matching service documentation for details on mapping type, threshold
-    and schema.
-
-    Returns authentication details for the created mapping.
+    See entity matching service documentation for details on mapping type and schema
+    Returns authentication details for the created project.
     """
-
-    log("Entity Matching Server: {}".format(server))
-
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Server Status: {}".format(status))
+    if verbose:
+        log("Entity Matching Server: {}".format(server))
 
     if schema is not None:
         schema_json = json.load(schema)
-        clkhash.schema.Schema.from_json_dict(schema_json)
+        # Validate the schema
+        clkhash.schema.validate_schema_dict(schema_json)
     else:
-        schema_json = 'NOT PROVIDED'
+        raise ValueError("Schema must be provided when creating new linkage project")
 
-    log("Schema: {}".format(schema_json))
-    log("Type: {}".format(type))
+    name = name if name is not None else ''
 
-    log("Creating new mapping")
+    # Creating new project
     response = requests.post(
-        "{}/api/v1/mappings".format(server),
+        "{}/api/v1/projects".format(server),
         json={
             'schema': schema_json,
             'result_type': type,
-            'threshold': threshold
+            'number_parties': 2,
+            'name': name,
+            'notes': 'Project created by clkhash command line tool'
         }
     )
 
-    if response.status_code != 200:
+    if response.status_code != 201:
+        log("Unexpected response - {}".format(response.status_code))
+        log(response.text)
+        raise SystemExit
+    else:
+        log("Project created")
+
+    # Parse project created response
+    project_creation_reply = response.json()
+    print(json.dumps(project_creation_reply), file=output)
+
+
+@cli.command('create', short_help="create a run on the entity service")
+@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option('--name', type=str, help="Name to give this run", default='')
+@click.option('--project', help='Project identifier')
+@click.option('--apikey', type=str, help="Project Authorization Token")
+@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-t','--threshold', type=float)
+@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+def create(server, name, project, apikey, output, threshold, verbose):
+    """Create a new run on an entity matching server.
+
+    See entity matching service documentation for details on threshold.
+
+    Returns details for the created run.
+    """
+    if verbose:
+        log("Entity Matching Server: {}".format(server))
+
+    if threshold is None:
+        raise ValueError("Please provide a threshold")
+
+    # Create a new run
+    response = requests.post(
+        "{}/api/v1/projects/{}/runs".format(server, project),
+        headers={"Authorization": apikey},
+        json={
+            'threshold': threshold,
+            'name': name,
+            'notes': 'Run created by clkhash command line tool'
+        }
+    )
+
+    if response.status_code != 201:
         log("Unexpected response")
         log(response.text)
     else:
-        log("Mapping created")
-        if verbose:
-            log(MAPPING_CREATED_MSG.format(**response.json()))
         print(response.text, file=output)
 
 
 @cli.command('upload', short_help='upload hashes to entity service')
 @click.argument('input', type=click.File('r'))
-@click.option('--mapping', help='Server identifier of the mapping')
+@click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def upload(input, mapping, apikey, server, output, verbose):
+def upload(input, project, apikey, server, output, verbose):
     """Upload CLK data to entity matching server.
 
     Given a json file containing hashed clk data as INPUT, upload to
@@ -196,19 +235,14 @@ def upload(input, mapping, apikey, server, output, verbose):
 
     Use "-" to read from stdin.
     """
+    if verbose:
+        log("Uploading CLK data from {}".format(input.name))
+        log("To Entity Matching Server: {}".format(server))
+        log("Project ID: {}".format(project))
+        log("Uploading CLK data to the server")
 
-    log("Uploading CLK data from {}".format(input.name))
-    log("To Entity Matching Server: {}".format(server))
-    log("Mapping ID: {}".format(mapping))
-
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Status: {}".format(status))
-
-    log("Uploading CLK data to the server")
-
-    response = requests.put(
-        '{}/api/v1/mappings/{}'.format(server, mapping),
+    response = requests.post(
+        '{}/api/v1/projects/{}/clks'.format(server, project),
         data=input,
         headers={
             "Authorization": apikey,
@@ -218,19 +252,18 @@ def upload(input, mapping, apikey, server, output, verbose):
 
     if verbose:
         log(response.text)
-        log("When the other party has uploaded their CLKS, you should be able to watch for results")
 
     print(response.text, file=output)
 
 
 @cli.command('results', short_help="fetch results from entity service")
-@click.option('--mapping',
-              help='Server identifier of the mapping')
+@click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
+@click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-def results(mapping, apikey, watch, server, output):
+def results(project, apikey, run, watch, server, output):
     """
     Check to see if results are available for a particular mapping
     and if so download.
@@ -241,13 +274,9 @@ def results(mapping, apikey, watch, server, output):
     the entity service documentation for details.
     """
 
-    log("Checking server status")
-    status = requests.get(server + "/api/v1/status").json()['status']
-    log("Status: {}".format(status))
-
     def get_result():
         return requests.get(
-            '{}/api/v1/mappings/{}'.format(server, mapping),
+            '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
             headers={"Authorization": apikey}
         )
 
@@ -255,7 +284,7 @@ def results(mapping, apikey, watch, server, output):
     log("Response code: {}".format(response.status_code))
 
     if watch:
-        while response.status_code != 200:
+        while response.status_code == 404:
             time.sleep(1)
             response = get_result()
 
