@@ -1,6 +1,5 @@
 import unittest
 
-from clkhash.backports import re_compile_full
 from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingProperties,
                                    IntegerSpec, StringSpec)
 from clkhash.validate_data import (EntryError, FormatError,

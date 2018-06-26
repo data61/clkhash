@@ -1,6 +1,4 @@
 import unittest
-import random
-from bitarray import bitarray
 
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.tokenizer import get_tokenizer, tokenize
