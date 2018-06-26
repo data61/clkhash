@@ -5,12 +5,12 @@ Generate a Bloom filter
 """
 
 import base64
-from enum import Enum
-from functools import partial
-from hashlib import md5, sha1
 import hmac
 import math
 import struct
+from enum import Enum
+from functools import partial
+from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
 from bitarray import bitarray
@@ -18,8 +18,8 @@ from future.builtins import range, zip
 
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
-from clkhash.schema import Schema, GlobalHashingProperties
 from clkhash.field_formats import FieldSpec
+from clkhash.schema import Schema, GlobalHashingProperties
 
 try:
     from hashlib import blake2b
@@ -30,11 +30,11 @@ except ImportError:
     # blake2b is already defined.
 
 
-def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
-                              keys,            # type: Sequence[bytes]
-                              k,               # type: int
-                              l,               # type: int
-                              encoding         # type: str
+def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
+                              keys,     # type: Sequence[bytes]
+                              k,        # type: int
+                              l,        # type: int
+                              encoding  # type: str
                               ):
     # type: (...) -> bitarray
     """
@@ -64,11 +64,11 @@ def double_hash_encode_ngrams(ngrams,          # type: Iterable[str]
     return bf
 
 
-def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str]
-                                           keys,            # type: Sequence[bytes]
-                                           k,               # type: int
-                                           l,               # type: int
-                                           encoding         # type: str
+def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
+                                           keys,  # type: Sequence[bytes]
+                                           k,  # type: int
+                                           l,  # type: int
+                                           encoding  # type: str
                                            ):
     # type: (...) -> bitarray.bitarray
     """
@@ -131,11 +131,11 @@ def double_hash_encode_ngrams_non_singular(ngrams,          # type: Iterable[str
     return bf
 
 
-def blake_encode_ngrams(ngrams,          # type: Iterable[str]
-                        keys,            # type: Sequence[bytes]
-                        k,               # type: int
-                        l,               # type: int
-                        encoding         # type: str
+def blake_encode_ngrams(ngrams,  # type: Iterable[str]
+                        keys,  # type: Sequence[bytes]
+                        k,  # type: int
+                        l,  # type: int
+                        encoding  # type: str
                         ):
     # type: (...) -> bitarray.bitarray
     """
@@ -190,13 +190,13 @@ def blake_encode_ngrams(ngrams,          # type: Iterable[str]
     key, = keys  # Unpack.
 
     log_l = int(math.log(l, 2))
-    if not 2**log_l == l:
+    if not 2 ** log_l == l:
         raise ValueError('parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(l))
     bf = bitarray(l)
     bf.setall(False)
     if k < 1:
         return bf
-    num_macs = (k+31) // 32
+    num_macs = (k + 31) // 32
 
     for m in ngrams:
         random_shorts = []  # type: List[int]
@@ -249,7 +249,7 @@ class NgramEncodings(Enum):
 
 
 def fold_xor(bloomfilter,  # type: bitarray
-             folds         # type: int
+             folds  # type: int
              ):
     # type: (...) -> bitarray
     """ Performs XOR folding on a Bloom filter.
@@ -279,10 +279,10 @@ def fold_xor(bloomfilter,  # type: bitarray
     return bloomfilter
 
 
-def crypto_bloom_filter(record,          # type: Sequence[Text]
-                        tokenizers,      # type: List[Callable[[Text], Iterable[Text]]]
-                        fields,          # type: Sequence[FieldSpec]
-                        keys,            # type: Sequence[Sequence[bytes]]
+def crypto_bloom_filter(record,  # type: Sequence[Text]
+                        tokenizers,  # type: List[Callable[[Text], Iterable[Text]]]
+                        fields,  # type: Sequence[FieldSpec]
+                        keys,  # type: Sequence[Sequence[bytes]]
                         hash_properties  # type: GlobalHashingProperties
                         ):
     # type: (...) -> Tuple[bitarray, Text, int]
@@ -329,8 +329,8 @@ def crypto_bloom_filter(record,          # type: Sequence[Text]
 
 
 def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
-                         keys,     # type: Sequence[Sequence[bytes]]
-                         schema    # type: Schema
+                         keys,  # type: Sequence[Sequence[bytes]]
+                         schema  # type: Schema
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
     """

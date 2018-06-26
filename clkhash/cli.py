@@ -12,7 +12,6 @@ import requests
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames, validate_data
 
-
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
 
@@ -39,7 +38,6 @@ def cli():
 
     All rights reserved Confidential Computing 2016.
     """
-
 
 
 @cli.command('hash', short_help="generate hashes from local PII data")
@@ -92,7 +90,7 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
 
 @cli.command('status', short_help='Get status of entity service')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def status(server, output, verbose):
     """Connect to an entity matching server and check the service status.
@@ -129,6 +127,7 @@ After both users have uploaded their data one can watch for and retrieve the res
     clkutil results -w --project="{project_id}" --run="{run_id}" --apikey="{result_token}" --output results.txt
 
 """
+
 
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
@@ -226,7 +225,7 @@ def create(server, name, project, apikey, output, threshold, verbose):
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def upload(input, project, apikey, server, output, verbose):
     """Upload CLK data to entity matching server.

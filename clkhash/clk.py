@@ -19,15 +19,14 @@ from clkhash.stats import OnlineMeanVariance
 from clkhash.validate_data import (validate_entries, validate_header,
                                    validate_row_lengths)
 
-
 log = logging.getLogger('clkhash.clk')
 
 CHUNK_SIZE = 1000
 
 
 def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
-                             keys,            # type: Sequence[Sequence[bytes]]
-                             schema           # type: Schema
+                             keys,  # type: Sequence[Sequence[bytes]]
+                             schema  # type: Schema
                              ):
     # type: (...) -> Tuple[List[str], Sequence[int]]
     """
@@ -49,12 +48,12 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     return clk_data, clk_popcounts
 
 
-def generate_clk_from_csv(input_f,             # type: TextIO
-                          keys,                # type: Tuple[AnyStr, AnyStr]
-                          schema,              # type: Schema
-                          validate=True,       # type: bool
-                          header=True,         # type: Union[bool, AnyStr]
-                          progress_bar=True    # type: bool
+def generate_clk_from_csv(input_f,  # type: TextIO
+                          keys,  # type: Tuple[AnyStr, AnyStr]
+                          schema,  # type: Schema
+                          validate=True,  # type: bool
+                          header=True,  # type: Union[bool, AnyStr]
+                          progress_bar=True  # type: bool
                           ):
     # type: (...) -> List[str]
     """ Generate Bloom filters from CSV file, then serialise them.
@@ -127,11 +126,11 @@ def generate_clk_from_csv(input_f,             # type: TextIO
     return results
 
 
-def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
-                  schema,         # type: Schema
-                  keys,           # type: Tuple[AnyStr, AnyStr]
+def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
+                  schema,  # type: Schema
+                  keys,  # type: Tuple[AnyStr, AnyStr]
                   validate=True,  # type: bool
-                  callback=None   # type: Optional[Callable[[int, Sequence[int]], None]]
+                  callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
     # type: (...) -> List[str]
 
@@ -158,7 +157,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(
                 hash_and_serialize_chunk,
-                chunk, key_lists, schema,)
+                chunk, key_lists, schema, )
             if callback is not None:
                 unpacked_callback = cast(Callable[[int, Sequence[int]], None],
                                          callback)
@@ -175,7 +174,7 @@ def generate_clks(pii_data,       # type: Sequence[Sequence[str]]
     return results
 
 
-T = TypeVar('T')      # Declare generic type variable
+T = TypeVar('T')  # Declare generic type variable
 
 
 def chunks(seq, chunk_size):

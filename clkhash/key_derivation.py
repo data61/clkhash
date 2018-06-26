@@ -1,11 +1,10 @@
-from typing import cast, Tuple, Union, Optional, Sequence, Any
+from typing import Tuple, Union, Optional, Sequence
 
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.backends import default_backend
 from future.builtins import range, zip
 from future.utils import raise_from
-
 
 """
 We use the block-size of SHA1 and MD5 as the default key size for HMAC
@@ -17,11 +16,12 @@ _HASH_FUNCTIONS = {
     'SHA512': hashes.SHA512
 }
 
-def hkdf(master_secret,             # type: bytes
-         num_keys,                  # type: int
-         hash_algo='SHA256',        # type: str
-         salt=None,                 # type: Optional[bytes]
-         info=None,                 # type: Optional[bytes]
+
+def hkdf(master_secret,  # type: bytes
+         num_keys,  # type: int
+         hash_algo='SHA256',  # type: str
+         salt=None,  # type: Optional[bytes]
+         info=None,  # type: Optional[bytes]
          key_size=DEFAULT_KEY_SIZE  # type: int
          ):
     # type: (...) -> Tuple[bytes, ...]
@@ -71,7 +71,6 @@ def hkdf(master_secret,             # type: bytes
         msg = "unsupported hash function '{}'".format(hash_algo)
         raise_from(ValueError(msg), None)
 
-
     hkdf = HKDF(algorithm=hash_function(),
                 length=num_keys * key_size,
                 salt=salt,
@@ -84,13 +83,13 @@ def hkdf(master_secret,             # type: bytes
     return keys
 
 
-def generate_key_lists(master_secrets,              # type: Sequence[Union[bytes, str]]
-                       num_identifier,              # type: int
-                       key_size=DEFAULT_KEY_SIZE,   # type: int
-                       salt=None,                   # type: Optional[bytes]
-                       info=None,                   # type: Optional[bytes]
-                       kdf='HKDF',                  # type: str
-                       hash_algo='SHA256'           # type: str
+def generate_key_lists(master_secrets,  # type: Sequence[Union[bytes, str]]
+                       num_identifier,  # type: int
+                       key_size=DEFAULT_KEY_SIZE,  # type: int
+                       salt=None,  # type: Optional[bytes]
+                       info=None,  # type: Optional[bytes]
+                       kdf='HKDF',  # type: str
+                       hash_algo='SHA256'  # type: str
                        ):
     # type: (...) -> Tuple[Tuple[bytes, ...], ...]
     """
