@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from base64 import b64decode
 from datetime import datetime
 import io
-import itertools
 import unittest
 
 from clkhash.backports import (int_from_bytes, re_compile_full,
