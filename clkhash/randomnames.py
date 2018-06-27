@@ -30,7 +30,7 @@ from clkhash.schema import Schema
 
 def load_csv_data(resource_name):
     # type: (str) -> List[str]
-    """Loads a specified CSV data file and returns the first column as a Python list
+    """ Loads first column of specified CSV file from package data.
     """
     data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
     if data_bytes is None:
@@ -62,8 +62,7 @@ def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
 
 def random_date(start, end):
     # type: (datetime, datetime) -> datetime
-    """
-    This function will return a random datetime between two datetime objects.
+    """ Generate a random datetime between two datetime objects.
 
     :param start: datetime of start
     :param end: datetime of end
@@ -76,7 +75,7 @@ def random_date(start, end):
 
 
 class NameList:
-    """ List of randomly generated names.
+    """ Randomly generated PII records.
     """
 
     with open(os.path.join(os.path.dirname(__file__),
@@ -130,12 +129,10 @@ class NameList:
 
     def load_names(self):
         # type: () -> None
-        """
-        This function loads a name database into globals firstNames and lastNames
+        """ Loads a name database from package data
 
-        initial version uses data files from
+        Uses data files sourced from
         http://www.quietaffiliate.com/free-first-name-and-last-name-databases-csv-and-sql/
-
         """
 
         self.all_male_first_names = load_csv_data('male-first-names.csv')

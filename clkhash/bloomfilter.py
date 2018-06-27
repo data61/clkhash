@@ -37,19 +37,18 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
                               encoding  # type: str
                               ):
     # type: (...) -> bitarray
-    """
-    Computes the double hash encoding of the provided ngrams with the given keys.
+    """ Computes the double hash encoding of the provided ngrams with the given keys.
 
-    Using the method from
-    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+        Using the method from
+        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
-    :param ngrams: list of n-grams to be encoded
-    :param keys: hmac secret keys for md5 and sha1 as bytes
-    :param k: number of hash functions to use per element of the ngrams
-    :param l: length of the output bitarray
-    :param encoding: the encoding to use when turning the ngrams to bytes
+        :param ngrams: list of n-grams to be encoded
+        :param keys: hmac secret keys for md5 and sha1 as bytes
+        :param k: number of hash functions to use per element of the ngrams
+        :param l: length of the output bitarray
+        :param encoding: the encoding to use when turning the ngrams to bytes
 
-    :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
+        :return: bitarray of length l with the bits set which correspond to the encoding of the ngrams
     """
     key_sha1, key_md5 = keys
     bf = bitarray(l)
@@ -210,10 +209,9 @@ def blake_encode_ngrams(ngrams,  # type: Iterable[str]
 
 
 class NgramEncodings(Enum):
-    """
-    Lists the available schemes for encoding n-grams.
+    """ The available schemes for encoding n-grams.
 
-    .. note::
+    ..
       the slightly awkward looking construction with the calls to partial and the overwrite of __call__ are due to
       compatibility issues with Python 2.7.
     """
@@ -286,23 +284,22 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
                         hash_properties  # type: GlobalHashingProperties
                         ):
     # type: (...) -> Tuple[bitarray, Text, int]
-    """
-    Makes a Bloom filter from a record with given tokenizers and lists of keys.
+    """ Computes the composite Bloom filter encoding of a record.
 
-    Using the method from
-    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+        Using the method from
+        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
-    :param record: plaintext record tuple. E.g. (index, name, dob, gender)
-    :param tokenizers: A list of tokenizers. A tokenizer is a function that
-        returns tokens from a string.
-    :param fields: A list of FieldSpec. One for each field.
-    :param keys: Keys for the hash functions as a tuple of lists of bytes.
-    :param hash_properties: Global hashing properties.
+        :param record: plaintext record tuple. E.g. (index, name, dob, gender)
+        :param tokenizers: A list of tokenizers. A tokenizer is a function that
+            returns tokens from a string.
+        :param fields: A list of FieldSpec. One for each field.
+        :param keys: Keys for the hash functions as a tuple of lists of bytes.
+        :param hash_properties: Global hashing properties.
 
-    :return: 3-tuple:
-            - bloom filter for record as a bitarray
-            - first element of record (usually an index)
-            - number of bits set in the bloomfilter
+        :return: 3-tuple:
+                - bloom filter for record as a bitarray
+                - first element of record (usually an index)
+                - number of bits set in the bloomfilter
     """
     xor_folds = hash_properties.xor_folds
     hash_l = hash_properties.l * 2 ** xor_folds
@@ -333,13 +330,12 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
                          schema  # type: Schema
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
-    """
-    Yield bloom filters
+    """ Compute composite Bloom filters (CLKs) for every record in an iterable dataset.
 
-    :param dataset: An iterable of indexable records.
-    :param schema: An instantiated Schema instance
-    :param keys: A tuple of two lists of secret keys used in the HMAC.
-    :return: Yields bloom filters as 3-tuples
+        :param dataset: An iterable of indexable records.
+        :param schema: An instantiated Schema instance
+        :param keys: A tuple of two lists of secret keys used in the HMAC.
+        :return: Generator yielding bloom filters as 3-tuples
     """
     tokenizers = [tokenizer.get_tokenizer(field.hashing_properties)
                   for field in schema.fields]
