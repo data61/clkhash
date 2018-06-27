@@ -125,8 +125,7 @@ class GlobalHashingProperties(object):
 
 
 class Schema(object):
-    """ Overall schema which describes how to hash plaintext identifiers
-        into clks.
+    """Linkage Schema which describes how to encode plaintext identifiers.
 
         :ivar version: Version for the schema. Needed to keep behaviour
             consistent between clkhash versions for the same schema.

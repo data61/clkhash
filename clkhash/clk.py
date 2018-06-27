@@ -35,9 +35,9 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
+    :param keys: A tuple of two lists of secret keys used in the HMAC.
     :param Schema schema: Schema specifying the entry formats and
             hashing settings.
-    :param keys: A tuple of two lists of secret keys used in the HMAC.
     :return: A list of serialized Bloom filters and a list of corresponding popcounts
     """
     clk_data = []
@@ -62,16 +62,15 @@ def generate_clk_from_csv(input_f,  # type: TextIO
         (a.k.a popcount -- the number of bits set to high) of the
         generated Bloom filters.
 
-        :param input_f: The CSV file to hash, as stream.
-        :param keys: A tuple of two lists of secret keys used in the
-            HMAC.
-        :param Schema schema: Schema specifying the entry formats and
+        :param input_f: A file-like object of csv data to hash.
+        :param keys: A tuple of two lists of secret keys.
+        :param schema: Schema specifying the record formats and
             hashing settings.
-        :param bool validate: Set to `False` to disable validation of
+        :param validate: Set to `False` to disable validation of
             data against the schama. Note that this will silence
             warnings whose aim is to keep the hashes consistent between
             data sources; this may affect linkage accuracy.
-        :param bool header: Set to `False` if the CSV file does not have
+        :param header: Set to `False` if the CSV file does not have
             a header. Set to `'ignore'` if the CSV file does have a
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
