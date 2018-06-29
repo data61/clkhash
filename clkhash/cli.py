@@ -11,6 +11,7 @@ import requests
 
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames, validate_data
+from clkhash.rest_client import project_upload_clks, run_get_result, run_get_status
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -241,14 +242,7 @@ def upload(input, project, apikey, server, output, verbose):
         log("Project ID: {}".format(project))
         log("Uploading CLK data to the server")
 
-    response = requests.post(
-        '{}/api/v1/projects/{}/clks'.format(server, project),
-        data=input,
-        headers={
-            "Authorization": apikey,
-            'content-type': 'application/json'
-        }
-    )
+    response = project_upload_clks(server, project, apikey, input)
 
     if verbose:
         log(response.text)
@@ -274,26 +268,35 @@ def results(project, apikey, run, watch, server, output):
     the entity service documentation for details.
     """
 
-    def get_result():
-        return requests.get(
-            '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
-            headers={"Authorization": apikey}
-        )
+    def log_status(status):
+        log("State: {}".format(status['state']))
+        log("Stage {} ({}/{})".format(
+            status['current_stage']['description'],
+            status['current_stage'],
+            status['stages']))
 
-    response = get_result()
-    log("Response code: {}".format(response.status_code))
+        if 'progress' in status['current_stage']:
+            log("Progress: {:.3f}%".format(status['current_stage']['progress']['relative']))
 
+    status = run_get_status(server, project, run, apikey)
+    log_status(status)
     if watch:
-        while response.status_code == 404:
+        while status['state'] not in {'error', 'completed'}:
             time.sleep(1)
-            response = get_result()
+            status = run_get_status(server, project, run, apikey)
+            log_status(status)
 
-    if response.status_code == 200:
+    if status['state'] == 'completed':
+        log("Downloading result")
+        response = run_get_result(server, project, run, apikey)
         log("Received result")
         print(response.text, file=output)
+    elif status['state'] == 'error':
+        log("There was an error")
+        error_result = run_get_result(server, project, run, apikey)
+        print(error_result.text, file=output)
     else:
         log("No result yet")
-        log(response.text)
 
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
