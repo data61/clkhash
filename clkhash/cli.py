@@ -7,11 +7,11 @@ import shutil
 import time
 
 import click
-import requests
 
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames, validate_data
-from clkhash.rest_client import project_upload_clks, run_get_result, run_get_status
+from clkhash.rest_client import project_upload_clks, run_get_result_text, run_get_status, project_create, run_create, \
+    server_get_status, ServiceError
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -101,12 +101,10 @@ def status(server, output, verbose):
     if verbose:
         log("Connecting to Entity Matching Server: {}".format(server))
 
-    response = requests.get(server + "/api/v1/status")
-    server_status = response.json()
+    service_status = server_get_status(server)
     if verbose:
-        log("Response: {}".format(response.status_code))
-        log("Status: {}".format(server_status['status']))
-    print(json.dumps(server_status), file=output)
+        log("Status: {}".format(service_status['status']))
+    print(json.dumps(service_status), file=output)
 
 
 MAPPING_CREATED_MSG = """
@@ -128,7 +126,6 @@ After both users have uploaded their data one can watch for and retrieve the res
     clkutil results -w --project="{project_id}" --run="{run_id}" --apikey="{result_token}" --output results.txt
 
 """
-
 
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
@@ -159,27 +156,16 @@ def create_project(type, schema, server, name, output, verbose):
     name = name if name is not None else ''
 
     # Creating new project
-    response = requests.post(
-        "{}/api/v1/projects".format(server),
-        json={
-            'schema': schema_json,
-            'result_type': type,
-            'number_parties': 2,
-            'name': name,
-            'notes': 'Project created by clkhash command line tool'
-        }
-    )
-
-    if response.status_code != 201:
-        log("Unexpected response - {}".format(response.status_code))
-        log(response.text)
+    try:
+        project_creation_reply = project_create(server, schema_json, type, name)
+    except ServiceError as e:
+        log("Unexpected response - {}".format(e.status_code))
+        log(e.text)
         raise SystemExit
     else:
         log("Project created")
 
-    # Parse project created response
-    project_creation_reply = response.json()
-    print(json.dumps(project_creation_reply), file=output)
+    json.dump(project_creation_reply, output)
 
 
 @cli.command('create', short_help="create a run on the entity service")
@@ -204,21 +190,13 @@ def create(server, name, project, apikey, output, threshold, verbose):
         raise ValueError("Please provide a threshold")
 
     # Create a new run
-    response = requests.post(
-        "{}/api/v1/projects/{}/runs".format(server, project),
-        headers={"Authorization": apikey},
-        json={
-            'threshold': threshold,
-            'name': name,
-            'notes': 'Run created by clkhash command line tool'
-        }
-    )
-
-    if response.status_code != 201:
-        log("Unexpected response")
-        log(response.text)
+    try:
+        response = run_create(server, project, apikey, threshold, name)
+    except ServiceError as e:
+        log("Unexpected response with status {}".format(e.status_code))
+        log(e.text)
     else:
-        print(response.text, file=output)
+        json.dump(response, output)
 
 
 @cli.command('upload', short_help='upload hashes to entity service')
@@ -245,9 +223,9 @@ def upload(input, project, apikey, server, output, verbose):
     response = project_upload_clks(server, project, apikey, input)
 
     if verbose:
-        log(response.text)
+        log(response)
 
-    print(response.text, file=output)
+    json.dump(response, output)
 
 
 @cli.command('results', short_help="fetch results from entity service")
@@ -288,13 +266,13 @@ def results(project, apikey, run, watch, server, output):
 
     if status['state'] == 'completed':
         log("Downloading result")
-        response = run_get_result(server, project, run, apikey)
+        response = run_get_result_text(server, project, run, apikey)
         log("Received result")
-        print(response.text, file=output)
+        print(response, file=output)
     elif status['state'] == 'error':
         log("There was an error")
-        error_result = run_get_result(server, project, run, apikey)
-        print(error_result.text, file=output)
+        error_result = run_get_result_text(server, project, run, apikey)
+        print(error_result, file=output)
     else:
         log("No result yet")
 
