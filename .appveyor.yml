@@ -21,6 +21,8 @@ install:
   - "%PYTHON%\\python.exe -m pip install -U wheel setuptools"
   # We need our development dependencies for testing
   - "%PYTHON%\\python.exe -m pip install -U -r requirements.txt"
+  # Install codecov so we can publish code coverage results after testing
+  - "%PYTHON%\\python.exe -m pip install -U codecov"
   # We need to install clkhash library itself
   - "%PYTHON%\\python.exe -m pip install ."
 
@@ -34,8 +36,7 @@ test_script:
   - "%PYTHON%\\python.exe -m pytest --cov=clkhash"
 
 after_test:
-  # This step builds the source and wheel distribution packages.
-  - "%PYTHON%\\python.exe setup.py sdist bdist_wheel"
+  - "%PYTHON%\\python.exe -m codecov"
 
 # Note Appveyor has only a small allocation for artifacts
 #artifacts:
