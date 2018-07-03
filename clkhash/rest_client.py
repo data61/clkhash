@@ -87,10 +87,14 @@ def run_get_status(server, project, run, apikey):
 
 
 def run_get_result_text(server, project, run, apikey):
-    return requests.get(
+    response = requests.get(
         '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
         headers={"Authorization": apikey}
-    ).text
+    )
+
+    if response.status_code != 200:
+        raise ServiceError("Error retrieving results", response)
+    return response.text
 
 
 def format_run_status(status):
