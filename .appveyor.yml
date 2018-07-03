@@ -20,7 +20,9 @@ install:
   # We need wheel installed to build wheels
   - "%PYTHON%\\python.exe -m pip install -U wheel setuptools"
   # We need our development dependencies for testing
-  - "%PYTHON%\\python.exe -m pip install -U -r requirements.txt codecov"
+  - "%PYTHON%\\python.exe -m pip install -U -r requirements.txt"
+  # Install codecov so we can publish code coverage results after testing
+  - "%PYTHON%\\python.exe -m pip install -U codecov"
   # We need to install clkhash library itself
   - "%PYTHON%\\python.exe -m pip install ."
 
