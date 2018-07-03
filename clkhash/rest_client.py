@@ -91,3 +91,19 @@ def run_get_result_text(server, project, run, apikey):
         '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
         headers={"Authorization": apikey}
     ).text
+
+
+def format_run_status(status):
+    status_lines = [
+        "State: {}".format(status['state']),
+        "Stage {} ({}/{})".format(
+            status['current_stage']['description'],
+            status['current_stage'],
+            status['stages']
+        )
+    ]
+
+    if 'progress' in status['current_stage']:
+        status_lines.append("Progress: {:.3f}%".format(status['current_stage']['progress']['relative']))
+
+    return '\n'.join(status_lines)
