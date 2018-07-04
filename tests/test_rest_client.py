@@ -68,8 +68,7 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         assert 'state' in status1
         assert 'stages' in status1
         print(rest_client.format_run_status(status1))
-        time.sleep(2)
-        status2 = rest_client.run_get_status(self.url, p_id, r_id, p['result_token'])
+        status2 = rest_client.wait_for_run(self.url, p_id, r_id, p['result_token'], 30)
         assert status2['state'] == 'completed'
         coord_result_raw = rest_client.run_get_result_text(self.url, p_id, r_id, p['result_token'])
         coord_result = json.loads(coord_result_raw)

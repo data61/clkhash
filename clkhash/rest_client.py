@@ -1,3 +1,5 @@
+import time
+
 import requests
 import clkhash
 import logging
@@ -103,6 +105,26 @@ def run_get_status(server, project, run, apikey):
         headers={"Authorization": apikey}
     )
     return _handle_json_response(response, "Run Status Error", 200)
+
+
+def wait_for_run(server, project, run, apikey, timeout=300):
+    start_time = time.time()
+    status = run_get_status(server, project, run, apikey)
+    while status['state'] not in {'error', 'completed'} and time.time() - start_time < timeout:
+        time.sleep(1)
+        status = run_get_status(server, project, run, apikey)
+    return status
+
+
+def watch_run_status(server, project, run, apikey, timeout=300):
+    start_time = time.time()
+    status = run_get_status(server, project, run, apikey)
+    while status['state'] not in {'error', 'completed'} and time.time() - start_time < timeout:
+        time.sleep(1)
+        status = run_get_status(server, project, run, apikey)
+        yield status
+
+    raise StopIteration
 
 
 def run_get_result_text(server, project, run, apikey):

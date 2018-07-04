@@ -11,7 +11,7 @@ import click
 import clkhash
 from clkhash import benchmark as bench, clk, randomnames, validate_data
 from clkhash.rest_client import project_upload_clks, run_get_result_text, run_get_status, project_create, run_create, \
-    server_get_status, ServiceError, format_run_status
+    server_get_status, ServiceError, format_run_status, watch_run_status
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -249,9 +249,7 @@ def results(project, apikey, run, watch, server, output):
     status = run_get_status(server, project, run, apikey)
     log(format_run_status(status))
     if watch:
-        while status['state'] not in {'error', 'completed'}:
-            time.sleep(1)
-            status = run_get_status(server, project, run, apikey)
+        for status in watch_run_status(server, project, run, apikey, 24*60*60):
             log(format_run_status(status))
 
     if status['state'] == 'completed':
