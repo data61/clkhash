@@ -67,7 +67,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
         :param schema: Schema specifying the record formats and
             hashing settings.
         :param validate: Set to `False` to disable validation of
-            data against the schama. Note that this will silence
+            data against the schema. Note that this will silence
             warnings whose aim is to keep the hashes consistent between
             data sources; this may affect linkage accuracy.
         :param header: Set to `False` if the CSV file does not have
