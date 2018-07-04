@@ -29,7 +29,7 @@ setup(
     license='Apache',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'codecov'],
+    tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov'],
     packages=find_packages(exclude=['tests']),
     package_data={'clkhash': ['data/*.csv', 'data/*.json', 'master-schemas/*.json']},
     entry_points={
