@@ -4,6 +4,7 @@ http://click.pocoo.org/5/testing/
 from __future__ import division, print_function
 
 import json
+import logging
 import os
 import random
 import time
@@ -17,19 +18,7 @@ import clkhash
 import clkhash.cli
 from clkhash import randomnames
 
-from tests import temporary_file, create_temp_file
-
-SIMPLE_SCHEMA_PATH = os.path.join(
-    os.path.dirname(__file__),
-    'testdata',
-    'simple-schema.json'
-)
-
-RANDOMNAMES_SCHEMA_PATH = os.path.join(
-    os.path.dirname(clkhash.__file__),
-    'data',
-    'randomnames-schema.json'
-)
+from tests import temporary_file, create_temp_file, SIMPLE_SCHEMA_PATH, RANDOMNAMES_SCHEMA_PATH
 
 
 class CLITestHelper(unittest.TestCase):
@@ -99,6 +88,7 @@ class CLITestHelper(unittest.TestCase):
         :raises: AssertionError if the command's exit code isn't 0
         :raises: json.decoder.JSONDecodeError if the output isn't json
         """
+        logging.info(command)
         output_str = self.run_command_capture_output(command)
         return json.loads(output_str)
 
@@ -407,6 +397,12 @@ class TestCliInteractionWithService(CLITestHelper):
     def test_status(self):
         self.run_command_load_json_output(['status', '--server', self.url])
 
+    def test_status_invalid_server_raises(self):
+        with pytest.raises(AssertionError) as exec_info:
+            self.run_command_capture_output(['status', '--server', 'https://example.com'])
+
+            assert 'invalid choice' in exec_info.value.args[0]
+
     def test_create_project(self):
         out = self._create_project()
 
@@ -417,6 +413,12 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['project_id']), 16)
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
+
+    def test_create_project_bad_type(self):
+        with pytest.raises(AssertionError) as exec_info:
+            self._create_project(project_args={'type': 'invalid'})
+
+        assert 'invalid choice' in exec_info.value.args[0]
 
     def test_create_project_and_run(self):
         project, run = self._create_project_and_run()

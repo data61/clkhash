@@ -1,6 +1,27 @@
 import os
 import sys
 import tempfile
+import clkhash
+
+SIMPLE_SCHEMA_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'testdata',
+    'simple-schema.json'
+)
+SAMPLE_DATA_SCHEMA_PATH = os.path.join(
+    os.path.dirname(__file__),
+    'testdata',
+    'dirty-data-schema.json'
+)
+
+RANDOMNAMES_SCHEMA_PATH = os.path.join(
+    os.path.dirname(clkhash.__file__),
+    'data',
+    'randomnames-schema.json'
+)
+
+SAMPLE_DATA_PATH_1 = os.path.join(os.path.dirname(__file__), 'testdata', 'dirty_1000_50_1.csv')
+SAMPLE_DATA_PATH_2 = os.path.join(os.path.dirname(__file__), 'testdata', 'dirty_1000_50_2.csv')
 
 
 class temporary_file(object):
