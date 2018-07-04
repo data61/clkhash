@@ -54,9 +54,8 @@ def project_delete(server, project, apikey):
         '{}/api/v1/projects/{}'.format(server, project),
         headers={"Authorization": apikey}
     )
-    if response.status_code != 200:
+    if response.status_code != 204:
         raise ServiceError("Error deleting project", response)
-    return response.text
 
 
 def project_get_description(server, project, apikey):
