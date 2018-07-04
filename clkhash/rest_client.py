@@ -128,10 +128,10 @@ def run_delete(server, project, run, apikey):
 def format_run_status(status):
     status_lines = [
         "State: {}".format(status['state']),
-        "Stage {} ({}/{})".format(
-            status['current_stage']['description'],
+        "Stage ({}/{}): {}".format(
             status['current_stage']['number'],
-            status['stages']
+            status['stages'],
+            status['current_stage']['description'],
         )
     ]
 
