@@ -68,6 +68,12 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         assert 'state' in status1
         assert 'stages' in status1
         print(rest_client.format_run_status(status1))
+
+        # Check we can watch the run progress this will raise if not completed in 10 seconds
+        for status_update in rest_client.watch_run_status(self.url, p_id, r_id, p['result_token'], 10, 0.05):
+            print(rest_client.format_run_status(status_update))
+
+        # Check that we can still "wait" on a completed run and get a valid status
         status2 = rest_client.wait_for_run(self.url, p_id, r_id, p['result_token'], 30)
         assert status2['state'] == 'completed'
         coord_result_raw = rest_client.run_get_result_text(self.url, p_id, r_id, p['result_token'])
@@ -144,4 +150,34 @@ def test_create_project_handles_503(requests_mock):
         rest_client.project_create('http://testing-es-url', {'id': 'schema'}, 'restype', 'myname', 'mynote')
 
 
+def test_watch_run_time_out(requests_mock):
+    requests_mock.get('http://testing-es-url/api/v1/projects/pid/runs/rid/status', json={'state': 'running'}, status_code=200)
+
+    with pytest.raises(TimeoutError):
+        for update in rest_client.watch_run_status('http://testing-es-url', 'pid', 'rid', 'apikey', timeout=0.5, update_period=0.01):
+            assert update['state'] == 'running'
+
+    assert requests_mock.last_request.headers['Authorization'] == 'apikey'
+
+
+def test_watch_run_rate_limited(requests_mock):
+    requests_mock.register_uri(
+        'GET',
+        'http://testing-es-url/api/v1/projects/pid/runs/rid/status',
+        [
+            {'json':{'state': 'running'}, 'status_code':200},
+            {'json':{'state': 'running'}, 'status_code':200},
+            {'text': '', 'status_code': 503},
+            {'text': '', 'status_code': 503},
+            {'json': {'state': 'running'}, 'status_code': 200},
+            {'json': {'state': 'completed'}, 'status_code': 200}
+        ]
+    )
+
+    for update in rest_client.watch_run_status('http://testing-es-url', 'pid', 'rid', 'apikey', timeout=None, update_period=0.01):
+        assert update['state'] in {'running', 'completed'}
+
+    assert update['state'] == 'completed'
+
+    assert requests_mock.last_request.headers['Authorization'] == 'apikey'
 
