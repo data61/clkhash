@@ -10,13 +10,8 @@ import clkhash
 from clkhash.clk import generate_clk_from_csv
 from clkhash import rest_client
 from clkhash.rest_client import ServiceError
+from clkhash.backports import TimeoutError
 from tests import SIMPLE_SCHEMA_PATH, SAMPLE_DATA_SCHEMA_PATH, SAMPLE_DATA_PATH_1, SAMPLE_DATA_PATH_2
-
-
-try:
-    TimeoutError
-except NameError:
-    TimeoutError = ValueError
 
 
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,

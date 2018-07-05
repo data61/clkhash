@@ -2,6 +2,7 @@ import time
 
 import requests
 import clkhash
+from clkhash.backports import TimeoutError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,12 +22,6 @@ class ServiceError(Exception):
 class RateLimitedClient(ServiceError):
     """Exception indicating client is asking for updates too frequently.
     """
-
-
-try:
-    TimeoutError
-except NameError:
-    TimeoutError = ValueError
 
 
 def _handle_json_response(response, failure_message, expected_status_code=200):

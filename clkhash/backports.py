@@ -104,8 +104,12 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
                   else csv.reader)  # Py3 with native Unicode support.
 
 if sys.version_info > (3, 2):
-    strftime = datetime.strftime
+    TimeoutError = globals()['__builtins__']['TimeoutError']
+else:
+    TimeoutError = Exception
 
+if sys.version_info > (3, 2):
+    strftime = datetime.strftime
 else:
     _YEAR_LEN = 4
 
