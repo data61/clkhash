@@ -19,8 +19,15 @@ class ServiceError(Exception):
 
 
 class RateLimitedClient(ServiceError):
-    """This particular error indicates the client is asking for updates too frequently.
+    """Exception indicating client is asking for updates too frequently.
     """
+
+
+try:
+    TimeoutError
+except NameError:
+    TimeoutError = ValueError
+
 
 def _handle_json_response(response, failure_message, expected_status_code=200):
     if response.status_code == 503:
@@ -111,12 +118,22 @@ def run_get_status(server, project, run, apikey):
     return _handle_json_response(response, "Run Status Error", 200)
 
 
-def wait_for_run(server, project, run, apikey, timeout=300):
-    start_time = time.time()
-    status = run_get_status(server, project, run, apikey)
-    while status['state'] not in {'error', 'completed'} and time.time() - start_time < timeout:
-        time.sleep(1)
-        status = run_get_status(server, project, run, apikey)
+def wait_for_run(server, project, run, apikey, timeout=None, update_period=1):
+    """
+    Monitor a linkage run and return the final status updates. If a timeout is provided and the
+    run hasn't entered a terminal state (error or completed) when the timeout is reached a
+    TimeoutError will be raised.
+
+    :param server: Base url of the upstream server.
+    :param project:
+    :param run:
+    :param apikey:
+    :param timeout: Stop waiting after this many seconds. The default (None) is to never give you up.
+    :param update_period: Time in seconds between queries to the run's status.
+    :raises TimeoutError
+    """
+    for status in watch_run_status(server, project, run, apikey, timeout, update_period):
+        pass
     return status
 
 
@@ -126,7 +143,6 @@ def watch_run_status(server, project, run, apikey, timeout=None, update_period=1
     only yield further updates when the status object changes. If a timeout is provided and the
     run hasn't entered a terminal state (error or completed) when the timeout is reached,
     updates will cease and a TimeoutError will be raised.
-
 
     :param server: Base url of the upstream server.
     :param project:

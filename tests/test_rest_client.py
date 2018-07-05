@@ -13,6 +13,12 @@ from clkhash.rest_client import ServiceError
 from tests import SIMPLE_SCHEMA_PATH, SAMPLE_DATA_SCHEMA_PATH, SAMPLE_DATA_PATH_1, SAMPLE_DATA_PATH_2
 
 
+try:
+    TimeoutError
+except NameError:
+    TimeoutError = ValueError
+
+
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,
                      "Set envvar TEST_ENTITY_SERVICE to run. Disabled for jenkins")
 class TestRestClientInteractionWithService(unittest.TestCase):
@@ -30,7 +36,7 @@ class TestRestClientInteractionWithService(unittest.TestCase):
 
     def _create_project(self, schema=None, result_type='permutations', name='', notes='', parties=2):
         if schema is None:
-            schema = json.load(open(SIMPLE_SCHEMA_PATH,'rt'))
+            schema = json.load(open(SIMPLE_SCHEMA_PATH, 'rt'))
         return rest_client.project_create(self.url, schema, result_type, name, notes, parties)
 
     def test_status(self):
@@ -44,8 +50,8 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         assert description['schema']['id'] == 'test schema'
 
     def test_upload_clks(self):
-        p = self._create_project()
-        schema_object = clkhash.schema.Schema.from_json_file(schema_file=open(SAMPLE_DATA_SCHEMA_PATH, 'rt'))
+        schema_object = json.load(open(SAMPLE_DATA_SCHEMA_PATH, 'rt'))
+        p = self._create_project(schema=schema_object)
         upload_response = rest_client.project_upload_clks(self.url, p['project_id'], p['update_tokens'][0], self.clk_data_1)
         assert 'receipt_token' in upload_response
 
@@ -60,9 +66,9 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         assert 'run_id' in run_response
         r_id = run_response['run_id']
         with pytest.raises(ServiceError):
-            status_invalid_run = rest_client.run_get_status(self.url, p_id, 'invalid-run-id', p['result_token'])
+            rest_client.run_get_status(self.url, p_id, 'invalid-run-id', p['result_token'])
         with pytest.raises(ServiceError):
-            status_invalid_auth = rest_client.run_get_status(self.url, p_id, r_id, 'invalid-token')
+            rest_client.run_get_status(self.url, p_id, r_id, 'invalid-token')
 
         status1 = rest_client.run_get_status(self.url, p_id, r_id, p['result_token'])
         assert 'state' in status1
@@ -70,11 +76,11 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         print(rest_client.format_run_status(status1))
 
         # Check we can watch the run progress this will raise if not completed in 10 seconds
-        for status_update in rest_client.watch_run_status(self.url, p_id, r_id, p['result_token'], 10, 0.05):
+        for status_update in rest_client.watch_run_status(self.url, p_id, r_id, p['result_token'], 10, 0.5):
             print(rest_client.format_run_status(status_update))
 
         # Check that we can still "wait" on a completed run and get a valid status
-        status2 = rest_client.wait_for_run(self.url, p_id, r_id, p['result_token'], 30)
+        status2 = rest_client.wait_for_run(self.url, p_id, r_id, p['result_token'], 10)
         assert status2['state'] == 'completed'
         coord_result_raw = rest_client.run_get_result_text(self.url, p_id, r_id, p['result_token'])
         coord_result = json.loads(coord_result_raw)
@@ -83,12 +89,22 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         assert coord_result['mask'].count(1) > 10
 
         result_a = json.loads(rest_client.run_get_result_text(self.url, p_id, r_id, upload_response_1['receipt_token']))
+        result_b = json.loads(rest_client.run_get_result_text(self.url, p_id, r_id, upload_response_2['receipt_token']))
         assert 'permutation' in result_a
         assert 'rows' in result_a
-        assert result_a['rows'] == 1000
+        assert 1000 == result_b['rows'] == result_a['rows']
 
         rest_client.run_delete(self.url, p_id, r_id, p['result_token'])
         rest_client.project_delete(self.url, p_id, p['result_token'])
+
+    def test_project_run_before_data(self):
+        p = self._create_project()
+
+        p_id = p['project_id']
+        upload_response_1 = rest_client.project_upload_clks(self.url, p_id, p['update_tokens'][0], self.clk_data_1)
+        run_response = rest_client.run_create(self.url, p_id, p['result_token'], 0.999, name='clkhash rest client test')
+        with pytest.raises(ServiceError):
+            json.loads(rest_client.run_get_result_text(self.url, p_id, run_response['run_id'], upload_response_1['receipt_token']))
 
 
 def test_status_404_raises_service_error(requests_mock):
@@ -165,8 +181,8 @@ def test_watch_run_rate_limited(requests_mock):
         'GET',
         'http://testing-es-url/api/v1/projects/pid/runs/rid/status',
         [
-            {'json':{'state': 'running'}, 'status_code':200},
-            {'json':{'state': 'running'}, 'status_code':200},
+            {'json': {'state': 'running'}, 'status_code':200},
+            {'json': {'state': 'running', 'progress': {}}, 'status_code':200},
             {'text': '', 'status_code': 503},
             {'text': '', 'status_code': 503},
             {'json': {'state': 'running'}, 'status_code': 200},
@@ -181,3 +197,78 @@ def test_watch_run_rate_limited(requests_mock):
 
     assert requests_mock.last_request.headers['Authorization'] == 'apikey'
 
+
+def test_watch_run_no_repeated_updates(requests_mock):
+    requests_mock.register_uri(
+        'GET',
+        'http://testing-es-url/api/v1/projects/pid/runs/rid/status',
+        [
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.4}}, 'stages': 2}, 'status_code': 200},
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.4}}, 'stages': 2}, 'status_code': 200},
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.4}}, 'stages': 2}, 'status_code': 200},
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.8}}, 'stages': 2}, 'status_code': 200},
+            {'json': {'state': 'completed', 'stages': 2}, 'status_code': 200},
+        ]
+    )
+
+    number_updates = 0
+    for update in rest_client.watch_run_status('http://testing-es-url', 'pid', 'rid', 'apikey', timeout=None, update_period=0.01):
+        assert update['state'] in {'running', 'completed'}
+        number_updates += 1
+
+    assert update['state'] == 'completed'
+    assert 3 == number_updates
+
+
+def test_watch_run_server_error(requests_mock):
+    requests_mock.register_uri(
+        'GET',
+        'http://testing-es-url/api/v1/projects/pid/runs/rid/status',
+        [
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.4}}, 'stages': 2}, 'status_code': 200},
+            {'json': {'state': 'running', 'current_stage': {'number': 1, 'description': 'A', 'progress': {'relative': 0.8}}, 'stages': 2}, 'status_code': 200},
+            {'text': 'SERVER ERROR', 'status_code': 500},
+        ]
+    )
+    with pytest.raises(ServiceError, match=r'.*SERVER ERROR') as exec_info:
+        for update in rest_client.watch_run_status('http://testing-es-url', 'pid', 'rid', 'apikey', timeout=None, update_period=0.01):
+            assert update['state'] == 'running'
+            assert 'A' in str(rest_client.format_run_status(update))
+
+    assert "SERVER ERROR" in str(exec_info.value)
+
+
+def test_delete_project_handles_500(requests_mock):
+    requests_mock.delete('http://testing-es-url/api/v1/projects/pid', text='', status_code=500)
+
+    with pytest.raises(ServiceError):
+        rest_client.project_delete('http://testing-es-url', 'pid', 'mykey')
+
+    assert requests_mock.last_request.headers['Authorization'] == 'mykey'
+
+
+def test_delete_project_handles_503(requests_mock):
+    requests_mock.delete('http://testing-es-url/api/v1/projects/pid', text='', status_code=503)
+
+    with pytest.raises(ServiceError):
+        rest_client.project_delete('http://testing-es-url', 'pid', 'mykey')
+
+    assert requests_mock.last_request.headers['Authorization'] == 'mykey'
+
+
+def test_delete_run_handles_500(requests_mock):
+    requests_mock.delete('http://testing-es-url/api/v1/projects/pid/runs/rid', text='', status_code=500)
+
+    with pytest.raises(ServiceError):
+        rest_client.run_delete('http://testing-es-url', 'pid', 'rid', 'mykey')
+
+    assert requests_mock.last_request.headers['Authorization'] == 'mykey'
+
+
+def test_delete_run_handles_503(requests_mock):
+    requests_mock.delete('http://testing-es-url/api/v1/projects/pid/runs/rid', text='', status_code=503)
+
+    with pytest.raises(ServiceError):
+        rest_client.run_delete('http://testing-es-url', 'pid', 'rid', 'mykey')
+
+    assert requests_mock.last_request.headers['Authorization'] == 'mykey'
