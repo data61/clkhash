@@ -18,9 +18,13 @@ class ServiceError(Exception):
         return "{}\nStatus Code: {}\nServer Message:\n{}".format(self.args[0], self.status_code, self.text)
 
 
+class RateLimitedClient(ServiceError):
+    """This particular error indicates the client is asking for updates too frequently.
+    """
+
 def _handle_json_response(response, failure_message, expected_status_code=200):
     if response.status_code == 503:
-        raise ServiceError('Client is rate limited. Try requesting less frequently.', response)
+        raise RateLimitedClient('Client is rate limited. Try requesting less frequently.', response)
     if response.status_code != expected_status_code:
         raise ServiceError(failure_message, response)
     try:
@@ -116,15 +120,49 @@ def wait_for_run(server, project, run, apikey, timeout=300):
     return status
 
 
-def watch_run_status(server, project, run, apikey, timeout=300):
-    start_time = time.time()
-    status = run_get_status(server, project, run, apikey)
-    while status['state'] not in {'error', 'completed'} and time.time() - start_time < timeout:
-        time.sleep(1)
-        status = run_get_status(server, project, run, apikey)
-        yield status
+def watch_run_status(server, project, run, apikey, timeout=None, update_period=1):
+    """
+    Monitor a linkage run and yield status updates. Will immediately yield an update and then
+    only yield further updates when the status object changes. If a timeout is provided and the
+    run hasn't entered a terminal state (error or completed) when the timeout is reached,
+    updates will cease and a TimeoutError will be raised.
 
-    raise StopIteration
+
+    :param server: Base url of the upstream server.
+    :param project:
+    :param run:
+    :param apikey:
+    :param timeout: Stop waiting after this many seconds. The default (None) is to never give you up.
+    :param update_period: Time in seconds between queries to the run's status.
+    :raises TimeoutError
+    """
+    start_time = time.time()
+    status = old_status = run_get_status(server, project, run, apikey)
+    yield status
+
+    def time_not_up():
+        return (
+            (timeout is None) or
+            (time.time() - start_time < timeout)
+        )
+
+    while time_not_up():
+
+        if status['state'] in {'error', 'completed'}:
+            # No point continuing as run has entered a terminal state
+            yield status
+            raise StopIteration
+
+        if old_status != status:
+            yield status
+
+        time.sleep(update_period)
+        old_status = status
+        try:
+            status = run_get_status(server, project, run, apikey)
+        except RateLimitedClient:
+            time.sleep(1)
+    raise TimeoutError("Timeout exceeded before run {} terminated".format(run))
 
 
 def run_get_result_text(server, project, run, apikey):
