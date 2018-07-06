@@ -106,7 +106,7 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
 if sys.version_info > (3, 2):
     TimeoutError = globals()['__builtins__']['TimeoutError']
 else:
-    TimeoutError = Exception
+    TimeoutError = OSError
 
 if sys.version_info > (3, 2):
     strftime = datetime.strftime
