@@ -519,7 +519,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(number_in_common / self.SAMPLES, 0.4)
         self.assertLessEqual(number_in_common / self.SAMPLES, 0.6)
 
-        # # Get results from first DP
+        # Get results from first DP
         alice_res = self.run_command_load_json_output(
             [
                 'results',
@@ -532,3 +532,19 @@ class TestCliInteractionWithService(CLITestHelper):
 
         self.assertIn('permutation', alice_res)
         self.assertIn('rows', alice_res)
+
+        # Get results from second DP
+        bob_res = self.run_command_load_json_output(
+            [
+                'results',
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--run', run['run_id'],
+                '--apikey', bob_upload['receipt_token'],
+                '--watch'
+            ]
+        )
+
+        self.assertIn('permutation', bob_res)
+        self.assertIn('rows', bob_res)
+
