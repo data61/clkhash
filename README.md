@@ -8,6 +8,7 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [![codecov](https://codecov.io/gh/n1analytics/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/n1analytics/clkhash)
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/n1analytics/clkhash.svg?branch=master)](https://travis-ci.org/n1analytics/clkhash)
+[![Requirements Status](https://requires.io/github/n1analytics/clkhash/requirements.svg?branch=master)](https://requires.io/github/n1analytics/clkhash/requirements/?branch=master)
 
 ## Installation
 

@@ -1,0 +1,14 @@
+version: 2
+dependencies:
+- type: python
+  path: requirements.txt
+  settings:
+    related_pr_behavior: close
+    github_labels:
+    - dependencies
+- type: python
+  path: docs/doc-requirements.txt
+  settings:
+    related_pr_behavior: close
+    github_labels:
+    - dependencies
