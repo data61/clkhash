@@ -1,4 +1,4 @@
-bitarray==0.8.1
+bitarray==0.8.3
 click==6.7
 cryptography==2.2.2
 enum34==1.1.6; python_version < '3.4'
