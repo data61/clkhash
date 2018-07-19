@@ -4,7 +4,7 @@ import codecs
 requirements = [
         "bitarray>=0.8",
         "click>=6.7",
-        "cryptography>=2.2",
+        "cryptography>=2.3",
         "enum34==1.1.6; python_version < '3.4'",
         "future>=0.16",
         "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
@@ -12,7 +12,7 @@ requirements = [
         "pyblake2>=1.1.1; python_version < '3.6'",
         "jsonschema>=2.6",
         "requests>=2.18",
-        "tqdm>=4.19",
+        "tqdm>=4.23",
         "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
 
@@ -21,7 +21,7 @@ with codecs.open('README.md', 'r', 'utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.11.1-b1',
+    version='0.11.2',
     description='Hash utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',

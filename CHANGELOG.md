@@ -1,3 +1,7 @@
+## 0.11.2
+
+Updates to dependencies.
+
 ## 0.11.1
 
 Changes to the clkhash command line tool to support new entity service api.
