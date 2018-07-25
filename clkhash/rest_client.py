@@ -207,6 +207,6 @@ def format_run_status(status):
     ]
 
     if 'progress' in status['current_stage']:
-        status_lines.append("Progress: {:.3f}%".format(status['current_stage']['progress']['relative']))
+        status_lines.append("Progress: {:.2%}".format(status['current_stage']['progress']['relative']))
 
     return '\n'.join(status_lines)
