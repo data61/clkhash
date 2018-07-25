@@ -1,6 +1,8 @@
 ## 0.11.2
 
-Updates to dependencies.
+- Updates to dependencies.
+- Addition of code coverage metrics from travis, appveyor.
+- Abstract rest calls out of command line tool. More comprehensive testing of cli and rest client.
 
 ## 0.11.1
 
