@@ -12,5 +12,5 @@ pytest-cov==2.5.1
 requests==2.19.1
 requests-mock==1.5.2
 six==1.11.0
-tqdm==4.23.4
+tqdm==4.24.0
 typing>=3.6.2; python_version < '3.5'
