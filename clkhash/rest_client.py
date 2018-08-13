@@ -162,7 +162,7 @@ def watch_run_status(server, project, run, apikey, timeout=None, update_period=1
         if status['state'] in {'error', 'completed'}:
             # No point continuing as run has entered a terminal state
             yield status
-            raise StopIteration
+            return
 
         if old_status != status:
             yield status
