@@ -1,3 +1,9 @@
+## 0.11.3
+
+- Bugfix in restclient to support Python 3.7
+- Bugfix in progress messages.
+- Dependency updates.
+
 ## 0.11.2
 
 - Updates to dependencies.
