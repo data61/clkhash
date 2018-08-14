@@ -21,7 +21,7 @@ with codecs.open('README.md', 'r', 'utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.11.2',
+    version='0.11.3',
     description='Hash utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
