@@ -17,6 +17,11 @@ matrix:
     - python: 'pypy3'
 
   include:
+    - python: '3.7-dev'
+      env:
+        - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
+        - MYPY_TYPING=1
+        - INCLUDE_CLI=1
     - python: '3.6'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
