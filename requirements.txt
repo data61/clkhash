@@ -5,7 +5,7 @@ enum34==1.1.6; python_version < '3.4'
 future==0.16.0
 futures==3.1.1; python_version < '3.2'
 jsonschema==2.6.0
-mypy_extensions==0.3.0
+mypy_extensions==0.4.1
 pyblake2==1.1.2; python_version < '3.6'
 pytest==3.7.1
 pytest-cov==2.5.1
