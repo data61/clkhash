@@ -355,7 +355,7 @@ def serialize_bitarray(ba):
 
 # TODO: I think this must already exist in anonlink - maybe that implelemtation should be moved here
 def deserialize_bitarray(ser):
-    # type: str -> (bitarray)
+    # type: (str) -> bitarray
     """Deserialize a base 64 encoded string to a bitarray (bloomfilter)
     
     """
