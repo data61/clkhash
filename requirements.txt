@@ -1,16 +1,16 @@
 bitarray==0.8.3
 click==6.7
-cryptography==2.3
+cryptography==2.3.1
 enum34==1.1.6; python_version < '3.4'
 future==0.16.0
 futures==3.1.1; python_version < '3.2'
 jsonschema==2.6.0
-mypy_extensions==0.3.0
+mypy_extensions==0.4.1
 pyblake2==1.1.2; python_version < '3.6'
 pytest==3.7.4
 pytest-cov==2.5.1
 requests==2.19.1
 requests-mock==1.5.2
 six==1.11.0
-tqdm==4.24.0
+tqdm==4.25.0
 typing>=3.6.2; python_version < '3.5'
