@@ -22,6 +22,6 @@ def plot(input):
         
     
     popcounts = [ deserialize_bitarray(clk).count() for clk in clks ]
-    plot_hist(popcounts, title='popcounts', xlab=True)
+    plot_hist(popcounts, bincount=60, xlab=True, showSummary=True)
         
     

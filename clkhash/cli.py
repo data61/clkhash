@@ -9,7 +9,7 @@ import time
 import click
 
 import clkhash
-from clkhash import benchmark as bench, clk, randomnames, validate_data
+from clkhash import benchmark as bench, clk, randomnames, validate_data, describe as descr
 from clkhash.rest_client import project_upload_clks, run_get_result_text, run_get_status, project_create, run_create, \
     server_get_status, ServiceError, format_run_status, watch_run_status
 
@@ -268,6 +268,12 @@ def results(project, apikey, run, watch, server, output):
 @cli.command('benchmark', short_help='carry out a local benchmark')
 def benchmark():
     bench.compute_hash_speed(10000)
+
+
+@cli.command('describe', short_help='show distribution of clk popcounts')
+@click.argument('input', type=click.File('r'))
+def describe(input):
+    descr.plot(input)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')

@@ -4,10 +4,13 @@ import random
 import unittest
 
 from future.builtins import range
+from bitarray import bitarray
+from math import ceil
 
 from clkhash.bloomfilter import (
     blake_encode_ngrams, double_hash_encode_ngrams,
-    double_hash_encode_ngrams_non_singular, NgramEncodings)
+    double_hash_encode_ngrams_non_singular, NgramEncodings,
+    serialize_bitarray, deserialize_bitarray)
 from clkhash.schema import GlobalHashingProperties
 
 
@@ -94,3 +97,22 @@ class TestNgramEncodings(unittest.TestCase):
                 ValueError,
                 msg='Expected ValueError on invalid encoding.'):
             NgramEncodings.from_properties(properties)
+
+def randomBitarray(numBytes):
+    ba = bitarray()
+    ba.frombytes(random.getrandbits(numBytes * 8).to_bytes(numBytes, byteorder='big'))
+    return ba
+    
+class TestSerialization(unittest.TestCase):
+    def test_ser_deser_inverse(self):
+        numBytes = 128
+        ba = randomBitarray(numBytes)
+        
+        ser = serialize_bitarray(ba)
+        # https://stackoverflow.com/questions/4715415/base64-what-is-the-worst-possible-increase-in-space-usage
+        self.assertEqual(len(ser), ceil(numBytes/3) * 4)
+
+        des = deserialize_bitarray(ser)
+        self.assertEqual(ba, des)
+
+
