@@ -10,10 +10,10 @@ class DescribeError(Exception):
     """ The user provided CLK JSON is invalid.
     """
 
-def plot(input):
+def plot(clk_json):
     try:
         # data was writen with: json.dump({'clks': clk_data}, output); so ...
-        clks = json.load(input)['clks']
+        clks = json.load(clk_json)['clks']
     except ValueError as e:  # In Python 3 we can be more specific
         # with json.decoder.JSONDecodeError,
         # but that doesn't exist in Python 2.
