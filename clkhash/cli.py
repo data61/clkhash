@@ -42,7 +42,7 @@ def cli():
 
 
 @cli.command('hash', short_help="generate hashes from local PII data")
-@click.argument('input', type=click.File('r'))
+@click.argument('pii_csv', type=click.File('r'))
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('output', type=click.File('w'))
@@ -50,10 +50,10 @@ def cli():
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
-def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
+def hash(pii_csv, keys, schema, output, quiet, no_header, check_header, validate):
     """Process data to create CLKs
 
-    Given a file containing csv data as INPUT, and a json
+    Given a file containing csv data as PII_CSV, and a json
     document defining the expected schema, verify the schema, then
     hash the data to create CLKs writing to OUTPUT. Note the CSV
     file should contain a header row - however this row is not used
@@ -61,7 +61,7 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
 
     It is important that the keys are only known by the two data providers. Two words should be provided. For example:
 
-    $clkutil hash input.txt horse staple output.txt
+    $clkutil hash pii.csv horse staple output.txt
 
     Use "-" to output to stdout.
     """
@@ -75,7 +75,7 @@ def hash(input, keys, schema, output, quiet, no_header, check_header, validate):
 
     try:
         clk_data = clk.generate_clk_from_csv(
-            input, keys, schema_object,
+            pii_csv, keys, schema_object,
             validate=validate,
             header=header,
             progress_bar=not quiet)
@@ -200,27 +200,27 @@ def create(server, name, project, apikey, output, threshold, verbose):
 
 
 @cli.command('upload', short_help='upload hashes to entity service')
-@click.argument('input', type=click.File('r'))
+@click.argument('clk_json', type=click.File('r'))
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def upload(input, project, apikey, server, output, verbose):
+def upload(clk_json, project, apikey, server, output, verbose):
     """Upload CLK data to entity matching server.
 
-    Given a json file containing hashed clk data as INPUT, upload to
+    Given a json file containing hashed clk data as CLK_JSON, upload to
     the entity resolution service.
 
     Use "-" to read from stdin.
     """
     if verbose:
-        log("Uploading CLK data from {}".format(input.name))
+        log("Uploading CLK data from {}".format(clk_json.name))
         log("To Entity Matching Server: {}".format(server))
         log("Project ID: {}".format(project))
         log("Uploading CLK data to the server")
 
-    response = project_upload_clks(server, project, apikey, input)
+    response = project_upload_clks(server, project, apikey, clk_json)
 
     if verbose:
         log(response)
@@ -271,9 +271,9 @@ def benchmark():
 
 
 @cli.command('describe', short_help='show distribution of clk popcounts')
-@click.argument('input', type=click.File('r'))
-def describe(input):
-    descr.plot(input)
+@click.argument('clk_json', type=click.File('r'))
+def describe(clk_json):
+    descr.plot(clk_json)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')
