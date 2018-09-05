@@ -1,4 +1,4 @@
-import random
+import os
 import unittest
 
 from bitarray import bitarray
@@ -7,9 +7,9 @@ from math import ceil
 from clkhash.serialization import serialize_bitarray, deserialize_bitarray
 
 def randomBitarray(numBytes):
-    ba = bitarray()
-    ba.frombytes(random.getrandbits(numBytes * 8).to_bytes(numBytes, byteorder='big'))
-    return ba
+    a = bitarray()
+    a.frombytes(os.urandom(numBytes))
+    return a
     
 class TestSerialization(unittest.TestCase):
     def test_ser_deser_inverse(self):
@@ -23,4 +23,5 @@ class TestSerialization(unittest.TestCase):
         des = deserialize_bitarray(ser)
         self.assertEqual(ba, des)
 
-
+if __name__ == "__main__":
+    unittest.main()
