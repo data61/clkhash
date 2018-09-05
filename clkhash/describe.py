@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import click
 import json
 from clkhash.backports import raise_from
 from bashplotlib.histogram import plot_hist
-from clkhash.bloomfilter import deserialize_bitarray
+from clkhash.serialization import deserialize_bitarray
 
 class DescribeError(Exception):
     """ The user provided CLK JSON is invalid.
