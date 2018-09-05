@@ -5,8 +5,8 @@ Generate CLK from data.
 import concurrent.futures
 import logging
 import time
-from typing import (Callable, cast, Sequence, TypeVar)
-
+from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
+                    Sequence, TextIO, Tuple, TypeVar, Union)
 from future.builtins import range
 from tqdm import tqdm
 
@@ -14,6 +14,7 @@ from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.serialization import serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
+from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
 from clkhash.validate_data import (validate_entries, validate_header,
                                    validate_row_lengths)
