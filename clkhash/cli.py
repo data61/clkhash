@@ -44,7 +44,7 @@ def cli():
 @click.argument('pii_csv', type=click.File('r'))
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
 @click.argument('schema', type=click.File('r', lazy=True))
-@click.argument('output', type=click.File('w'))
+@click.argument('clk_json', type=click.File('w'))
 @click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
@@ -52,17 +52,18 @@ def cli():
 def hash(pii_csv, keys, schema, output, quiet, no_header, check_header, validate):
     """Process data to create CLKs
 
-    Given a file containing csv data as PII_CSV, and a json
+    Given a file containing CSV data as PII_CSV, and a JSON
     document defining the expected schema, verify the schema, then
-    hash the data to create CLKs writing to OUTPUT. Note the CSV
-    file should contain a header row - however this row is not used
-    by this tool.
+    hash the data to create CLKs writing them as JSON to CLK_JSON.
+    Note the CSV file should contain a header row - however this
+    row is not used by this tool.
 
-    It is important that the keys are only known by the two data providers. Two words should be provided. For example:
+    It is important that the keys are only known by the two data providers.
+    Two words should be provided. For example:
 
-    $clkutil hash pii.csv horse staple output.txt
+    $clkutil hash pii.csv horse staple pii-schema.json clk.json
 
-    Use "-" to output to stdout.
+    Use "-" for CLK_JSON to write JSON to stdout.
     """
 
     schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
