@@ -49,17 +49,16 @@ def cli():
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
-def hash(pii_csv, keys, schema, output, quiet, no_header, check_header, validate):
+def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, validate):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
     document defining the expected schema, verify the schema, then
-    hash the data to create CLKs writing them as JSON to CLK_JSON.
-    Note the CSV file should contain a header row - however this
-    row is not used by this tool.
+    hash the data to create CLKs writing them as JSON to CLK_JSON. Note the CSV
+    file should contain a header row - however this row is not used
+    by this tool.
 
-    It is important that the keys are only known by the two data providers.
-    Two words should be provided. For example:
+    It is important that the keys are only known by the two data providers. Two words should be provided. For example:
 
     $clkutil hash pii.csv horse staple pii-schema.json clk.json
 
@@ -84,9 +83,9 @@ def hash(pii_csv, keys, schema, output, quiet, no_header, check_header, validate
         log(msg)
         log('Hashing failed.')
     else:
-        json.dump({'clks': clk_data}, output)
-        if hasattr(output, 'name'):
-            log("CLK data written to {}".format(output.name))
+        json.dump({'clks': clk_data}, clk_json)
+        if hasattr(clk_json, 'name'):
+            log("CLK data written to {}".format(clk_json.name))
 
 
 @cli.command('status', short_help='Get status of entity service')
