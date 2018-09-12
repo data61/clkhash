@@ -18,7 +18,7 @@ class TestSerialization(unittest.TestCase):
         
         ser = serialize_bitarray(ba)
         # https://stackoverflow.com/questions/4715415/base64-what-is-the-worst-possible-increase-in-space-usage
-        self.assertEqual(len(ser), ceil(numBytes/3) * 4)
+        self.assertEqual(len(ser), ceil(numBytes/3.0) * 4)
 
         des = deserialize_bitarray(ser)
         self.assertEqual(ba, des)

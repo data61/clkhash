@@ -15,12 +15,11 @@ def serialize_bitarray(ba):
     """
     return base64.b64encode(ba.tobytes()).decode('utf8')
 
-# TODO: I think this must already exist in anonlink - maybe that implelemtation should be moved here
 def deserialize_bitarray(ser):
     # type: (str) -> bitarray
     """Deserialize a base 64 encoded string to a bitarray (bloomfilter)
     
     """
-    ba = bitarray()   # TODO: Is endianess used consistently?
+    ba = bitarray()
     ba.frombytes(base64.b64decode(ser.encode(encoding='UTF-8', errors='strict')))
     return ba
