@@ -7,12 +7,12 @@ import logging
 import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
-
 from future.builtins import range
 from tqdm import tqdm
 
 from clkhash.backports import unicode_reader
-from clkhash.bloomfilter import stream_bloom_filters, serialize_bitarray
+from clkhash.bloomfilter import stream_bloom_filters
+from clkhash.serialization import serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance

@@ -1,6 +1,6 @@
 import pkg_resources
 
-from . import bloomfilter, field_formats, key_derivation, schema, randomnames
+from . import bloomfilter, field_formats, key_derivation, schema, randomnames, describe
 
 try:
     __version__ = pkg_resources.get_distribution('clkhash').version
