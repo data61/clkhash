@@ -5,9 +5,11 @@ from clkhash.backports import raise_from
 from bashplotlib.histogram import plot_hist
 from clkhash.serialization import deserialize_bitarray
 
+
 class DescribeError(Exception):
     """ The user provided CLK JSON is invalid.
     """
+
 
 def plot(clk_json):
     try:
@@ -19,8 +21,9 @@ def plot(clk_json):
         msg = 'The input is not a valid JSON file.'
         raise_from(DescribeError(msg), e)
         
-    
-    popcounts = [ deserialize_bitarray(clk).count() for clk in clks ]
+    if len(clks) == 0:
+        msg = 'No clks found'
+        raise DescribeError(msg)
+
+    popcounts = [deserialize_bitarray(clk).count() for clk in clks]
     plot_hist(popcounts, bincount=60, title='popcounts', xlab=True, showSummary=True)
-        
-    
