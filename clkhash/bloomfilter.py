@@ -345,10 +345,3 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
                                 keys, hash_properties)
             for s in dataset)
 
-
-def serialize_bitarray(ba):
-    # type: (bitarray) -> str
-    """Serialize a bitarray (bloomfilter)
-
-    """
-    return base64.b64encode(ba.tobytes()).decode('utf8')
