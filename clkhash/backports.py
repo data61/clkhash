@@ -103,11 +103,8 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
                   if sys.version_info < (3, 0)
                   else csv.reader)  # Py3 with native Unicode support.
 
-if sys.version_info > (3, 2):
-    try:
-        TimeoutError = globals()['__builtins__']['TimeoutError']
-    except:
-        pass    # pypy3 raises TypeError: 'module' object is not subscriptable
+if hasattr(__builtins__, 'TimeoutError'):
+    TimeoutError = __builtins__.TimeoutError
 else:
     TimeoutError = OSError
 
