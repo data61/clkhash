@@ -4,6 +4,8 @@ import random
 import unittest
 
 from future.builtins import range
+from bitarray import bitarray
+from math import ceil
 
 from clkhash.bloomfilter import (
     blake_encode_ngrams, double_hash_encode_ngrams,
@@ -94,3 +96,8 @@ class TestNgramEncodings(unittest.TestCase):
                 ValueError,
                 msg='Expected ValueError on invalid encoding.'):
             NgramEncodings.from_properties(properties)
+
+def randomBitarray(numBytes):
+    ba = bitarray()
+    ba.frombytes(random.getrandbits(numBytes * 8).to_bytes(numBytes, byteorder='big'))
+    return ba
