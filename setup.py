@@ -13,7 +13,8 @@ requirements = [
         "jsonschema>=2.6",
         "requests>=2.18",
         "tqdm>=4.24",
-        "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
+        "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5
+        "bashplotlib>=0.6.5"
     ]
 
 with codecs.open('README.md', 'r', 'utf-8') as f:
