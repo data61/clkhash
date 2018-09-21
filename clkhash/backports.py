@@ -104,7 +104,7 @@ unicode_reader = (_p2_unicode_reader  # Python 2 with hacky workarounds.
                   else csv.reader)  # Py3 with native Unicode support.
 
 if hasattr(__builtins__, 'TimeoutError'):
-    TimeoutError = __builtins__.TimeoutError
+    TimeoutError = __builtins__.TimeoutError    # type: type
 else:
     TimeoutError = OSError
 
