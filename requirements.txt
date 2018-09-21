@@ -4,7 +4,7 @@ click==6.7
 cryptography==2.3.1
 enum34==1.1.6; python_version < '3.4'
 future==0.16.0
-futures==3.1.1; python_version < '3.2'
+futures==3.2.0; python_version < '3.2'
 jsonschema==2.6.0
 mypy_extensions==0.4.1
 pyblake2==1.1.2; python_version < '3.6'
