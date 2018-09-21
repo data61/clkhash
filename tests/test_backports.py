@@ -7,8 +7,16 @@ from datetime import datetime
 import io
 import unittest
 
+import clkhash.backports
 from clkhash.backports import (int_from_bytes, re_compile_full,
                                unicode_reader, strftime)
+
+
+class TestMiscBackports(unittest.TestCase):
+
+    def test_backported_exceptions(self):
+        assert hasattr(clkhash.backports, 'TimeoutError')
+        assert issubclass(clkhash.backports.TimeoutError, OSError)
 
 
 class TestIntBackports(unittest.TestCase):
