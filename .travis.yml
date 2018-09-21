@@ -33,6 +33,21 @@ matrix:
         - INCLUDE_CLI=1
         - SKIP_TEST_NB=1
 
+    # OSX + Python is not officially supported by Travis CI as of September 2018
+    # nevertheless, "nightly" and some "*-dev" versions seem to work, so we
+    # include them explicitly.
+    # They only seem to work with the xcode8.3 image, and not the newer ones.
+    # Thus we will leave this in, until it breaks one day, at which point we
+    # will probably remove testing on OSX if it is not supported then.
+    - os: osx
+      osx_image: xcode8.3
+      python: "3.6-dev"
+    - os: osx
+      osx_image: xcode8.3
+      python: "3.7-dev"
+    - os: osx
+      osx_image: xcode8.3
+      python: "nightly"
 
 install:
   - if [ "${MYPY_TYPING}" == "1" ]; then travis_retry pip install mypy; fi
