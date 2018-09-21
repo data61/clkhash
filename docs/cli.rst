@@ -3,41 +3,19 @@ Command Line Tool
 
 This command line tool can be used to process PII data into Cryptographic Longterm Keys.
 
-The command line tool can be accessed in two ways:
+The command line tool can be accessed in two equivalent ways:
 
-- Using the ``clkutil`` script which should have been added to your path during installation.
-- directly running the python module ``clkhash.cli`` with ``python -m clkhash.cli``.
+- Using the ``clkutil`` script which gets added to your path during installation.
+- directly running the python module with ``python -m clkhash``.
+
+.. command-output:: clkutil --help
 
 
-Help
------
+Command specific help
+---------------------
 
-The ``clkutil`` tool has help pages for all commands built in.::
-
-    $ clkutil hash --help
-    Usage: clkutil hash [OPTIONS] INPUT KEYS... SCHEMA OUTPUT
-
-      Process data to create CLKs
-
-      Given a file containing csv data as INPUT, and a json document defining
-      the expected schema, verify the schema, then hash the data to create CLKs
-      writing to OUTPUT. Note the CSV file should contain a header row - however
-      this row is not used by this tool.
-
-      It is important that the keys are only known by the two data providers.
-      Two words should be provided. For example:
-
-      $clkutil hash input.txt horse staple output.txt
-
-      Use "-" to output to stdout.
-
-    Options:
-      -q, --quiet             Quiet any progress messaging
-      --no-header             Don't skip the first row
-      --check-header BOOLEAN  If true, check the header against the schema
-      --validate BOOLEAN      If true, validate the entries against the schema
-      --help                  Show this message and exit.
-
+The ``clkutil`` tool has help pages for all commands built in - simply append ``--help``
+to the command.
 
 
 Hashing
@@ -46,6 +24,8 @@ Hashing
 The command line tool ``clkutil`` can be used to hash a csv file of personally identifiable information.
 The tool needs to be provided with keys and a :ref:`schema`; it will output a file containing
 json serialized hashes.
+
+.. command-output:: clkutil hash --help
 
 
 Example
@@ -69,12 +49,69 @@ Where:
   column, use bigram tokens of the name, use positional unigrams of the date of birth etc.
 - ``clk.json`` is the output file.
 
+Describing
+----------
+
+Users can help inspect hashed ``CLKs`` by using the ``describe`` command.
+
+.. command-output:: clkutil describe --help
+
+
+Example
+~~~~~~~
+
+::
+
+    $ clkutil describe example_clks_a.json
+
+
+     339|                                   oo
+     321|                                  ooo
+     303|                                  ooo
+     285|                                  ooo o
+     268|                                  oooooo
+     250|                                oooooooo
+     232|                                oooooooo
+     214|                               ooooooooo
+     196|                             o ooooooooo o
+     179|                             o ooooooooooo
+     161|                             oooooooooooooo
+     143|                            ooooooooooooooo
+     125|                           oooooooooooooooo
+     107|                           oooooooooooooooooo
+      90|                         ooooooooooooooooooooo
+      72|                         oooooooooooooooooooooo
+      54|                        oooooooooooooooooooooooo
+      36|                      ooooooooooooooooooooooooooo
+      18|                   oooooooooooooooooooooooooooooooo
+       1| o  o  ooooooooooooooooooooooooooooooooooooooooooooooooooo oo
+         ------------------------------------------------------------
+         4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6 6 7 7 7 7
+         1 2 3 4 5 6 7 9 0 1 2 3 4 5 7 8 9 0 1 2 3 5 6 7 8 9 0 1 3 4
+         0 1 2 4 5 7 8 0 1 2 4 5 7 8 0 1 2 4 5 7 8 0 1 2 4 5 7 8 0 1
+           . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+           4 8 3 7 1 6 0 4 9 3 7 2 6 0 5 9 3 8 2 6 1 5 9 4 8 2 7 1 5
+
+    -------------------------
+    |        Summary        |
+    -------------------------
+    |   observations: 5000  |
+    | min value: 410.000000 |
+    |   mean : 601.571600   |
+    | max value: 753.000000 |
+    -------------------------
+
+
 .. _data-generation:
 
 Data Generation
 ---------------
 
-The cli tool has an option for generating fake pii data.
+The cli tool has a command for generating fake pii data.
+
+.. command-output:: clkutil generate --help
+
+
 ::
 
     $ clkutil generate 1000 fake-pii-out.csv
@@ -85,7 +122,6 @@ The cli tool has an option for generating fake pii data.
     2,Yaritza Edman,1972/11/30,F
 
 A corresponding hashing schema can be generated as well::
-
     $ clkutil generate-default-schema schema.json
     $ cat schema.json
     {

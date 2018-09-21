@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'nbsphinx',
+    'sphinxcontrib.programoutput',
 
 ]
 
