@@ -1,3 +1,9 @@
+## 0.12.0
+
+- New describe command added to cli
+- Bugfix to ensure we run on pypy3
+- Updates to dependencies
+
 ## 0.11.3
 
 - Bugfix in restclient to support Python 3.7
