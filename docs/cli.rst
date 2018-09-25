@@ -1,12 +1,15 @@
 Command Line Tool
 =================
 
-This command line tool can be used to process PII data into Cryptographic Longterm Keys.
+``clkhash`` includes a command line tool which can be used to interact without writing Python code.
+The primary use case is to encode personally identifiable data from a csv into Cryptographic Longterm Keys.
 
 The command line tool can be accessed in two equivalent ways:
 
 - Using the ``clkutil`` script which gets added to your path during installation.
 - directly running the python module with ``python -m clkhash``.
+
+A list of valid commands can be listed with the ``--help`` argument:
 
 .. command-output:: clkutil --help
 
@@ -52,7 +55,7 @@ Where:
 Describing
 ----------
 
-Users can help inspect hashed ``CLKs`` by using the ``describe`` command.
+Users can inspect the distribution of the number of bits set in ``CLKs`` by using the ``describe`` command.
 
 .. command-output:: clkutil describe --help
 
@@ -102,12 +105,19 @@ Example
     -------------------------
 
 
+.. note::
+
+    It is an indication of problems in the hashing if the distribution is skewed towards no bits set or
+    all bits set. Consult the :doc:`tutorial_cli` for further details.
+
+
+
 .. _data-generation:
 
 Data Generation
 ---------------
 
-The cli tool has a command for generating fake pii data.
+The command line tool has a ``generate`` command for generating fake pii data.
 
 .. command-output:: clkutil generate --help
 
@@ -121,7 +131,11 @@ The cli tool has a command for generating fake pii data.
     1,Garold Staten,1928/11/23,M
     2,Yaritza Edman,1972/11/30,F
 
+
+
+
 A corresponding hashing schema can be generated as well::
+
     $ clkutil generate-default-schema schema.json
     $ cat schema.json
     {

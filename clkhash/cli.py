@@ -272,6 +272,8 @@ def benchmark():
 @cli.command('describe', short_help='show distribution of clk popcounts')
 @click.argument('clk_json', type=click.File('r'))
 def describe(clk_json):
+    """show distribution of clk's popcounts
+    """
     descr.plot(clk_json)
 
 
