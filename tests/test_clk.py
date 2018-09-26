@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import io
+import textwrap
 import unittest
 
 from clkhash import clk, schema, randomnames, validate_data
@@ -25,82 +26,99 @@ class TestChunks(unittest.TestCase):
 
 
 class TestComplexSchemaChanges(unittest.TestCase):
-    def test_doesnt_crash(self):
-        CSV_INPUT = io.StringIO(
-            'name,id,dob,gender,children\n'
-            'KÉVIN,kev007,1963-12-13,M,1\n'
-            '"JOHN HOWARD, ESQ.",stv534,1992-02-29,M,16\n'
-            'JULIA,alp423,0123-01-12,F,0\n'
-            )
-        SCHEMA_DICT = dict(
-            version=1,
-            clkConfig=dict(
-                l=1024,
-                k=30,
-                kdf=dict(
-                    type='HKDF',
-                    hash='SHA256',
-                    salt='SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==',
-                    info='c2NoZW1hX2V4YW1wbGU=',
-                    keySize=64),
-                hash=dict(
-                    type='doubleHash')),
-            features=[
-                dict(
-                    identifier='name',
-                    format=dict(
-                        type='string',
-                        encoding='utf-8',
-                        case='upper'),
-                    hashing=dict(
-                        ngram=2,
-                        weight=2)),
-                dict(
-                    identifier='id',
-                    format=dict(
-                        type='string',
-                        encoding='ascii',
-                        pattern=r'[a-z][a-z][a-z]\d\d\d'),
-                    hashing=dict(
-                        ngram=1,
-                        positional=True)),
-                dict(
-                    identifier='dob',
-                    format=dict(
-                        type='date',
-                        format='%Y-%m-%d',
-                        description='When were ya born?'),
-                    hashing=dict(
-                        ngram=2,
-                        positional=True,
-                        weight=.5)),
-                dict(
-                    identifier='gender',
-                    format=dict(
-                        type='enum',
-                        values=['M', 'F']),
-                    hashing=dict(
-                        ngram=1,
-                        positional=False)),
-                dict(
-                    identifier='children',
-                    format=dict(
-                        type='integer',
-                        maximum=20),
-                    hashing=dict(
-                        ngram=1,
-                        positional=True))])
-        KEYS = ('chicken', 'nuggets')
+    CSV_INPUT = textwrap.dedent("""\
+        name,id,dob,gender,children
+        KÉVIN,kev007,1963-12-13,M,1
+        "JOHN HOWARD, ESQ.",stv534,1992-02-29,M,16
+        JULIA,alp423,0123-01-12,F,0
+        """)
 
-        loaded_schema = schema.from_json_dict(SCHEMA_DICT)
+    SCHEMA_DICT = dict(
+        version=1,
+        clkConfig=dict(
+            l=1024,
+            k=30,
+            kdf=dict(
+                type='HKDF',
+                hash='SHA256',
+                salt='SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==',
+                info='c2NoZW1hX2V4YW1wbGU=',
+                keySize=64),
+            hash=dict(
+                type='doubleHash')),
+        features=[
+            dict(
+                identifier='name',
+                format=dict(
+                    type='string',
+                    encoding='utf-8',
+                    case='upper'),
+                hashing=dict(
+                    ngram=2,
+                    weight=2)),
+            dict(
+                identifier='id',
+                format=dict(
+                    type='string',
+                    encoding='ascii',
+                    pattern=r'[a-z][a-z][a-z]\d\d\d'),
+                hashing=dict(
+                    ngram=1,
+                    positional=True)),
+            dict(
+                identifier='dob',
+                format=dict(
+                    type='date',
+                    format='%Y-%m-%d',
+                    description='When were ya born?'),
+                hashing=dict(
+                    ngram=2,
+                    positional=True,
+                    weight=.5)),
+            dict(
+                identifier='gender',
+                format=dict(
+                    type='enum',
+                    values=['M', 'F']),
+                hashing=dict(
+                    ngram=1,
+                    positional=False)),
+            dict(
+                identifier='children',
+                format=dict(
+                    type='integer',
+                    maximum=20),
+                hashing=dict(
+                    ngram=1,
+                    positional=True))])
+    KEYS = ('chicken', 'nuggets')
+
+    def test_expected_number_of_encodings_returned(self):
+        loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
 
         results = clk.generate_clk_from_csv(
-            CSV_INPUT,
-            KEYS,
+            io.StringIO(self.CSV_INPUT),
+            self.KEYS,
             loaded_schema,
             validate=True,
             header=True,
             progress_bar=False)
+
+        assert len(results) == 3
+
+    def test_encoding_regression(self):
+        loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
+
+        results = clk.generate_clk_from_csv(
+            io.StringIO(self.CSV_INPUT),
+            self.KEYS,
+            loaded_schema,
+            validate=True,
+            header=True,
+            progress_bar=False)
+
+        assert results[0] == 'THHkzVWFYtzMJzmWobTLN8k8VwRN8+na10bN3N9I9oDPGuRZLGpV/QXZYtRZ6/wc+K3W9wvmDA2KpHmOTlVAY9jDblysQ9zlR86OMSbBn+uG3Qxi8EDpUN6nSI5FfOK1Zt77J0ye8P3wifF6QdkFfm3UXNGWil7CPNnUa/fHG0w='
+        assert results[1] == '/r76/u//7+1O/3bG//7N5t3evpe/Wt7+v/f/Xt/+9rpXW//f/p7/v//3/vv7v/7/fv7X//vf3Vf/9vP//nd/3t93dt7/dPr/fj7f1z5B3/7W1u/qr+b3//q6729n6/au7772TPz+2s3u/n/88/9OTG/PxvrOh/7Hb89cz+Z3vmo='
 
 
 class TestHeaderChecking(unittest.TestCase):
