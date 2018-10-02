@@ -1,6 +1,6 @@
 import unittest
 
-from clkhash.field_formats import FieldHashingProperties
+from clkhash.field_formats import FieldHashingPropertiesV1
 from clkhash.tokenizer import get_tokenizer, tokenize
 
 __author__ = 'shardy'
@@ -8,7 +8,7 @@ __author__ = 'shardy'
 
 class TestTokenizer(unittest.TestCase):
     def test_unigram_1(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=False
         )
@@ -16,7 +16,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1', '2', '9', '3'])
 
     def test_unigram_2(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=False
         )
@@ -24,7 +24,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1', '2', '9', '3'])
 
     def test_unigram_duplicate(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=False
         )
@@ -32,7 +32,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1', '2', '1', '2'])
 
     def test_unigram_1_positional(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=True
         )
@@ -40,7 +40,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1 1', '2 2', '3 9', '4 3'])
 
     def test_positional_unigram_1(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=True
         )
@@ -48,7 +48,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1 1', '2 2', '3 3'])
 
     def test_positional_unigram_2(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=True
         )
@@ -56,7 +56,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1 1', '2 *', '3 2', '4 *'])
 
     def test_positional_unigram_duplicate(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=1,
             positional=True
         )
@@ -64,7 +64,7 @@ class TestTokenizer(unittest.TestCase):
                          ['1 1', '2 1', '3 1'])
 
     def test_bigram_1(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=2,
             positional=False
         )
@@ -72,7 +72,7 @@ class TestTokenizer(unittest.TestCase):
                          [' s', 'st', 'te', 'ev', 've', 'e '])
 
     def test_bigram_2(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=2,
             positional=False
         )
@@ -80,7 +80,7 @@ class TestTokenizer(unittest.TestCase):
                          [' s', 'st', 'tv', 'v '])
 
     def test_bigram_duplicate(self):
-        properties = FieldHashingProperties(
+        properties = FieldHashingPropertiesV1(
             ngram=2,
             positional=False
         )

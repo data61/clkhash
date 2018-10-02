@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import abc
 import re
+import math
 from datetime import datetime
 from typing import Any, cast, Dict, Iterable, Optional, Text, Union
 
@@ -59,8 +60,8 @@ class MissingValueSpec(object):
         )
 
 
-class FieldHashingProperties(object):
-    """ Stores the settings used to hash a field. This includes the
+class FieldHashingProperties(abc.ABC):
+    """ Stores the settings used to hash a field - just those in common for v1 and v2 schemas. This includes the
         encoding and tokenisation parameters.
 
         :ivar str encoding: The encoding to use when converting the
@@ -71,17 +72,13 @@ class FieldHashingProperties(object):
             2.
         :ivar bool positional: Controls whether the n-grams are
             positional.
-        :ivar float weight: Controls the weight of the field in the
-            Bloom filter.
     """
     _DEFAULT_ENCODING = 'utf-8'
     _DEFAULT_POSITIONAL = False
-    _DEFAULT_WEIGHT = 1
 
     def __init__(self,
                  ngram,  # type: int
                  encoding=_DEFAULT_ENCODING,  # type: str
-                 weight=_DEFAULT_WEIGHT,  # type: Union[int, float]
                  positional=_DEFAULT_POSITIONAL,  # type: bool
                  missing_value=None  # type: Optional[MissingValueSpec]
                  ):
@@ -99,15 +96,21 @@ class FieldHashingProperties(object):
             msg = '{} is not a valid Python encoding.'
             raise_from(ValueError(msg.format(encoding)), e)
 
-        if weight < 0:
-            msg = 'weight should be non-negative but is {}.'
-            raise ValueError(msg.format(weight))
-
         self.ngram = ngram
         self.encoding = encoding
         self.positional = positional
-        self.weight = weight
         self.missing_value = missing_value
+
+    @abc.abstractmethod
+    def ks(self, schema, num_ngrams):
+        # type (...) -> [int]
+        """
+        Provide a k for each ngram in the field value.
+        :param schema: the schema
+        :param num_ngrams: number of ngrams in the field value
+        :return: [ k, ... ] a k value to be used for each ngram
+        """
+        pass
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
@@ -125,7 +128,7 @@ class FieldHashingProperties(object):
             return str_in
 
     @classmethod
-    def from_json_dict(cls, json_dict):
+    def _from_json_dict(cls, json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
         """ Make a :class:`FieldHashingProperties` object from a
             dictionary.
@@ -141,10 +144,137 @@ class FieldHashingProperties(object):
             ngram=json_dict['ngram'],
             positional=json_dict.get(
                 'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
-            weight=json_dict.get(
-                'weight', FieldHashingProperties._DEFAULT_WEIGHT),
             missing_value=MissingValueSpec.from_json_dict(
                 json_dict['missingValue']) if 'missingValue' in json_dict else None)
+
+
+class FieldHashingPropertiesV1(FieldHashingProperties):
+    """ Stores the settings used to hash a field for v1 schema. This includes the
+        encoding and tokenisation parameters.
+
+        :ivar str encoding: The encoding to use when converting the
+            string to bytes. Refer to
+            `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`_
+            for possible values.
+        :ivar int ngram: The n in n-gram. Possible values are 0, 1, and
+            2.
+        :ivar bool positional: Controls whether the n-grams are
+            positional.
+        :ivar float weight: Controls the weight of the field in the
+            Bloom filter.
+    """
+    _DEFAULT_WEIGHT = 1
+
+    def __init__(self,
+                 ngram,  # type: int
+                 encoding=FieldHashingProperties._DEFAULT_ENCODING,  # type: str
+                 weight=_DEFAULT_WEIGHT,  # type: Union[int, float]
+                 positional=FieldHashingProperties._DEFAULT_POSITIONAL,  # type: bool
+                 missing_value=None  # type: Optional[MissingValueSpec]
+                 ):
+        # type: (...) -> None
+        """ Make a :class:`FieldHashingPropertiesV1` object, setting it
+            attributes to values specified in keyword arguments.
+        """
+        FieldHashingProperties.__init__(self, ngram, encoding, positional, missing_value)
+
+        if weight < 0:
+            msg = 'weight should be non-negative but is {}.'
+            raise ValueError(msg.format(weight))
+
+        self.weight = weight
+
+
+    def ks(self, schema, num_ngrams):
+        # type (...) -> [int]
+        """
+        Provide a k for each ngram in the field value.
+        :param schema: the schema
+        :param num_ngrams: number of ngrams in the field value
+        :return: [ k, ... ] a k value to be used for each ngram
+        """
+        k = int(round(self.weight * schema.k))
+        return [k] * num_ngrams
+
+
+    @staticmethod
+    def from_json_dict(json_dict):
+        # type: (Dict[str, Any]) -> FieldHashingPropertiesV1
+        """ Make a :class:`FieldHashingPropertiesV1` object from a
+            dictionary.
+
+            :param dict json_dict:
+                The dictionary must have have an 'ngram' key. It may have
+                'positional' and 'weight' keys; if these are missing, then
+                they are filled with the default values. The encoding is
+                always set to the default value.
+            :return: A :class:`FieldHashingPropertiesV1` instance.
+        """
+        result = FieldHashingPropertiesV1._from_json_dict(json_dict)
+        result.weight = json_dict.get('weight', FieldHashingPropertiesV1._DEFAULT_WEIGHT)
+        return result
+
+
+class FieldHashingPropertiesV2(FieldHashingProperties):
+    """ Stores the settings used to hash a field for v2 schema. This includes the
+        encoding and tokenisation parameters.
+
+        :ivar str encoding: The encoding to use when converting the
+            string to bytes. Refer to
+            `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`_
+            for possible values.
+        :ivar int ngram: The n in n-gram. Possible values are 0, 1, and 2.
+        :ivar bool positional: Controls whether the n-grams are positional.
+        :ivar int num_bits: dynamic k = num_bits / number of n-grams
+        :ivar int k: max number of bits per n-gram
+    """
+
+    def __init__(self,
+                 ngram,  # type: int
+                 encoding=FieldHashingProperties._DEFAULT_ENCODING,  # type: str
+                 num_bits=None,
+                 k=None,
+                 positional=FieldHashingProperties._DEFAULT_POSITIONAL,  # type: bool
+                 missing_value=None  # type: Optional[MissingValueSpec]
+                 ):
+        # type: (...) -> None
+        """ Make a :class:`FieldHashingPropertiesV2` object, setting it
+            attributes to values specified in keyword arguments.
+        """
+        FieldHashingProperties.__init__(self, ngram, encoding, positional, missing_value)
+        # TODO: do we need to validate exactly one specified and the value is reasonable or can we rely on the schema?
+        self.num_bits = num_bits
+        self.k = k if not num_bits else None
+
+
+    def ks(self, schema, num_ngrams):
+        # type (...) -> [int]
+        """
+        Provide a k for each ngram in the field value.
+        :param schema: the schema
+        :param num_ngrams: number of ngrams in the field value
+        :return: [ k, ... ] a k value for each of num_ngrams such that the sum is exactly num_bits
+        """
+        x = int(math.floor(self.num_bits / num_ngrams))
+        residue = self.num_bits % num_ngrams
+        return ([x + 1] * residue) + ([x] * (num_ngrams - residue))
+
+    @staticmethod
+    def from_json_dict(json_dict):
+        # type: (Dict[str, Any]) -> FieldHashingPropertiesV2
+        """ Make a :class:`FieldHashingPropertiesV2` object from a
+            dictionary.
+
+            :param dict json_dict:
+                The dictionary must have have an 'ngram' key and one of numBits or k. It may have
+                'positional'; if this is missing then the default value is used.
+                The encoding is always set to the default value.
+            :return: A :class:`FieldHashingPropertiesV2` instance.
+        """
+        result = FieldHashingPropertiesV2._from_json_dict(json_dict)
+        result.num_bits = json_dict.get('numBits', None)
+        result.k = json_dict.get('k', None)
+        return result
 
 
 @add_metaclass(abc.ABCMeta)
@@ -173,8 +303,8 @@ class FieldSpec(object):
         self.description = description
 
     @classmethod
-    def from_json_dict(cls, field_dict):
-        # type: (Dict[str, Any]) -> FieldSpec
+    def from_json_dict(cls, fhp_cls, field_dict):
+        # type: (FieldHashingProperties, Dict[str, Any]) -> FieldSpec
         """ Initialise a FieldSpec object from a dictionary of
             properties.
 
@@ -187,8 +317,7 @@ class FieldSpec(object):
         """
         identifier = field_dict['identifier']
         description = field_dict['format'].get('description')
-        hashing_properties = FieldHashingProperties.from_json_dict(
-            field_dict['hashing'])
+        hashing_properties = fhp_cls.from_json_dict(field_dict['hashing'])
 
         result = cls.__new__(cls)  # type: ignore
         result.identifier = identifier
@@ -353,8 +482,8 @@ class StringSpec(FieldSpec):
         self.regex_based = regex_based
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> StringSpec
+    def from_json_dict(cls, fhp_cls, json_dict):
+        # type: (FieldHashingProperties, Dict[str, Any]) -> StringSpec
         """ Make a StringSpec object from a dictionary containing its
             properties.
 
@@ -369,7 +498,7 @@ class StringSpec(FieldSpec):
         """
         # noinspection PyCompatibility
         result = cast(StringSpec,  # Go away, Mypy.
-                      super().from_json_dict(json_dict))
+                      super().from_json_dict(fhp_cls, json_dict))
 
         format_ = json_dict['format']
         if 'encoding' in format_:
@@ -491,8 +620,8 @@ class IntegerSpec(FieldSpec):
         self.maximum = maximum
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> IntegerSpec
+    def from_json_dict(cls, fhp_cls, json_dict):
+        # type: (FieldHashingProperties, Dict[str, Any]) -> IntegerSpec
         """ Make a IntegerSpec object from a dictionary containing its
             properties.
 
@@ -505,7 +634,7 @@ class IntegerSpec(FieldSpec):
         """
         # noinspection PyCompatibility
         result = cast(IntegerSpec,  # For Mypy.
-                      super().from_json_dict(json_dict))
+                      super().from_json_dict(fhp_cls, json_dict))
 
         format_ = json_dict['format']
         result.minimum = format_.get('minimum')
@@ -605,7 +734,7 @@ class DateSpec(FieldSpec):
         self.format = format
 
     @classmethod
-    def from_json_dict(cls, json_dict):
+    def from_json_dict(cls, fhp_cls, json_dict):
         # type: (Dict[str, Any]) -> DateSpec
         """ Make a DateSpec object from a dictionary containing its
             properties.
@@ -619,7 +748,7 @@ class DateSpec(FieldSpec):
         """
         # noinspection PyCompatibility
         result = cast(DateSpec,  # For Mypy.
-                      super().from_json_dict(json_dict))
+                      super().from_json_dict(fhp_cls, json_dict))
 
         format_ = json_dict['format']
         result.format = format_['format']
@@ -695,7 +824,7 @@ class EnumSpec(FieldSpec):
         self.values = set(values)
 
     @classmethod
-    def from_json_dict(cls, json_dict):
+    def from_json_dict(cls, fhp_cls, json_dict):
         # type: (Dict[str, Any]) -> EnumSpec
         """ Make a EnumSpec object from a dictionary containing its
             properties.
@@ -707,7 +836,7 @@ class EnumSpec(FieldSpec):
         """
         # noinspection PyCompatibility
         result = cast(EnumSpec,  # Appease the gods of Mypy.
-                      super().from_json_dict(json_dict))
+                      super().from_json_dict(fhp_cls, json_dict))
 
         format_ = json_dict['format']
         result.values = set(format_['values'])
@@ -750,7 +879,7 @@ class Ignore(FieldSpec):
         # type: (...) -> None
         # noinspection PyCompatibility
         super().__init__('' if identifier is None else identifier,
-                         FieldHashingProperties(ngram=0, weight=0))
+                         FieldHashingPropertiesV2(ngram=0))
 
     def validate(self, str_in):
         pass
@@ -765,8 +894,8 @@ FIELD_TYPE_MAP = {
 }
 
 
-def spec_from_json_dict(json_dict):
-    # type: (Dict[str, Any]) -> FieldSpec
+def _spec_from_json_dict(fhp_cls, json_dict):
+    # type: (FieldHashingProperties, Dict[str, Any]) -> FieldSpec
     """ Turns a dictionary into the appropriate object.
 
         :param dict json_dict: A dictionary with properties.
@@ -777,4 +906,10 @@ def spec_from_json_dict(json_dict):
         return Ignore(json_dict['identifier'])
     type_str = json_dict['format']['type']
     spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
-    return spec_type.from_json_dict(json_dict)
+    return spec_type.from_json_dict(fhp_cls, json_dict)
+
+def spec_v1_from_json_dict(json_dict):
+    return _spec_from_json_dict(FieldHashingPropertiesV1, json_dict)
+
+def spec_v2_from_json_dict(json_dict):
+    return _spec_from_json_dict(FieldHashingPropertiesV2, json_dict)

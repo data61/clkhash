@@ -125,15 +125,11 @@ class TestXorFolding(unittest.TestCase):
     def test_xor_folding_integration(self):
         namelist = randomnames.NameList(1)
         schema_0 = namelist.SCHEMA
-        assert schema_0.hashing_globals.xor_folds == 0
+        assert schema_0.xor_folds == 0
 
-        schema_1 = Schema(
-            version=schema_0.version,
-            hashing_globals=copy(schema_0.hashing_globals),
-            fields=schema_0.fields
-        )
-        schema_1.hashing_globals.xor_folds = 1
-        schema_1.hashing_globals.l //= 2
+        schema_1 = copy(schema_0)
+        schema_1.xor_folds = 1
+        schema_1.l //= 2
 
         key_lists = generate_key_lists(('secret', 'sshh'),
                                        len(namelist.schema_types))

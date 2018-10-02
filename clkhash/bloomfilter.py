@@ -19,7 +19,7 @@ from future.builtins import range, zip
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
 from clkhash.field_formats import FieldSpec
-from clkhash.schema import Schema, GlobalHashingProperties
+from clkhash.schema import Schema
 
 try:
     from hashlib import blake2b
@@ -30,11 +30,12 @@ except ImportError:
     # blake2b is already defined.
 
 
-def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
-                              keys,     # type: Sequence[bytes]
-                              k,        # type: int
-                              l,        # type: int
-                              encoding  # type: str
+
+def double_hash_encode_ngrams(ngrams,    # type: Iterable[str]
+                              keys,      # type: Sequence[bytes]
+                              ks,        # type: Iterable[int]
+                              l,         # type: int
+                              encoding   # type: str
                               ):
     # type: (...) -> bitarray
     """ Computes the double hash encoding of the provided ngrams with the given keys.
@@ -44,7 +45,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
 
         :param ngrams: list of n-grams to be encoded
         :param keys: hmac secret keys for md5 and sha1 as bytes
-        :param k: number of hash functions to use per element of the ngrams
+        :param ks: number of hash functions to use for each ngram
         :param l: length of the output bitarray
         :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -54,7 +55,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     bf = bitarray(l)
     bf.setall(False)
 
-    for m in ngrams:
+    for m, k in zip(ngrams, ks):
         sha1hm = int(hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(), 16) % l
         md5hm = int(hmac.new(key_md5, m.encode(encoding=encoding), md5).hexdigest(), 16) % l
         for i in range(k):
@@ -65,7 +66,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
 
 def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
                                            keys,  # type: Sequence[bytes]
-                                           k,  # type: int
+                                           ks,  # type: Iterable[int]
                                            l,  # type: int
                                            encoding  # type: str
                                            ):
@@ -99,7 +100,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
     :param ngrams: list of n-grams to be encoded
     :param keys: tuple with (key_sha1, key_md5).
         That is, (hmac secret keys for sha1 as bytes, hmac secret keys for md5 as bytes)
-    :param k: number of hash functions to use per element of the ngrams
+    :param ks: number of hash functions to use for each ngram
     :param l: length of the output bitarray
     :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -108,7 +109,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
     key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
-    for m in ngrams:
+    for m, k in zip(ngrams, ks):
         m_bytes = m.encode(encoding=encoding)
 
         sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
@@ -132,7 +133,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
 
 def blake_encode_ngrams(ngrams,  # type: Iterable[str]
                         keys,  # type: Sequence[bytes]
-                        k,  # type: int
+                        ks,  # type:  Iterable[int]
                         l,  # type: int
                         encoding  # type: str
                         ):
@@ -180,7 +181,7 @@ def blake_encode_ngrams(ngrams,  # type: Iterable[str]
 
     :param ngrams: list of n-grams to be encoded
     :param keys: secret key for blake2 as bytes
-    :param k: number of hash functions to use per element of the ngrams
+    :param ks: number of hash functions to use for each ngram
     :param l: length of the output bitarray (has to be a power of 2)
     :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -193,12 +194,14 @@ def blake_encode_ngrams(ngrams,  # type: Iterable[str]
         raise ValueError('parameter "l" has to be a power of two for the BLAKE2 encoding, but was: {}'.format(l))
     bf = bitarray(l)
     bf.setall(False)
-    if k < 1:
-        return bf
-    num_macs = (k + 31) // 32
 
-    for m in ngrams:
+    # TODO: I think k = 0 was used to ignore a field, but can't we use IgnoreField instead?
+    # if k < 1:
+    #    return bf
+
+    for m, k in zip(ngrams, ks):
         random_shorts = []  # type: List[int]
+        num_macs = (k + 31) // 32
         for i in range(num_macs):
             hash_bytes = blake2b(m.encode(encoding=encoding), key=key, salt=str(i).encode()).digest()
             random_shorts.extend(struct.unpack('32H', hash_bytes))  # interpret hash bytes as 32 unsigned shorts.
@@ -231,18 +234,18 @@ class NgramEncodings(Enum):
 
     @classmethod
     def from_properties(cls,
-                        properties  # type: GlobalHashingProperties
+                        schema  # type: Schema
                         ):
         # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-        if properties.hash_type == 'doubleHash':
-            if properties.hash_prevent_singularity:
+        if schema.hash_type == 'doubleHash':
+            if schema.hash_prevent_singularity:
                 return cls.DOUBLE_HASH_NON_SINGULAR
             else:
                 return cls.DOUBLE_HASH
-        elif properties.hash_type == 'blakeHash':
+        elif schema.hash_type == 'blakeHash':
             return cls.BLAKE_HASH
         else:
-            msg = "Unsupported hash type '{}'".format(properties.hash_type)
+            msg = "Unsupported hash type '{}'".format(schema.hash_type)
             raise ValueError(msg)
 
 
@@ -279,9 +282,8 @@ def fold_xor(bloomfilter,  # type: bitarray
 
 def crypto_bloom_filter(record,  # type: Sequence[Text]
                         tokenizers,  # type: List[Callable[[Text], Iterable[Text]]]
-                        fields,  # type: Sequence[FieldSpec]
-                        keys,  # type: Sequence[Sequence[bytes]]
-                        hash_properties  # type: GlobalHashingProperties
+                        schema,  # type: Schema
+                        keys  # type: Sequence[Sequence[bytes]]
                         ):
     # type: (...) -> Tuple[bitarray, Text, int]
     """ Computes the composite Bloom filter encoding of a record.
@@ -292,35 +294,28 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
         :param record: plaintext record tuple. E.g. (index, name, dob, gender)
         :param tokenizers: A list of tokenizers. A tokenizer is a function that
             returns tokens from a string.
-        :param fields: A list of FieldSpec. One for each field.
+        :param schema: the schema
         :param keys: Keys for the hash functions as a tuple of lists of bytes.
-        :param hash_properties: Global hashing properties.
 
         :return: 3-tuple:
                 - bloom filter for record as a bitarray
                 - first element of record (usually an index)
                 - number of bits set in the bloomfilter
     """
-    xor_folds = hash_properties.xor_folds
-    hash_l = hash_properties.l * 2 ** xor_folds
-    hash_k = hash_properties.k
-    hash_function = NgramEncodings.from_properties(hash_properties)
+    hash_l = schema.l * 2 ** schema.xor_folds
+    hash_function = NgramEncodings.from_properties(schema)
 
     bloomfilter = bitarray(hash_l)
     bloomfilter.setall(False)
 
     for (entry, tokenize, field, key) \
-            in zip(record, tokenizers, fields, keys):
+            in zip(record, tokenizers, schema.fields, keys):
         hash_props = field.hashing_properties
-
-        ngrams = tokenize(field.format_value(entry))
-
-        adjusted_k = int(round(hash_props.weight * hash_k))
-
+        ngrams = [n for n in tokenize(field.format_value(entry))]
         bloomfilter |= hash_function(
-            ngrams, key, adjusted_k, hash_l, hash_props.encoding)
+            ngrams, key, hash_props.ks(schema, len(ngrams)), hash_l, hash_props.encoding)
 
-    bloomfilter = fold_xor(bloomfilter, xor_folds)
+    bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
 
     return bloomfilter, record[0], bloomfilter.count()
 
@@ -339,9 +334,6 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
     """
     tokenizers = [tokenizer.get_tokenizer(field.hashing_properties)
                   for field in schema.fields]
-    hash_properties = schema.hashing_globals
-
-    return (crypto_bloom_filter(s, tokenizers, schema.fields,
-                                keys, hash_properties)
+    return (crypto_bloom_filter(s, tokenizers, schema, keys)
             for s in dataset)
 

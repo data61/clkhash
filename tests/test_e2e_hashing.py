@@ -3,8 +3,8 @@ import unittest
 
 from clkhash import bloomfilter, clk, randomnames
 from clkhash.key_derivation import generate_key_lists
-from clkhash.schema import GlobalHashingProperties, Schema
-from clkhash.field_formats import FieldHashingProperties, StringSpec
+from clkhash.schema import Schema
+from clkhash.field_formats import FieldHashingPropertiesV1, StringSpec
 
 
 class TestNamelistHashable(unittest.TestCase):
@@ -35,24 +35,21 @@ class TestNamelistHashable(unittest.TestCase):
 
 class TestHashingWithDifferentWeights(unittest.TestCase):
     def test_different_weights(self):
-        schema = Schema(
-            version=1,
-            hashing_globals=GlobalHashingProperties(
-                k=30,
-                kdf_hash='SHA256',
-                kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
-                kdf_key_size=64,
-                kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
-                kdf_type='HKDF',
-                l=1024,
-                hash_type='blakeHash',
-                xor_folds=0,
-            ),
+        schema = Schema.schema_v1(
+            k=30,
+            kdf_hash='SHA256',
+            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+            kdf_key_size=64,
+            kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+            kdf_type='HKDF',
+            l=1024,
+            hash_type='blakeHash',
+            xor_folds=0,
             fields=[
                 StringSpec(
                     identifier='some info',
-                    hashing_properties=FieldHashingProperties(
-                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                    hashing_properties=FieldHashingPropertiesV1(
+                        encoding=FieldHashingPropertiesV1._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
                         weight=1

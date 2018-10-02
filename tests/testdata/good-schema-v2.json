@@ -3,7 +3,6 @@
   "version": 2,
   "clkConfig": {
     "l": 1024,
-    "k": 20,
     "hash": {
       "type": "doubleHash"
     },
@@ -17,10 +16,6 @@
   },
   "features": [
     {
-      "identifier": "index",
-      "ignored": true
-    },
-    {
       "identifier": "firstName",
       "format": {
         "type": "string",
@@ -29,7 +24,8 @@
         "case": "upper"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "bitsPerToken": 200
       }
     },
     {
@@ -42,7 +38,8 @@
         "description": "comma separated list of middle names"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "k": 20
       }
     },
     {

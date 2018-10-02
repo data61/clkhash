@@ -1,6 +1,6 @@
 import unittest
 
-from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingProperties,
+from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingPropertiesV1,
                                    IntegerSpec, StringSpec)
 from clkhash.validate_data import (EntryError, FormatError,
                                    validate_entries, validate_header,
@@ -9,7 +9,7 @@ from clkhash.validate_data import (EntryError, FormatError,
 
 class FieldsMaker(unittest.TestCase):
     def setUp(self):
-        ascii_hashing = FieldHashingProperties(encoding='ascii', ngram=2)
+        ascii_hashing = FieldHashingPropertiesV1(encoding='ascii', ngram=2)
         self.fields = [
             StringSpec(
                 identifier='given name',

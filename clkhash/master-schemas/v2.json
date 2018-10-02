@@ -161,8 +161,8 @@
       "type": "object",
       "required": ["ngram"],
       "properties": {
-        "strategy": {"type": "object", "oneOf": [
-          {"bitsPerToken": {"type": "number", "minimum": 1, "default": 200, "description": "dynamic k = bitsPerToken / number of n-grams"}},
+        "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf": [
+          {"numBits": {"type": "number", "minimum": 1, "default": 200, "description": "dynamic k = numBits / number of n-grams"}},
           {"k": {"type": "number", "minimum": 1, "default": 20, "description": "max number of bits per n-gram"}}
         ]},
         "ngram": {"type": "integer", "minimum": 0, "default": 2},

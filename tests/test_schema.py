@@ -4,7 +4,7 @@ import io
 import os
 import unittest
 
-from clkhash import schema
+from clkhash.schema import Schema, SchemaError, MasterSchemaError
 
 TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
 
@@ -17,11 +17,11 @@ class TestSchemaValidation(unittest.TestCase):
     def test_good_schema(self):
         # These are some perfectly fine schemas.
         with open(_test_data_file_path('good-schema-v1.json')) as f:
-            schema.Schema.from_json_file(f)
+            Schema.from_json_file(f)
 
     def test_good_schema_repr(self):
         with open(_test_data_file_path('good-schema-v1.json')) as f:
-            s = schema.Schema.from_json_file(f)
+            s = Schema.from_json_file(f)
         schema_repr = repr(s)
         assert "v1" in schema_repr
         assert "11 fields" in schema_repr
@@ -29,51 +29,59 @@ class TestSchemaValidation(unittest.TestCase):
     def test_invalid_schema(self):
         # This schema is not valid (missing encoding in its feature).
         with open(_test_data_file_path('bad-schema-v1.json')) as f:
-            with self.assertRaises(schema.SchemaError):
-                schema.Schema.from_json_file(f)
+            with self.assertRaises(SchemaError):
+                Schema.from_json_file(f)
 
     def test_valid_but_unsupported_schema(self):
         # This schema has an unsupported version.
         with open(_test_data_file_path(
                 'good-but-unsupported-schema-v1.json')) as f:
-            with self.assertRaises(schema.SchemaError):
-                schema.Schema.from_json_file(f)
+            with self.assertRaises(SchemaError):
+                Schema.from_json_file(f)
 
     def test_invalid_json_schema(self):
         invalid_schema_file = io.StringIO('{')  # Invalid json.
         msg = 'Invalid JSON in schema should raise SchemaError.'
-        with self.assertRaises(schema.SchemaError, msg=msg):
-            schema.Schema.from_json_file(invalid_schema_file)
+        with self.assertRaises(SchemaError, msg=msg):
+            Schema.from_json_file(invalid_schema_file)
 
     def test_list_schema(self):
         invalid_schema_file = io.StringIO('[]')  # Must be dict instead.
         msg = 'List as top element should raise SchemaError.'
-        with self.assertRaises(schema.SchemaError, msg=msg):
-            schema.Schema.from_json_file(invalid_schema_file)
+        with self.assertRaises(SchemaError, msg=msg):
+            Schema.from_json_file(invalid_schema_file)
 
     def test_string_schema(self):
         invalid_schema_file = io.StringIO('"foo"')  # Must be dict.
         msg = 'Literal as top element should raise SchemaError.'
-        with self.assertRaises(schema.SchemaError, msg=msg):
-            schema.Schema.from_json_file(invalid_schema_file)
+        with self.assertRaises(SchemaError, msg=msg):
+            Schema.from_json_file(invalid_schema_file)
 
     def test_no_version(self):
         invalid_schema_file = io.StringIO('{}')  # Missing version.
         msg = 'Schema with no version should raise SchemaError.'
-        with self.assertRaises(schema.SchemaError, msg=msg):
-            schema.Schema.from_json_file(invalid_schema_file)
+        with self.assertRaises(SchemaError, msg=msg):
+            Schema.from_json_file(invalid_schema_file)
 
     def test_missing_master(self):
         # This shouldn't happen but we need to be able to handle it if,
         # for example, we have a corrupt install.
-        original_paths = schema.MASTER_SCHEMA_FILE_NAMES
-        schema.MASTER_SCHEMA_FILE_NAMES = {1: 'nonexistent.json'}
+        original_paths = Schema.MASTER_SCHEMA_FILE_NAMES
+        Schema.MASTER_SCHEMA_FILE_NAMES = {1: 'nonexistent.json'}
 
         msg = 'Missing master schema should raise MasterSchemaError.'
-        with self.assertRaises(schema.MasterSchemaError, msg=msg):
-            schema.validate_schema_dict({'version': 1})
+        with self.assertRaises(MasterSchemaError, msg=msg):
+            Schema._validate_schema_dict({'version': 1})
 
-        schema.MASTER_SCHEMA_FILE_NAMES = original_paths
+        Schema.MASTER_SCHEMA_FILE_NAMES = original_paths
+
+    def test_good_schema2_repr(self):
+        with open(_test_data_file_path('good-schema-v2.json')) as f:
+            s = Schema.from_json_file(f)
+            # print('schema type: ', type(s))
+        schema_repr = repr(s)
+        assert "v2" in schema_repr
+        assert "11 fields" in schema_repr
 
 
 class TestSchemaLoading(unittest.TestCase):
@@ -173,4 +181,4 @@ class TestSchemaLoading(unittest.TestCase):
         }
 
         # This fails in #111. Now it shouldn't.
-        schema.Schema.from_json_dict(schema_dict)
+        Schema.from_json_dict(schema_dict)
