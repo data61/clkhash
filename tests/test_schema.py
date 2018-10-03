@@ -71,7 +71,7 @@ class TestSchemaValidation(unittest.TestCase):
 
         msg = 'Missing master schema should raise MasterSchemaError.'
         with self.assertRaises(MasterSchemaError, msg=msg):
-            Schema._validate_schema_dict({'version': 1})
+            Schema.validate_schema_dict({'version': 1})
 
         Schema.MASTER_SCHEMA_FILE_NAMES = original_paths
 

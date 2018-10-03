@@ -60,7 +60,8 @@ class MissingValueSpec(object):
         )
 
 
-class FieldHashingProperties(abc.ABC):
+@add_metaclass(abc.ABCMeta)
+class FieldHashingProperties(object):
     """ Stores the settings used to hash a field - just those in common for v1 and v2 schemas. This includes the
         encoding and tokenisation parameters.
 
@@ -151,6 +152,7 @@ class FieldHashingProperties(abc.ABC):
     def from_json_dict(json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
         raise NotImplementedError('Call this method on concrete subclasses not abstract base')
+
 
 class FieldHashingPropertiesV1(FieldHashingProperties):
     """ Stores the settings used to hash a field for v1 schema. This includes the

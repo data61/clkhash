@@ -182,7 +182,7 @@ class Schema:
         """
         if validate:
             # This raises iff the schema is invalid.
-            Schema._validate_schema_dict(dict)
+            Schema.validate_schema_dict(dict)
 
         version = dict['version']
 
@@ -280,7 +280,7 @@ class Schema:
 
 
     @staticmethod
-    def _validate_schema_dict(schema):
+    def validate_schema_dict(schema):
         # type: (Dict[str, Any]) -> None
         """ Validate the schema.
 
