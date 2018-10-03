@@ -128,7 +128,7 @@ class FieldHashingProperties(abc.ABC):
             return str_in
 
     @classmethod
-    def _from_json_dict(cls, json_dict):
+    def from_json_dict(cls, json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
         """ Make a :class:`FieldHashingProperties` object from a
             dictionary.
@@ -210,7 +210,7 @@ class FieldHashingPropertiesV1(FieldHashingProperties):
                 always set to the default value.
             :return: A :class:`FieldHashingPropertiesV1` instance.
         """
-        result = FieldHashingPropertiesV1._from_json_dict(json_dict)
+        result = cast(FieldHashingPropertiesV1, FieldHashingProperties.from_json_dict(json_dict))
         result.weight = json_dict.get('weight', FieldHashingPropertiesV1._DEFAULT_WEIGHT)
         return result
 
@@ -271,7 +271,7 @@ class FieldHashingPropertiesV2(FieldHashingProperties):
                 The encoding is always set to the default value.
             :return: A :class:`FieldHashingPropertiesV2` instance.
         """
-        result = FieldHashingPropertiesV2._from_json_dict(json_dict)
+        result = cast(FieldHashingPropertiesV2, FieldHashingProperties.from_json_dict(json_dict))
         result.num_bits = json_dict.get('numBits', None)
         result.k = json_dict.get('k', None)
         return result
@@ -735,7 +735,7 @@ class DateSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls, fhp_cls, json_dict):
-        # type: (Dict[str, Any]) -> DateSpec
+        # type: (FieldHashingProperties, Dict[str, Any]) -> DateSpec
         """ Make a DateSpec object from a dictionary containing its
             properties.
 
@@ -825,7 +825,7 @@ class EnumSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls, fhp_cls, json_dict):
-        # type: (Dict[str, Any]) -> EnumSpec
+        # type: (FieldHashingProperties, Dict[str, Any]) -> EnumSpec
         """ Make a EnumSpec object from a dictionary containing its
             properties.
 

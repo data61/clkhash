@@ -45,7 +45,7 @@ class Schema:
                  kdf_salt=None,  # type: Optional[bytes]
                  kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
                  ):
-        # type: (...) -> Schema
+        # type: (...) -> None
         """ Create a Schema with fields used in v1 & v2 set.
 
             :param version: the schema version
@@ -71,6 +71,7 @@ class Schema:
         self.version = version
         self.fields = fields
         self.l = l
+        self.k = 0  # to keep mypy happy
         self.hash_type = hash_type
         self.kdf_type = kdf_type
         self.hash_prevent_singularity = (
@@ -219,7 +220,7 @@ class Schema:
         else:
             msg = ('Schema version {} is not supported. '
                    'Consider updating clkhash.').format(version)
-            raise_from(SchemaError(msg))
+            raise SchemaError(msg)
 
     @staticmethod
     def from_json_file(schema_file, validate=True):
