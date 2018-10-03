@@ -148,7 +148,7 @@ def create_project(type, schema, server, name, output, verbose):
     if schema is not None:
         schema_json = json.load(schema)
         # Validate the schema
-        clkhash.schema.validate_schema_dict(schema_json)
+        clkhash.schema.Schema.validate_schema_dict(schema_json)
     else:
         raise ValueError("Schema must be provided when creating new linkage project")
 
