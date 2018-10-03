@@ -128,7 +128,7 @@ class FieldHashingProperties(abc.ABC):
             return str_in
 
     @classmethod
-    def from_json_dict(cls, json_dict):
+    def _from_json_dict(cls, json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
         """ Make a :class:`FieldHashingProperties` object from a
             dictionary.
@@ -147,6 +147,11 @@ class FieldHashingProperties(abc.ABC):
             missing_value=MissingValueSpec.from_json_dict(
                 json_dict['missingValue']) if 'missingValue' in json_dict else None)
 
+    @abc.abstractmethod
+    @staticmethod
+    def from_json_dict(json_dict):
+        # type: (Dict[str, Any]) -> FieldHashingProperties
+        pass
 
 class FieldHashingPropertiesV1(FieldHashingProperties):
     """ Stores the settings used to hash a field for v1 schema. This includes the
@@ -210,7 +215,7 @@ class FieldHashingPropertiesV1(FieldHashingProperties):
                 always set to the default value.
             :return: A :class:`FieldHashingPropertiesV1` instance.
         """
-        result = cast(FieldHashingPropertiesV1, FieldHashingProperties.from_json_dict(json_dict))
+        result = cast(FieldHashingPropertiesV1, FieldHashingPropertiesV1._from_json_dict(json_dict))
         result.weight = json_dict.get('weight', FieldHashingPropertiesV1._DEFAULT_WEIGHT)
         return result
 
@@ -271,7 +276,7 @@ class FieldHashingPropertiesV2(FieldHashingProperties):
                 The encoding is always set to the default value.
             :return: A :class:`FieldHashingPropertiesV2` instance.
         """
-        result = cast(FieldHashingPropertiesV2, FieldHashingProperties.from_json_dict(json_dict))
+        result = cast(FieldHashingPropertiesV2, FieldHashingPropertiesV2._from_json_dict(json_dict))
         result.num_bits = json_dict.get('numBits', None)
         result.k = json_dict.get('k', None)
         return result
