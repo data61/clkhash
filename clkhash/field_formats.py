@@ -147,11 +147,11 @@ class FieldHashingProperties(abc.ABC):
             missing_value=MissingValueSpec.from_json_dict(
                 json_dict['missingValue']) if 'missingValue' in json_dict else None)
 
-    @abc.abstractmethod
     @staticmethod
     def from_json_dict(json_dict):
         # type: (Dict[str, Any]) -> FieldHashingProperties
-        pass
+        raise NotImplementedError('Call this method on concrete subclasses not abstract base')
+        # FieldHashingPropertiesV1.from_json_dict(json_dict)
 
 class FieldHashingPropertiesV1(FieldHashingProperties):
     """ Stores the settings used to hash a field for v1 schema. This includes the
