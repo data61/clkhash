@@ -5,12 +5,13 @@ import unittest
 
 from future.builtins import range
 from bitarray import bitarray
-from math import ceil
 
 from clkhash.bloomfilter import (
     blake_encode_ngrams, double_hash_encode_ngrams,
     double_hash_encode_ngrams_non_singular, NgramEncodings)
-from clkhash.schema import Schema
+from clkhash.hashing_properties import HashingProperties
+from clkhash.field_formats import FieldHashingPropertiesV1
+
 
 class TestEncoding(unittest.TestCase):
 
@@ -81,23 +82,12 @@ class TestEncoding(unittest.TestCase):
 
 class TestNgramEncodings(unittest.TestCase):
     def test_from_properties_invalid_hash(self):
-        salt_b64 = ('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybyml'
-                   'EFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==')
-        properties = Schema.schema_v1(
-            fields=None,
-            k=30,
-            kdf_hash='SHA256',
-            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
-            kdf_key_size=64,
-            kdf_salt=base64.b64decode(salt_b64),
-            kdf_type='HKDF',
-            l=1024,
-            hash_type='jakubHash',  # <- this is invalid.
-            xor_folds=0)
+        hp = HashingProperties(k=30, hash_type='jakubHash')  # <- this is invalid.
+        fhp = FieldHashingPropertiesV1(2)
         with self.assertRaises(
                 ValueError,
                 msg='Expected ValueError on invalid encoding.'):
-            NgramEncodings.from_properties(properties)
+            NgramEncodings.from_properties(hp, fhp)
 
 def randomBitarray(numBytes):
     ba = bitarray()

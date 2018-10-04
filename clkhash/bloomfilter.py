@@ -18,8 +18,10 @@ from future.builtins import range, zip
 
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
-from clkhash.field_formats import FieldSpec
 from clkhash.schema import Schema
+from clkhash.field_formats import FieldHashingProperties
+from clkhash.hashing_properties import HashingProperties
+from typing import Optional, Sequence, Text
 
 try:
     from hashlib import blake2b
@@ -234,18 +236,28 @@ class NgramEncodings(Enum):
 
     @classmethod
     def from_properties(cls,
-                        schema  # type: Schema
+                        hpv1,  # type: Optional[HashingProperties]
+                        fhp    # type: FieldHashingProperties
                         ):
         # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-        if schema.hash_type == 'doubleHash':
-            if schema.hash_prevent_singularity:
+        """
+        Get the hashing function for this field
+        :param hpv1: global hashing properties for v1 schema,
+            None for v2 schema which gets them from FieldHashingProperties
+        :param fhp: properties for this field
+        :return: the hashing function
+        """
+        hp = fhp.get_hashing_properties(hpv1)
+        print('NgramEncodings.from_properties: hp =', hp)
+        if hp.hash_type == 'doubleHash':
+            if hp.hash_prevent_singularity:
                 return cls.DOUBLE_HASH_NON_SINGULAR
             else:
                 return cls.DOUBLE_HASH
-        elif schema.hash_type == 'blakeHash':
+        elif hp.hash_type == 'blakeHash':
             return cls.BLAKE_HASH
         else:
-            msg = "Unsupported hash type '{}'".format(schema.hash_type)
+            msg = "Unsupported hash type '{}'".format(hp.hash_type)
             raise ValueError(msg)
 
 
@@ -294,7 +306,8 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
         :param record: plaintext record tuple. E.g. (index, name, dob, gender)
         :param tokenizers: A list of tokenizers. A tokenizer is a function that
             returns tokens from a string.
-        :param schema: the schema
+        :param hpv1: global hashing properties for v1 schema,
+            None for v2 schema which gets them from FieldHashingProperties
         :param keys: Keys for the hash functions as a tuple of lists of bytes.
 
         :return: 3-tuple:
@@ -303,20 +316,20 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
                 - number of bits set in the bloomfilter
     """
     hash_l = schema.l * 2 ** schema.xor_folds
-    hash_function = NgramEncodings.from_properties(schema)
 
     bloomfilter = bitarray(hash_l)
     bloomfilter.setall(False)
 
     for (entry, tokenize, field, key) \
             in zip(record, tokenizers, schema.fields, keys):
-        hash_props = field.hashing_properties
         ngrams = [n for n in tokenize(field.format_value(entry))]
-        bloomfilter |= hash_function(
-            ngrams, key, hash_props.ks(schema, len(ngrams)), hash_l, hash_props.encoding)
+        field_hash_props = field.hashing_properties
+        hash_function = NgramEncodings.from_properties(schema.hashing_properties, field_hash_props)
+        bloomfilter |= hash_function(ngrams, key,
+                                     field_hash_props.ks(schema.hashing_properties, len(ngrams)),
+                                     hash_l, field_hash_props.encoding)
 
     bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
-
     return bloomfilter, record[0], bloomfilter.count()
 
 

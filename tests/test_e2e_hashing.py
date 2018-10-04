@@ -4,6 +4,7 @@ import unittest
 from clkhash import bloomfilter, clk, randomnames
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
+from clkhash.hashing_properties import HashingProperties
 from clkhash.field_formats import FieldHashingPropertiesV1, StringSpec
 
 
@@ -35,16 +36,15 @@ class TestNamelistHashable(unittest.TestCase):
 
 class TestHashingWithDifferentWeights(unittest.TestCase):
     def test_different_weights(self):
-        schema = Schema.schema_v1(
-            k=30,
+        schema = Schema(
+            l=1024,
+            hashing_properties=HashingProperties(k=30, hash_type='blakeHash'),
+            xor_folds=0,
             kdf_hash='SHA256',
             kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
             kdf_key_size=64,
             kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
             kdf_type='HKDF',
-            l=1024,
-            hash_type='blakeHash',
-            xor_folds=0,
             fields=[
                 StringSpec(
                     identifier='some info',

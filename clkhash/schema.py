@@ -14,8 +14,10 @@ import jsonschema
 from future.builtins import map
 
 from clkhash.backports import raise_from
+
 from clkhash.field_formats import FieldSpec, spec_v1_from_json_dict, spec_v2_from_json_dict
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
+from clkhash.hashing_properties import HashingProperties
 
 
 class SchemaError(Exception):
@@ -28,16 +30,15 @@ class MasterSchemaError(Exception):
         the exception for you!
     """
 
+
 class Schema:
     
     MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json', 2: 'v2.json'}  # type: Dict[Hashable, Text]
 
     def __init__(self,
-                 version,  # type: int
                  fields,  # type: Sequence[FieldSpec]
                  l,  # type: int
-                 hash_type,  # type: str
-                 hash_prevent_singularity=None,  # type: Optional[bool]
+                 hashing_properties=None,  # type: Optional[HashingProperties]
                  xor_folds=0,  # type: int
                  kdf_type='HKDF',  # type: str
                  kdf_hash='SHA256',  # type: str
@@ -46,17 +47,11 @@ class Schema:
                  kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
                  ):
         # type: (...) -> None
-        """ Create a Schema with fields used in v1 & v2 set.
-
-            :param version: the schema version
+        """ Create a Schema.
             :param fields: the features or field definitions
             :param l: The length of the resulting hash in bits. This is the
                 length after XOR folding.
-            :param hash_type: The hashing function to use. Choices are
-                'doubleHash' and 'blakeHash'.
-            :param hash_prevent_singularity: Ignored unless hash_type is
-                'doubleHash'. Prevents bloom filter collisions in certain
-                cases when True.
+            :param hashingProperties: global hashing properties for v1 schema or None for v2
             :param xor_folds: The number of XOR folds to perform on the hash.
             :param kdf_type: The key derivation function to use. Currently,
                 the only permitted value is 'HKDF'.
@@ -68,17 +63,13 @@ class Schema:
                 of :ref:`hkdf` for details.
             :param kdf_key_size: The size of the derived keys in bytes.
         """
-        self.version = version
+        self.version = 1 if hashing_properties else 2
         self.fields = fields
         self.l = l
-        self.k = 0  # to keep mypy happy
-        self.hash_type = hash_type
-        self.kdf_type = kdf_type
-        self.hash_prevent_singularity = (
-            False
-            if hash_prevent_singularity is None and hash_type == 'doubleHash'
-            else hash_prevent_singularity)
+        self.hashing_properties = hashing_properties
         self.xor_folds = xor_folds
+
+        self.kdf_type = kdf_type
         self.kdf_type = kdf_type
         self.kdf_hash = kdf_hash
         self.kdf_info = kdf_info
@@ -89,82 +80,6 @@ class Schema:
     def __repr__(self):
         return "<Schema (v{}): {} fields>".format(self.version, len(self.fields))
 
-
-    @staticmethod
-    def schema_v1(fields,  # type: Sequence[FieldSpec]
-                 l,  # type: int
-                 k,  # type: int
-                 hash_type,  # type: str
-                 hash_prevent_singularity=None,  # type: Optional[bool]
-                 xor_folds=0,  # type: int
-                 kdf_type='HKDF',  # type: str
-                 kdf_hash='SHA256',  # type: str
-                 kdf_info=None,  # type: Optional[bytes]
-                 kdf_salt=None,  # type: Optional[bytes]
-                 kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
-                 ):
-        # type: (...) -> Schema
-        """ Create a Schema for v1.
-
-            :param fields: the features or field definitions
-            :param l: The length of the resulting hash in bits. This is the
-                 length after XOR folding.
-            :param k: The number of bits of the hash to set per ngram.
-            :param hash_type: The hashing function to use. Choices are
-                'doubleHash' and 'blakeHash'.
-            :param hash_prevent_singularity: Ignored unless hash_type is
-                'doubleHash'. Prevents bloom filter collisions in certain
-                cases when True.
-            :param xor_folds: The number of XOR folds to perform on the hash.
-            :param kdf_type: The key derivation function to use. Currently,
-                the only permitted value is 'HKDF'.
-            :param kdf_hash: The hash function to use in key derivation. The
-                options are 'SHA256' and 'SHA512'.
-            :param kdf_info: The info for key derivation. See documentation
-                of :ref:`hkdf` for details.
-            :param kdf_salt: The salt for key derivation. See documentation
-                of :ref:`hkdf` for details.
-            :param kdf_key_size: The size of the derived keys in bytes.
-         """
-        x = Schema(1, fields, l, hash_type, hash_prevent_singularity, xor_folds, kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
-        x.k = k
-        return x
-
-    @staticmethod
-    def schema_v2(fields,  # type: Sequence[FieldSpec]
-                 l,  # type: int
-                 hash_type,  # type: str
-                 hash_prevent_singularity=None,  # type: Optional[bool]
-                 xor_folds=0,  # type: int
-                 kdf_type='HKDF',  # type: str
-                 kdf_hash='SHA256',  # type: str
-                 kdf_info=None,  # type: Optional[bytes]
-                 kdf_salt=None,  # type: Optional[bytes]
-                 kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
-                 ):
-        # type: (...) -> Schema
-        """ Create a Schema for v2.
-
-            :param fields: the features or field definitions
-            :param l: The length of the resulting hash in bits. This is the
-                length after XOR folding.
-            :param hash_type: The hashing function to use. Choices are
-                'doubleHash' and 'blakeHash'.
-            :param hash_prevent_singularity: Ignored unless hash_type is
-                'doubleHash'. Prevents bloom filter collisions in certain
-                cases when True.
-            :param xor_folds: The number of XOR folds to perform on the hash.
-            :param kdf_type: The key derivation function to use. Currently,
-                the only permitted value is 'HKDF'.
-            :param kdf_hash: The hash function to use in key derivation. The
-                options are 'SHA256' and 'SHA512'.
-            :param kdf_info: The info for key derivation. See documentation
-                of :ref:`hkdf` for details.
-            :param kdf_salt: The salt for key derivation. See documentation
-                of :ref:`hkdf` for details.
-            :param kdf_key_size: The size of the derived keys in bytes.
-        """
-        return Schema(2, fields, l, hash_type, hash_prevent_singularity, xor_folds, kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
     @staticmethod
     def from_json_dict(dict, validate=True):
@@ -190,10 +105,6 @@ class Schema:
         l = clk_config['l']
         xor_folds = clk_config.get('xor_folds', 0)
 
-        clk_hash = clk_config['hash']
-        hash_type = clk_hash['type']
-        hash_prevent_singularity = clk_hash.get('prevent_singularity')
-
         kdf = clk_config['kdf']
         kdf_type = kdf['type']
         kdf_hash = kdf.get('hash', 'SHA256')
@@ -208,15 +119,19 @@ class Schema:
         kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
 
         features = dict['features']
+
         if version == 1:
             k = clk_config['k']
+            clk_hash = clk_config['hash']
+            hash_type = clk_hash['type']
+            hash_prevent_singularity = clk_hash.get('prevent_singularity')
             fields = list(map(spec_v1_from_json_dict, features))
-            return Schema.schema_v1(fields, l, k, hash_type, hash_prevent_singularity, xor_folds,
-                                    kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
+            return Schema(fields, l, HashingProperties(k, hash_type, hash_prevent_singularity), xor_folds,
+                          kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
         elif version == 2:
             fields = list(map(spec_v2_from_json_dict, features))
-            return Schema.schema_v2(fields, l, hash_type, hash_prevent_singularity, xor_folds,
-                                    kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
+            return Schema(fields, l, None, xor_folds,
+                          kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
         else:
             msg = ('Schema version {} is not supported. '
                    'Consider updating clkhash.').format(version)

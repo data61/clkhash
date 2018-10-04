@@ -11,12 +11,14 @@ import abc
 import re
 import math
 from datetime import datetime
-from typing import Any, cast, Dict, Iterable, Optional, Text, Union
+from typing import Any, cast, Dict, Iterable, Optional, Text, Union, Sequence
 
 from future.builtins import range, super
 from six import add_metaclass
 
 from clkhash.backports import re_compile_full, strftime, raise_from
+
+from clkhash.hashing_properties import HashingProperties
 
 
 class InvalidEntryError(ValueError):
@@ -103,11 +105,26 @@ class FieldHashingProperties(object):
         self.missing_value = missing_value
 
     @abc.abstractmethod
-    def ks(self, schema, num_ngrams):
-        # type (...) -> [int]
+    def get_hashing_properties(self,
+                               hashing_properties  # type: Optional[HashingProperties]
+                               ):
+        # type: (...) -> HashingProperties
+        """
+        Get HashingProperties
+        :param hashing_properties: global HashingProperties for schema v1
+        :return: hashing_properties
+        """
+        pass
+
+    @abc.abstractmethod
+    def ks(self,
+           hashing_properties,  # type: Optional[HashingProperties]
+           num_ngrams  # type: int
+           ):
+        # type: (...) -> Sequence[int]
         """
         Provide a k for each ngram in the field value.
-        :param schema: the schema
+        :param hashing_properties: global HashingProperties for schema v1
         :param num_ngrams: number of ngrams in the field value
         :return: [ k, ... ] a k value to be used for each ngram
         """
@@ -190,18 +207,36 @@ class FieldHashingPropertiesV1(FieldHashingProperties):
 
         self.weight = weight
 
+    def get_hashing_properties(self,
+                               hashing_properties  # type: Optional[HashingProperties]
+                               ):
+        # type: (...) -> HashingProperties
+        """
+        Get global HashingProperties from param
+        :param hashing_properties: global HashingProperties for schema v1
+        :return: hashing_properties
+        """
+        if hashing_properties:
+            return hashing_properties
+        else:
+            raise ValueError('Schema v1 requires global HashingProperties')
 
-    def ks(self, schema, num_ngrams):
-        # type (...) -> [int]
+    def ks(self,
+           hashing_properties,  # type: Optional[HashingProperties]
+           num_ngrams  # type: int
+           ):
+        # type: (...) -> Sequence[int]
         """
         Provide a k for each ngram in the field value.
-        :param schema: the schema
+        :param hashing_properties: global HashingProperties for schema v1
         :param num_ngrams: number of ngrams in the field value
         :return: [ k, ... ] a k value to be used for each ngram
         """
-        k = int(round(self.weight * schema.k))
-        return [k] * num_ngrams
-
+        if hashing_properties and hashing_properties.k:
+            k = int(round(self.weight * hashing_properties.k))
+            return [k] * num_ngrams
+        else:
+            raise ValueError('Schema v1 requires global HashingProperties.k')
 
     @staticmethod
     def from_json_dict(json_dict):
@@ -238,8 +273,10 @@ class FieldHashingPropertiesV2(FieldHashingProperties):
     def __init__(self,
                  ngram,  # type: int
                  encoding=FieldHashingProperties._DEFAULT_ENCODING,  # type: str
-                 num_bits=None,
-                 k=None,
+                 hash_type = 'blakeHash',          # type: str
+                 hash_prevent_singularity = None,  # type: Optional[bool]
+                 num_bits=None,                    # type: Optional[int]
+                 k=None,                           # type: Optional[int]
                  positional=FieldHashingProperties._DEFAULT_POSITIONAL,  # type: bool
                  missing_value=None  # type: Optional[MissingValueSpec]
                  ):
@@ -249,21 +286,40 @@ class FieldHashingPropertiesV2(FieldHashingProperties):
         """
         FieldHashingProperties.__init__(self, ngram, encoding, positional, missing_value)
         # TODO: do we need to validate exactly one specified and the value is reasonable or can we rely on the schema?
+        self.hashing_properties = HashingProperties(k, hash_type, hash_prevent_singularity)
         self.num_bits = num_bits
-        self.k = k if not num_bits else None
+
+    def get_hashing_properties(self,
+                               hashing_properties  # type: Optional[HashingProperties]
+                               ):
+        # type: (...) -> HashingProperties
+        """
+        Get per field HashingProperties from this FieldHashingPropertiesV2
+        :param hashing_properties: not used, None for schema v2
+        :return: hashing_properties
+        """
+        return self.hashing_properties
 
 
-    def ks(self, schema, num_ngrams):
-        # type (...) -> [int]
+    def ks(self,
+           hashing_properties,  # type: Optional[HashingProperties]
+           num_ngrams  # type: int
+           ):
+        # type: (...) -> Sequence[int]
         """
         Provide a k for each ngram in the field value.
-        :param schema: the schema
+        :param hashing_properties: not used, None for schema v2
         :param num_ngrams: number of ngrams in the field value
         :return: [ k, ... ] a k value for each of num_ngrams such that the sum is exactly num_bits
         """
-        x = int(math.floor(self.num_bits / num_ngrams))
-        residue = self.num_bits % num_ngrams
-        return ([x + 1] * residue) + ([x] * (num_ngrams - residue))
+        if self.num_bits:
+            x = int(math.floor(self.num_bits / num_ngrams))
+            residue = self.num_bits % num_ngrams
+            return ([x + 1] * residue) + ([x] * (num_ngrams - residue))
+        elif self.hashing_properties.k:
+            return [self.hashing_properties.k] * num_ngrams
+        else:
+            raise ValueError('One of num_bits or k must be specified.')
 
     @staticmethod
     def from_json_dict(json_dict):
@@ -278,8 +334,10 @@ class FieldHashingPropertiesV2(FieldHashingProperties):
             :return: A :class:`FieldHashingPropertiesV2` instance.
         """
         result = cast(FieldHashingPropertiesV2, FieldHashingPropertiesV2._from_json_dict(json_dict))
-        result.num_bits = json_dict.get('numBits', None)
-        result.k = json_dict.get('k', None)
+        result.num_bits = json_dict.get('numBits', 0)
+        hash_cfg = json_dict.get('hash', {'type': 'blakeHash'})
+        result.hashing_properties = HashingProperties(json_dict.get('k'), hash_cfg['type'],
+                                                      hash_cfg.get('prevent_singularity'))
         return result
 
 

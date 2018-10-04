@@ -3,9 +3,6 @@
   "version": 2,
   "clkConfig": {
     "l": 1024,
-    "hash": {
-      "type": "doubleHash"
-    },
     "kdf": {
       "type": "HKDF",
       "hash": "SHA256",
@@ -24,8 +21,9 @@
         "case": "upper"
       },
       "hashing": {
+        "hash": {"type": "doubleHash"},
         "ngram": 2,
-        "bitsPerToken": 200
+        "numBits": 200
       }
     },
     {
@@ -38,6 +36,7 @@
         "description": "comma separated list of middle names"
       },
       "hashing": {
+        "hash": {"type": "blakeHash"},
         "ngram": 2,
         "k": 20
       }

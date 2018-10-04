@@ -21,7 +21,7 @@
   "definitions": {
     "clkConfig": {
       "type": "object",
-      "required": ["l", "kdf", "hash"],
+      "required": ["l", "kdf"],
       "properties": {
         "l": {
           "type": "integer",
@@ -40,30 +40,7 @@
           "oneOf": [
             {"$ref": "#/definitions/hkdf"}
           ]
-        },
-        "hash": {
-          "type": "object",
-          "oneOf": [
-            {"$ref": "#/definitions/doubleHash"},
-            {"$ref": "#/definitions/blakeHash"}
-          ],
-          "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
         }
-      }
-    },
-    "doubleHash": {
-      "type": "object",
-      "required": ["type"],
-      "properties": {
-        "type": {"enum": ["doubleHash"]},
-        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/n1analytics/clkhash/issues/33"}
-      }
-    },
-    "blakeHash": {
-      "type": "object",
-      "required": ["type"],
-      "properties": {
-        "type": {"enum": ["blakeHash"]}
       }
     },
     "hkdf": {
@@ -161,6 +138,12 @@
       "type": "object",
       "required": ["ngram"],
       "properties": {
+        "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
+            {"$ref": "#/definitions/doubleHash"},
+            {"$ref": "#/definitions/blakeHash"}
+          ],
+          "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
+        },
         "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf": [
           {"numBits": {"type": "number", "minimum": 1, "default": 200, "description": "dynamic k = numBits / number of n-grams"}},
           {"k": {"type": "number", "minimum": 1, "default": 20, "description": "max number of bits per n-gram"}}
@@ -168,6 +151,21 @@
         "ngram": {"type": "integer", "minimum": 0, "default": 2},
         "positional": {"type": "boolean", "default": false},
         "missingValue": {"$ref": "#/definitions/missingValue"}
+      }
+    },
+    "doubleHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["doubleHash"]},
+        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/n1analytics/clkhash/issues/33"}
+      }
+    },
+    "blakeHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["blakeHash"]}
       }
     },
     "missingValue": {
@@ -180,3 +178,4 @@
     }
   }
 }
+

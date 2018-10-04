@@ -6,6 +6,7 @@ from future.builtins import zip
 from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE
 from clkhash.schema import Schema
+from clkhash.hashing_properties import HashingProperties
 from clkhash.field_formats import FieldHashingProperties, FieldHashingPropertiesV1, StringSpec
 
 class TestKeyDerivation(unittest.TestCase):
@@ -42,17 +43,15 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_compare_to_legacy(self):
         # Identifier: 'ANY freetext'
-        schema = Schema.schema_v1(
-            k=10,
+        schema = Schema(
+            l=1024,
+            hashing_properties=HashingProperties(k=10, hash_type='doubleHash', hash_prevent_singularity=False),
+            xor_folds=0,
             kdf_hash='SHA256',
             kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
             kdf_key_size=64,
             kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
             kdf_type='HKDF',
-            l=1024,
-            hash_type='doubleHash',
-            hash_prevent_singularity=False,
-            xor_folds=0,
             fields=[
                 StringSpec(
                     identifier='ANY text 1',
@@ -118,7 +117,7 @@ class TestKeyDerivation(unittest.TestCase):
         hkdf_count = bloom_hkdf[0].count()
         legacy_count = bloom_legacy[0].count()
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
-        self.assertLessEqual(legacy_count, schema.k * 6) # 6 bi-grams
+        self.assertLessEqual(legacy_count, schema.hashing_properties.k * 6) # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 
