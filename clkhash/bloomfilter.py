@@ -19,7 +19,7 @@ from future.builtins import range, zip
 from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
 from clkhash.schema import Schema
-from clkhash.field_formats import FieldHashingProperties
+from clkhash.field_formats import FieldHashingProperties, Ignore
 from clkhash.hashing_properties import HashingProperties
 from typing import Optional, Sequence, Text
 
@@ -248,7 +248,6 @@ class NgramEncodings(Enum):
         :return: the hashing function
         """
         hp = fhp.get_hashing_properties(hpv1)
-        print('NgramEncodings.from_properties: hp =', hp)
         if hp.hash_type == 'doubleHash':
             if hp.hash_prevent_singularity:
                 return cls.DOUBLE_HASH_NON_SINGULAR
@@ -322,12 +321,13 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
 
     for (entry, tokenize, field, key) \
             in zip(record, tokenizers, schema.fields, keys):
-        ngrams = [n for n in tokenize(field.format_value(entry))]
-        field_hash_props = field.hashing_properties
-        hash_function = NgramEncodings.from_properties(schema.hashing_properties, field_hash_props)
-        bloomfilter |= hash_function(ngrams, key,
-                                     field_hash_props.ks(schema.hashing_properties, len(ngrams)),
-                                     hash_l, field_hash_props.encoding)
+        if not type(field) is Ignore:
+            ngrams = [n for n in tokenize(field.format_value(entry))]
+            field_hash_props = field.hashing_properties
+            hash_function = NgramEncodings.from_properties(schema.hashing_properties, field_hash_props)
+            bloomfilter |= hash_function(ngrams, key,
+                                         field_hash_props.ks(schema.hashing_properties, len(ngrams)),
+                                         hash_l, field_hash_props.encoding)
 
     bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
     return bloomfilter, record[0], bloomfilter.count()

@@ -24,7 +24,7 @@ class TestSchemaValidation(unittest.TestCase):
             s = Schema.from_json_file(f)
         schema_repr = repr(s)
         assert "v1" in schema_repr
-        assert "11 fields" in schema_repr
+        assert "12 fields" in schema_repr
 
     def test_invalid_schema(self):
         # This schema is not valid (missing encoding in its feature).
@@ -78,10 +78,9 @@ class TestSchemaValidation(unittest.TestCase):
     def test_good_schema2_repr(self):
         with open(_test_data_file_path('good-schema-v2.json')) as f:
             s = Schema.from_json_file(f)
-            # print('schema type: ', type(s))
         schema_repr = repr(s)
         assert "v2" in schema_repr
-        assert "11 fields" in schema_repr
+        assert "12 fields" in schema_repr
 
 
 class TestSchemaLoading(unittest.TestCase):

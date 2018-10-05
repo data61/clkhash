@@ -1,12 +1,80 @@
 import base64
 import unittest
+import os
+from math import sqrt
 
 from clkhash import bloomfilter, clk, randomnames
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.hashing_properties import HashingProperties
 from clkhash.field_formats import FieldHashingPropertiesV1, StringSpec
+from clkhash.serialization import deserialize_bitarray
 
+
+class OnlineVariance(object):
+    """
+    Welford's algorithm computes the sample variance incrementally.
+    From: https://stackoverflow.com/questions/5543651/computing-standard-deviation-in-a-stream
+    """
+
+    def __init__(self, iterable=None, ddof=1):
+        self.ddof, self.n, self.mean, self.M2 = ddof, 0, 0.0, 0.0
+        if iterable is not None:
+            for datum in iterable:
+                self.include(datum)
+
+    def include(self, datum):
+        self.n += 1
+        self.delta = datum - self.mean
+        self.mean += self.delta / self.n
+        self.M2 += self.delta * (datum - self.mean)
+
+    @property
+    def variance(self):
+        return self.M2 / (self.n - self.ddof)
+
+    @property
+    def std(self):
+        return sqrt(self.variance)
+
+
+TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
+
+def _test_data_file_path(file_name):
+    return os.path.join(TEST_DATA_DIRECTORY, file_name)
+
+def _test_schema(file_name):
+    with open(_test_data_file_path(file_name)) as f:
+        return Schema.from_json_file(f)
+
+
+class TestV2(unittest.TestCase):
+
+    def test_compare_v1_and_v2(self):
+        pii = randomnames.NameList(100).names
+        schema_v1 = randomnames.NameList.SCHEMA
+        # this v2 schema should be equivalent to the above v1 schema
+        schema_v2 = _test_schema('randomnames-schema-v2.json')
+        keys = ('secret', 'sshh')
+        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, keys), clk.generate_clks(pii, schema_v2, keys)):
+            self.assertEqual(clkv1, clkv2)
+
+    def test_compare_k_and_num_bits(self):
+        pii = randomnames.NameList(100).names
+        keys = ('secret', 'sshh')
+        def stats(schema):
+            counts = (deserialize_bitarray(clk).count() for clk in clk.generate_clks(pii, schema, keys))
+            ov = OnlineVariance(counts)
+            return ov.mean, ov.std
+
+        schema_k = _test_schema('randomnames-schema-v2.json')
+        mean_k, std_k = stats(schema_k)
+        print('test_compare_k_and_num_bits k: ', mean_k, std_k)
+
+        schema_num_bits = _test_schema('randomnames-schema-num-bits-v2.json')
+        mean_num_bits, std_num_bits = stats(schema_num_bits)
+        print('test_compare_k_and_num_bits num_bits: ', mean_num_bits, std_num_bits)
+        # self.assertGreater(std_k, std_num_bits)
 
 class TestNamelistHashable(unittest.TestCase):
     def test_namelist_hashable(self):

@@ -17,6 +17,10 @@
   },
   "features": [
     {
+      "identifier": "id",
+      "ignored": true
+    },
+    {
       "identifier": "firstName",
       "format": {
         "type": "string",
