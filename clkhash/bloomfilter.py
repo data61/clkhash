@@ -208,38 +208,17 @@ def blake_encode_ngrams(ngrams,  # type: Iterable[str]
     return bf
 
 
-class NgramEncodings(Enum):
-    """ The available schemes for encoding n-grams.
-
-    ..
-      the slightly awkward looking construction with the calls to partial and the overwrite of __call__ are due to
-      compatibility issues with Python 2.7.
-    """
-    DOUBLE_HASH = partial(double_hash_encode_ngrams)
-    """ the initial encoding scheme as described in Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel
-    Error-Tolerant Anonymous Linking Code. Also see :meth:`double_hash_encode_ngrams`"""
-    BLAKE_HASH = partial(blake_encode_ngrams)
-    """ uses the BLAKE2 hash function, which is one of the fastest modern hash functions, and does less hash function
-    calls compared to the DOUBLE_HASH based schemes. It avoids one of the exploitable weaknesses of the DOUBLE_HASH
-    scheme. Also see :meth:`blake_encode_ngrams`"""
-    DOUBLE_HASH_NON_SINGULAR = partial(double_hash_encode_ngrams_non_singular)
-    """ very similar to DOUBLE_HASH, but avoids singularities in the encoding. Also see
-    :meth:`double_hash_encode_ngrams_non_singular`"""
-
-    def __call__(self, *args):
-        return self.value(*args)
-
 def hashing_function_from_properties(
                     properties  # type: GlobalHashingProperties
                     ):
     # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
     if properties.hash_type == 'doubleHash':
         if properties.hash_prevent_singularity:
-            return double_hash_encode_ngrams_non_singular # NgramEncodings.DOUBLE_HASH_NON_SINGULAR
+            return double_hash_encode_ngrams_non_singular
         else:
-            return double_hash_encode_ngrams # NgramEncodings.DOUBLE_HASH
+            return double_hash_encode_ngrams
     elif properties.hash_type == 'blakeHash':
-        return blake_encode_ngrams # NgramEncodings.BLAKE_HASH
+        return blake_encode_ngrams
     else:
         msg = "Unsupported hash type '{}'".format(properties.hash_type)
         raise ValueError(msg)
