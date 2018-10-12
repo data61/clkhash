@@ -4,12 +4,9 @@
 Generate a Bloom filter
 """
 
-import base64
 import hmac
 import math
 import struct
-from enum import Enum
-from functools import partial
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
