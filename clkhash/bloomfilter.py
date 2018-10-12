@@ -7,12 +7,10 @@ Generate a Bloom filter
 import hmac
 import math
 import struct
-
 from enum import Enum
 from functools import partial
 from hashlib import md5, sha1
-from typing import Callable, Iterable, List, Sequence, Text, Tuple
-
+from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
 from future.builtins import range, zip
 
@@ -30,27 +28,27 @@ except ImportError:
     # blake2b is already defined.
 
 
-def double_hash_encode_ngrams(ngrams,  # type: Iterable[str]
-                              keys,  # type: Sequence[bytes]
-                              k,  # type: int
-                              l,  # type: int
+def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
+                              keys,     # type: Sequence[bytes]
+                              k,        # type: int
+                              l,        # type: int
                               encoding  # type: str
                               ):
     # type: (...) -> bitarray
-    """ Computes the double hash encoding of the provided ngrams with the
-    given keys.
+    """
+    Computes the double hash encoding of the ngrams with the given keys.
 
-        Using the method from
-        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+    Using the method from
+    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
-        :param ngrams: list of n-grams to be encoded
-        :param keys: hmac secret keys for md5 and sha1 as bytes
-        :param k: number of hash functions to use for each ngram
-        :param l: length of the output bitarray
-        :param encoding: the encoding to use when turning the ngrams to bytes
+    :param ngrams: list of n-grams to be encoded
+    :param keys: hmac secret keys for md5 and sha1 as bytes
+    :param k: number of hash functions to use for each ngram
+    :param l: length of the output bitarray
+    :param encoding: the encoding to use when turning the ngrams to bytes
 
-        :return: bitarray of length l with the bits set which correspond to
-        the encoding of the ngrams
+    :return: bitarray of length l with the bits set which correspond to
+    the encoding of the ngrams
     """
     key_sha1, key_md5 = keys
     bf = bitarray(l)
@@ -69,16 +67,15 @@ def double_hash_encode_ngrams(ngrams,  # type: Iterable[str]
     return bf
 
 
-def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
-                                           keys,  # type: Sequence[bytes]
-                                           k,  # type: int
-                                           l,  # type: int
+def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
+                                           keys,     # type: Sequence[bytes]
+                                           k,        # type: int
+                                           l,        # type: int
                                            encoding  # type: str
                                            ):
     # type: (...) -> bitarray.bitarray
     """
-    computes the double hash encoding of the provided n-grams with the given
-    keys.
+    computes the double hash encoding of the n-grams with the given keys.
 
     The original construction of [Schnell2011]_ displays an abnormality for
     certain inputs:
@@ -144,16 +141,15 @@ def double_hash_encode_ngrams_non_singular(ngrams,  # type: Iterable[str]
     return bf
 
 
-def blake_encode_ngrams(ngrams,  # type: Iterable[str]
-                        keys,  # type: Sequence[bytes]
-                        k,  # type:  int
-                        l,  # type: int
+def blake_encode_ngrams(ngrams,   # type: Iterable[str]
+                        keys,     # type: Sequence[bytes]
+                        k,        # type: int
+                        l,        # type: int
                         encoding  # type: str
                         ):
     # type: (...) -> bitarray.bitarray
     """
-    Computes the encoding of the provided ngrams using the BLAKE2 hash
-    function.
+    Computes the encoding of the ngrams using the BLAKE2 hash function.
 
     We deliberately do not use the double hashing scheme as proposed in [
     Schnell2011]_, because this
@@ -295,7 +291,7 @@ def hashing_function_from_properties(
 
 
 def fold_xor(bloomfilter,  # type: bitarray
-             folds  # type: int
+             folds         # type: int
              ):
     # type: (...) -> bitarray
     """ Performs XOR folding on a Bloom filter.
@@ -325,11 +321,10 @@ def fold_xor(bloomfilter,  # type: bitarray
     return bloomfilter
 
 
-def crypto_bloom_filter(record,  # type: Sequence[Text]
-                        tokenizers,
-                        # type: List[Callable[[Text], Iterable[Text]]]
-                        schema,  # type: Schema
-                        keys  # type: Sequence[Sequence[bytes]]
+def crypto_bloom_filter(record,      # type: Sequence[Text]
+                        tokenizers,  # type: List[Callable[[Text, Optional[Text]], Iterable[Text]]]
+                        schema,      # type: Schema
+                        keys         # type: Sequence[Sequence[bytes]]
                         ):
     # type: (...) -> Tuple[bitarray, Text, int]
     """ Computes the composite Bloom filter encoding of a record.
@@ -369,8 +364,8 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
 
 
 def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
-                         keys,  # type: Sequence[Sequence[bytes]]
-                         schema  # type: Schema
+                         keys,     # type: Sequence[Sequence[bytes]]
+                         schema    # type: Schema
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
     """ Compute composite Bloom filters (CLKs) for every record in an

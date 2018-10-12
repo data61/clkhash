@@ -93,9 +93,10 @@ class TestEncoding(unittest.TestCase):
 
 class TestNgramEncodings(unittest.TestCase):
     def test_from_properties_invalid_hash(self):
-        # <- this is invalid.
-        fhp = FieldHashingProperties(ngram=2, k=30,
-                                     hash_type='jakubHash')
+        fhp = FieldHashingProperties(
+            ngram=2, k=30,
+            hash_type='jakubHash'  # <- this is invalid.
+        )
         with self.assertRaises(
                 ValueError,
                 msg='Expected ValueError on invalid encoding.'):

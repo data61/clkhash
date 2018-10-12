@@ -51,8 +51,8 @@ class MissingValueSpec(object):
                  ):
         # type: (...) -> None
         self.sentinel = sentinel
-        self.replace_with = replace_with if replace_with is not None \
-            else sentinel
+        self.replace_with = (replace_with if replace_with is not None
+                             else sentinel)
 
     @classmethod
     def from_json_dict(cls, json_dict):
@@ -64,8 +64,10 @@ class MissingValueSpec(object):
 
 
 class FieldHashingProperties(object):
-    """ Stores the settings used to hash a field. This includes the
-        encoding and tokenisation parameters.
+    """
+    Stores the settings used to hash a field.
+
+    This includes the encoding and tokenisation parameters.
 
         :ivar str encoding: The encoding to use when converting the
             string to bytes. Refer to
@@ -83,13 +85,13 @@ class FieldHashingProperties(object):
 
     def __init__(self,
                  ngram,  # type: int
-                 encoding=_DEFAULT_ENCODING,  # type: str
+                 encoding=_DEFAULT_ENCODING,      # type: str
                  positional=_DEFAULT_POSITIONAL,  # type: bool
-                 hash_type='blakeHash',  # type: str
-                 prevent_singularity=None,  # type: Optional[bool]
-                 num_bits=None,  # type: Optional[int]
-                 k=None,  # type: Optional[int]
-                 missing_value=None  # type: Optional[MissingValueSpec]
+                 hash_type='blakeHash',           # type: str
+                 prevent_singularity=None,        # type: Optional[bool]
+                 num_bits=None,                   # type: Optional[int]
+                 k=None,                          # type: Optional[int]
+                 missing_value=None               # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
@@ -130,8 +132,8 @@ class FieldHashingProperties(object):
         :param num_ngrams: number of ngrams in the field value
         :return: k
         """
-        return int(round(self.num_bits / num_ngrams)) if self.num_bits \
-            else (self.k if self.k else 0)
+        return (int(round(self.num_bits / num_ngrams)) if self.num_bits
+                else (self.k if self.k else 0))
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
@@ -154,8 +156,8 @@ def fhp_from_json_dict(
         json_dict  # type: Dict[str, Any]
     ):
     # type: (...) -> FieldHashingProperties
-    """ Make a :class:`FieldHashingProperties` object from a
-        dictionary.
+    """
+    Make a :class:`FieldHashingProperties` object from a dictionary.
 
         :param dict json_dict:
             The dictionary must have have an 'ngram' key

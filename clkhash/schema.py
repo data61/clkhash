@@ -14,11 +14,9 @@ from copy import deepcopy
 import jsonschema
 from future.builtins import map
 
-
 from clkhash.backports import raise_from
 from clkhash.field_formats import FieldSpec, spec_from_json_dict
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
-
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
                             2: 'v2.json'}  # type: Dict[Hashable, Text]
@@ -40,13 +38,13 @@ class Schema:
     """
 
     def __init__(self,
-                 fields,  # type: Sequence[FieldSpec]
-                 l,  # type: int
-                 xor_folds=0,  # type: int
-                 kdf_type='HKDF',  # type: str
-                 kdf_hash='SHA256',  # type: str
-                 kdf_info=None,  # type: Optional[bytes]
-                 kdf_salt=None,  # type: Optional[bytes]
+                 fields,                            # type: Sequence[FieldSpec]
+                 l,                                 # type: int
+                 xor_folds=0,                       # type: int
+                 kdf_type='HKDF',                   # type: str
+                 kdf_hash='SHA256',                 # type: str
+                 kdf_info=None,                     # type: Optional[bytes]
+                 kdf_salt=None,                     # type: Optional[bytes]
                  kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
                  ):
         # type: (...) -> None
@@ -103,22 +101,21 @@ def convert_v1_to_v2(
 
         hashing = f['hashing']
         weight = hashing.get('weight', 1.0)
-        ngram = hashing['ngram']
 
-        if weight == 0 or ngram == 0:
+        if weight == 0:
             return {
                 'identifier': f['identifier'],
                 'ignored': True
             }
 
-        result = deepcopy(f)
-        hashing = result['hashing']
+        x = deepcopy(f)
+        hashing = x['hashing']
         if 'weight' in hashing:
             del hashing['weight']
 
         hashing['k'] = int(round(weight * k))
         hashing['hash'] = clk_hash
-        return result
+        return x
 
     result = {
         'version': 2,
@@ -132,11 +129,11 @@ def convert_v1_to_v2(
     return result
 
 
-def from_json_dict(dict, validate=True):
+def from_json_dict(dct, validate=True):
     # type: (Dict[str, Any], bool) -> Schema
-    """ Create a Schema for v1 or v2 according to dict
+    """ Create a Schema for v1 or v2 according to dct
 
-    :param dict: This dictionary must have a `'features'`
+    :param dct: This dictionary must have a `'features'`
             key specifying the columns of the dataset. It must have
             a `'version'` key containing the master schema version
             that this schema conforms to. It must have a `'hash'`
@@ -147,19 +144,19 @@ def from_json_dict(dict, validate=True):
     """
     if validate:
         # This raises iff the schema is invalid.
-        validate_schema_dict(dict)
+        validate_schema_dict(dct)
 
-    version = dict['version']
+    version = dct['version']
     if version == 1:
-        dict = convert_v1_to_v2(dict)
+        dct = convert_v1_to_v2(dct)
         if validate:
-            validate_schema_dict(dict)
+            validate_schema_dict(dct)
     elif version != 2:
         msg = ('Schema version {} is not supported. '
                'Consider updating clkhash.').format(version)
         raise SchemaError(msg)
 
-    clk_config = dict['clkConfig']
+    clk_config = dct['clkConfig']
     l = clk_config['l']
     xor_folds = clk_config.get('xor_folds', 0)
 
@@ -176,9 +173,7 @@ def from_json_dict(dict, validate=True):
                 else None)
     kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
 
-    features = dict['features']
-
-    fields = list(map(spec_from_json_dict, features))
+    fields = list(map(spec_from_json_dict, dct['features']))
     return Schema(fields, l, xor_folds,
                   kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
