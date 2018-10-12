@@ -36,8 +36,10 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     # type: (...) -> bitarray
     """ Computes the double hash encoding of the provided ngrams with the given keys.
 
-        Using the method from
-        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+        Using the method from:
+        Schnell, R., Bachteler, T., & Reiher, J. (2011).
+        A Novel Error-Tolerant Anonymous Linking Code.
+        http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
 
         :param ngrams: list of n-grams to be encoded
         :param keys: hmac secret keys for md5 and sha1 as bytes
