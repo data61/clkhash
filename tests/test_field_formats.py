@@ -16,15 +16,15 @@ class TestFieldFormats(unittest.TestCase):
                 pattern=r'[5-9',  # This is syntactically incorrect.
                 description='foo'),
             hashing=dict(
-                ngram=1))
+                ngram=1, k=20))
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
-            field_formats.spec_v1_from_json_dict(regex_spec)
+            field_formats.spec_from_json_dict(regex_spec)
 
         # Ok, let's fix it. This should not raise.
         regex_spec['format']['pattern'] = r'dog(.dog)*'
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # Ensure we accept these.
         spec.validate('dog')
@@ -50,11 +50,11 @@ class TestFieldFormats(unittest.TestCase):
         # Finally, check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='null')
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
         # validating the sentinel should work
         spec.validate('null')
         self.assertTrue(spec.is_missing_value('null'))
@@ -63,7 +63,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual('dog', spec.hashing_properties.replace_missing_value('dog'))
         # now with replaceWith value
         regex_spec['hashing']['missingValue']['replaceWith'] = 'cat'
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
         self.assertEqual('cat', spec.hashing_properties.replace_missing_value('null'))
 
     def test_string_nonregex_from_json_dict(self):
@@ -77,9 +77,9 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # The min and max lengths should be None.
         self.assertIsNone(spec.min_length)
@@ -92,7 +92,7 @@ class TestFieldFormats(unittest.TestCase):
         # Ok, let's put a 'minLength' and 'maxLength' in.
         spec_dict['format']['minLength'] = 5
         spec_dict['format']['maxLength'] = 8
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are not fine anymore.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -119,17 +119,17 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
-        self.assertEqual(spec.hashing_properties.weight, 0)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         spec_dict['hashing']['missingValue'] = dict(sentinel='N/A')
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
         # validating the sentinel should work
         spec.validate('N/A')
 
     def test_string_nonregex_init(self):
-        hashing_properties = field_formats.FieldHashingPropertiesV1(
-            ngram=2, encoding='utf-8')
+        hashing_properties = field_formats.FieldHashingProperties(
+            ngram=2, k=20)
         spec = field_formats.StringSpec(
             identifier='first name',
             hashing_properties=hashing_properties,
@@ -158,9 +158,9 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are fine since the default encoding is utf-8.
         spec.validate('dogs')
@@ -178,9 +178,9 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are fine since the default encoding is utf-8.
         spec.validate('fur')
@@ -202,10 +202,10 @@ class TestFieldFormats(unittest.TestCase):
                 type='integer',
                 description='buzz'),
             hashing=dict(
-                ngram=1,
+                ngram=1, k=20,
                 positional=True))
 
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # `minimum` and `maximum` should be None.
         self.assertIsNone(spec.minimum)
@@ -232,7 +232,7 @@ class TestFieldFormats(unittest.TestCase):
         # Ok, let's put a 'minimum' and 'maximum' in.
         regex_spec['format']['minimum'] = 8
         regex_spec['format']['maximum'] = 12
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # These are too small, thus invalid.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -259,11 +259,11 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
         # validating the sentinel should work
         spec.validate('None')
         self.assertEqual('42', spec.hashing_properties.replace_missing_value('None'))
@@ -277,10 +277,9 @@ class TestFieldFormats(unittest.TestCase):
                 description='phoenix dactylifera'),
             hashing=dict(
                 ngram=0,
-                positional=False,
-                weight=1))
+                k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
 
         # These are valid dates.
         spec.validate('1946-06-14')
@@ -346,7 +345,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 0)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check for graceful fail if format spec is invalid
         spec.format = 'invalid%'
@@ -359,9 +358,9 @@ class TestFieldFormats(unittest.TestCase):
             format=dict(
                 type='date',
                 format='%Y:%m-%d'),
-            hashing=dict(ngram=0))
+            hashing=dict(ngram=0, k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(regex_spec)
         from datetime import date
         from clkhash.field_formats import DateSpec
         d = date.today()
@@ -376,10 +375,9 @@ class TestFieldFormats(unittest.TestCase):
                 description='fizz'),
             hashing=dict(
                 ngram=2,
-                positional=False,
-                weight=2.57))
+                k=20))
 
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
 
         # These are fine.
         spec.validate('dogs')
@@ -403,11 +401,11 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 2)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 2.57)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check missing values
         spec_dict['hashing']['missingValue']=dict(sentinel='', replaceWith='omg')
-        spec = field_formats.spec_v1_from_json_dict(spec_dict)
+        spec = field_formats.spec_from_json_dict(spec_dict)
         # that's the sentinel for missing values
         spec.validate('')
         # check the missing value related functions in spec

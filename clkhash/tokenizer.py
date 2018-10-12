@@ -43,7 +43,12 @@ def tokenize(n, positional, word, ignore=None):
         return (word[i:i + n] for i in range(len(word) - n + 1))
 
 
-def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties
+def _null_tokenizer(n, positional, word, ignore=None):
+    # type: (int, bool, Text, Optional[Text]) -> Iterable[Text]
+    return ('' for i in range(0))
+
+
+def get_tokenizer(fhp  # type: Optional[field_formats.FieldHashingProperties]
                   ):
     # type: (...) -> Callable[[Text], Iterable[Text]]
     """ Get tokeniser function from the hash settings.
@@ -51,7 +56,6 @@ def get_tokenizer(hash_settings  # type: field_formats.FieldHashingProperties
         This function takes a FieldHashingProperties object. It returns a
         function that takes a string and tokenises based on those properties.
     """
-    n = hash_settings.ngram
-    p = hash_settings.positional
+    return functools.partial(tokenize, fhp.ngram, fhp.positional) if fhp \
+        else functools.partial(_null_tokenizer, 0, 0)
 
-    return functools.partial(tokenize, n, p)

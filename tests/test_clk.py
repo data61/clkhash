@@ -92,7 +92,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
                         positional=True))])
         KEYS = ('chicken', 'nuggets')
 
-        loaded_schema = schema.Schema.from_json_dict(SCHEMA_DICT)
+        loaded_schema = schema.from_json_dict(SCHEMA_DICT)
 
         results = clk.generate_clk_from_csv(
             CSV_INPUT,

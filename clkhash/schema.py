@@ -9,15 +9,19 @@ import base64
 import json
 import pkgutil
 from typing import Any, Dict, Hashable, Optional, Sequence, Text, TextIO
+from copy import deepcopy
 
 import jsonschema
 from future.builtins import map
 
-from clkhash.backports import raise_from
 
-from clkhash.field_formats import FieldSpec, spec_v1_from_json_dict, spec_v2_from_json_dict
+from clkhash.backports import raise_from
+from clkhash.field_formats import FieldSpec, spec_from_json_dict
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
-from clkhash.hashing_properties import HashingProperties
+
+
+MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
+                            2: 'v2.json'}  # type: Dict[Hashable, Text]
 
 
 class SchemaError(Exception):
@@ -32,13 +36,12 @@ class MasterSchemaError(Exception):
 
 
 class Schema:
-    
-    MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json', 2: 'v2.json'}  # type: Dict[Hashable, Text]
+    """Linkage Schema which describes how to encode plaintext identifiers.
+    """
 
     def __init__(self,
                  fields,  # type: Sequence[FieldSpec]
                  l,  # type: int
-                 hashing_properties=None,  # type: Optional[HashingProperties]
                  xor_folds=0,  # type: int
                  kdf_type='HKDF',  # type: str
                  kdf_hash='SHA256',  # type: str
@@ -51,7 +54,6 @@ class Schema:
             :param fields: the features or field definitions
             :param l: The length of the resulting hash in bits. This is the
                 length after XOR folding.
-            :param hashingProperties: global hashing properties for v1 schema or None for v2
             :param xor_folds: The number of XOR folds to perform on the hash.
             :param kdf_type: The key derivation function to use. Currently,
                 the only permitted value is 'HKDF'.
@@ -63,10 +65,8 @@ class Schema:
                 of :ref:`hkdf` for details.
             :param kdf_key_size: The size of the derived keys in bytes.
         """
-        self.version = 1 if hashing_properties else 2
         self.fields = fields
         self.l = l
-        self.hashing_properties = hashing_properties
         self.xor_folds = xor_folds
 
         self.kdf_type = kdf_type
@@ -76,161 +76,205 @@ class Schema:
         self.kdf_salt = kdf_salt
         self.kdf_key_size = kdf_key_size
 
-
     def __repr__(self):
-        return "<Schema (v{}): {} fields>".format(self.version, len(self.fields))
+        return "<Schema (v2): {} fields>".format(len(self.fields))
 
 
-    @staticmethod
-    def from_json_dict(dict, validate=True):
-        # type: (Dict[str, Any], bool) -> Schema
-        """ Create a Schema for v1 or v2 according to dict
+def convert_v1_to_v2(
+        dict  # type: Dict[str, Any]
+    ):
+    # type: (...) -> Dict[str, Any]
+    """
+    Convert v1 schema dict to v2 schema dict.
+    :param dict: v1 schema dict
+    :return: v2 schema dict
+    """
+    version = dict['version']
+    if version != 1:
+        raise ValueError('Version {} not 1'.format(version))
 
-        :param dict: This dictionary must have a `'features'`
-                key specifying the columns of the dataset. It must have
-                a `'version'` key containing the master schema version
-                that this schema conforms to. It must have a `'hash'`
-                key with all the globals.
-        :param validate: (default True) Raise an exception if the
-                schema does not conform to the master schema.
-        :return: the Schema
-        """
+    clk_config = dict['clkConfig']
+    k = clk_config['k']
+    clk_hash = clk_config['hash']
+
+    def convert_feature(f):
+        if 'ignored' in f:
+            return f
+
+        hashing = f['hashing']
+        weight = hashing.get('weight', 1.0)
+        ngram = hashing['ngram']
+
+        if weight == 0 or ngram == 0:
+            return {
+                'identifier': f['identifier'],
+                'ignored': True
+            }
+
+        result = deepcopy(f)
+        hashing = result['hashing']
+        if 'weight' in hashing:
+            del hashing['weight']
+
+        hashing['k'] = int(round(weight * k))
+        hashing['hash'] = clk_hash
+        return result
+
+    result = {
+        'version': 2,
+        'clkConfig': {
+            'l': clk_config['l'],
+            'xor_folds': clk_config.get('xor_folds', 0),
+            'kdf': clk_config['kdf']
+        },
+        'features': list(map(convert_feature, dict['features']))
+    }
+    return result
+
+
+def from_json_dict(dict, validate=True):
+    # type: (Dict[str, Any], bool) -> Schema
+    """ Create a Schema for v1 or v2 according to dict
+
+    :param dict: This dictionary must have a `'features'`
+            key specifying the columns of the dataset. It must have
+            a `'version'` key containing the master schema version
+            that this schema conforms to. It must have a `'hash'`
+            key with all the globals.
+    :param validate: (default True) Raise an exception if the
+            schema does not conform to the master schema.
+    :return: the Schema
+    """
+    if validate:
+        # This raises iff the schema is invalid.
+        validate_schema_dict(dict)
+
+    version = dict['version']
+    if version == 1:
+        dict = convert_v1_to_v2(dict)
         if validate:
-            # This raises iff the schema is invalid.
-            Schema.validate_schema_dict(dict)
+            validate_schema_dict(dict)
+    elif version != 2:
+        msg = ('Schema version {} is not supported. '
+               'Consider updating clkhash.').format(version)
+        raise SchemaError(msg)
 
-        version = dict['version']
+    clk_config = dict['clkConfig']
+    l = clk_config['l']
+    xor_folds = clk_config.get('xor_folds', 0)
 
-        clk_config = dict['clkConfig']
-        l = clk_config['l']
-        xor_folds = clk_config.get('xor_folds', 0)
+    kdf = clk_config['kdf']
+    kdf_type = kdf['type']
+    kdf_hash = kdf.get('hash', 'SHA256')
+    kdf_info_string = kdf.get('info')
+    kdf_info = (base64.b64decode(kdf_info_string)
+                if kdf_info_string is not None
+                else None)
+    kdf_salt_string = kdf.get('salt')
+    kdf_salt = (base64.b64decode(kdf_salt_string)
+                if kdf_salt_string is not None
+                else None)
+    kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
 
-        kdf = clk_config['kdf']
-        kdf_type = kdf['type']
-        kdf_hash = kdf.get('hash', 'SHA256')
-        kdf_info_string = kdf.get('info')
-        kdf_info = (base64.b64decode(kdf_info_string)
-                           if kdf_info_string is not None
-                           else None)
-        kdf_salt_string = kdf.get('salt')
-        kdf_salt = (base64.b64decode(kdf_salt_string)
-                           if kdf_salt_string is not None
-                           else None)
-        kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
+    features = dict['features']
 
-        features = dict['features']
-
-        if version == 1:
-            k = clk_config['k']
-            clk_hash = clk_config['hash']
-            hash_type = clk_hash['type']
-            hash_prevent_singularity = clk_hash.get('prevent_singularity')
-            fields = list(map(spec_v1_from_json_dict, features))
-            return Schema(fields, l, HashingProperties(k, hash_type, hash_prevent_singularity), xor_folds,
-                          kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
-        elif version == 2:
-            fields = list(map(spec_v2_from_json_dict, features))
-            return Schema(fields, l, None, xor_folds,
-                          kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
-        else:
-            msg = ('Schema version {} is not supported. '
-                   'Consider updating clkhash.').format(version)
-            raise SchemaError(msg)
-
-    @staticmethod
-    def from_json_file(schema_file, validate=True):
-        # type: (TextIO, bool) -> Schema
-        """ Load a Schema object from a json file.
-            :param schema_file: A JSON file containing the schema.
-            :param validate: (default True) Raise an exception if the
-                schema does not conform to the master schema.
-            :raises SchemaError: When the schema is invalid.
-            :return: the Schema
-        """
-        try:
-            schema_dict = json.load(schema_file)
-        except ValueError as e:  # In Python 3 we can be more specific
-            # with json.decoder.JSONDecodeError,
-            # but that doesn't exist in Python 2.
-            msg = 'The schema is not a valid JSON file.'
-            raise_from(SchemaError(msg), e)
-
-        return Schema.from_json_dict(schema_dict, validate=validate)
-
-    @staticmethod
-    def _get_master_schema(version):
-        # type: (Hashable) -> bytes
-        """ Loads the master schema of given version as bytes.
-
-            :param version: The version of the master schema whose path we
-                wish to retrieve.
-            :raises SchemaError: When the schema version is unknown. This
-                usually means that either (a) clkhash is out of date, or (b)
-                the schema version listed is incorrect.
-            :return: Bytes of the schema.
-        """
-        try:
-            file_name = Schema.MASTER_SCHEMA_FILE_NAMES[version]
-        except (TypeError, KeyError) as e:
-            msg = ('Schema version {} is not supported. '
-                   'Consider updating clkhash.').format(version)
-            raise_from(SchemaError(msg), e)
-
-        try:
-            schema_bytes = pkgutil.get_data('clkhash',
-                                            'master-schemas/{}'.format(file_name))
-        except IOError as e:  # In Python 3 we can be more specific with
-            # FileNotFoundError, but that doesn't exist in
-            # Python 2.
-            msg = ('The master schema could not be found. The schema cannot be '
-                   'validated. Please file a bug report.')
-            raise_from(MasterSchemaError(msg), e)
-
-        if schema_bytes is None:
-            msg = ('The master schema could not be loaded. The schema cannot be '
-                   'validated. Please file a bug report.')
-            raise MasterSchemaError(msg)
-
-        return schema_bytes
+    fields = list(map(spec_from_json_dict, features))
+    return Schema(fields, l, xor_folds,
+                  kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
 
-    @staticmethod
-    def validate_schema_dict(schema):
-        # type: (Dict[str, Any]) -> None
-        """ Validate the schema.
+def from_json_file(schema_file, validate=True):
+    # type: (TextIO, bool) -> Schema
+    """ Load a Schema object from a json file.
+        :param schema_file: A JSON file containing the schema.
+        :param validate: (default True) Raise an exception if the
+            schema does not conform to the master schema.
+        :raises SchemaError: When the schema is invalid.
+        :return: the Schema
+    """
+    try:
+        schema_dict = json.load(schema_file)
+    except ValueError as e:  # In Python 3 we can be more specific
+        # with json.decoder.JSONDecodeError,
+        # but that doesn't exist in Python 2.
+        msg = 'The schema is not a valid JSON file.'
+        raise_from(SchemaError(msg), e)
 
-            This raises iff either the schema or the master schema are
-            invalid. If it's successful, it returns nothing.
+    return from_json_dict(schema_dict, validate=validate)
 
-            :param schema: The schema to validate, as parsed by `json`.
-            :raises SchemaError: When the schema is invalid.
-            :raises MasterSchemaError: When the master schema is invalid.
-        """
-        if not isinstance(schema, dict):
-            msg = ('The top level of the schema file is a {}, whereas a dict is '
-                   'expected.'.format(type(schema).__name__))
-            raise SchemaError(msg)
 
-        if 'version' in schema:
-            version = schema['version']
-        else:
-            raise SchemaError('A format version is expected in the schema.')
+def _get_master_schema(version):
+    # type: (Hashable) -> bytes
+    """ Loads the master schema of given version as bytes.
 
-        master_schema_bytes = Schema._get_master_schema(version)
-        try:
-            master_schema = json.loads(master_schema_bytes.decode('utf-8'))
-        except ValueError as e:  # In Python 3 we can be more specific with
-            # json.decoder.JSONDecodeError, but that
-            # doesn't exist in Python 2.
-            msg = ('The master schema is not a valid JSON file. The schema cannot '
-                   'be validated. Please file a bug report.')
-            raise_from(MasterSchemaError(msg), e)
+        :param version: The version of the master schema whose path we
+            wish to retrieve.
+        :raises SchemaError: When the schema version is unknown. This
+            usually means that either (a) clkhash is out of date, or (b)
+            the schema version listed is incorrect.
+        :return: Bytes of the schema.
+    """
+    try:
+        file_name = MASTER_SCHEMA_FILE_NAMES[version]
+    except (TypeError, KeyError) as e:
+        msg = ('Schema version {} is not supported. '
+               'Consider updating clkhash.').format(version)
+        raise_from(SchemaError(msg), e)
 
-        try:
-            jsonschema.validate(schema, master_schema)
-        except jsonschema.exceptions.ValidationError as e:
-            raise_from(SchemaError('The schema is not valid.'), e)
-        except jsonschema.exceptions.SchemaError as e:
-            msg = ('The master schema is not valid. The schema cannot be '
-                   'validated. Please file a bug report.')
-            raise_from(MasterSchemaError(msg), e)
+    try:
+        schema_bytes = pkgutil.get_data('clkhash',
+                                        'master-schemas/{}'.format(file_name))
+    except IOError as e:  # In Python 3 we can be more specific with
+        # FileNotFoundError, but that doesn't exist in
+        # Python 2.
+        msg = ('The master schema could not be found. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
+
+    if schema_bytes is None:
+        msg = ('The master schema could not be loaded. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise MasterSchemaError(msg)
+
+    return schema_bytes
+
+
+def validate_schema_dict(schema):
+    # type: (Dict[str, Any]) -> None
+    """ Validate the schema.
+
+        This raises iff either the schema or the master schema are
+        invalid. If it's successful, it returns nothing.
+
+        :param schema: The schema to validate, as parsed by `json`.
+        :raises SchemaError: When the schema is invalid.
+        :raises MasterSchemaError: When the master schema is invalid.
+    """
+    if not isinstance(schema, dict):
+        msg = ('The top level of the schema file is a {}, whereas a dict is '
+               'expected.'.format(type(schema).__name__))
+        raise SchemaError(msg)
+
+    if 'version' in schema:
+        version = schema['version']
+    else:
+        raise SchemaError('A format version is expected in the schema.')
+
+    master_schema_bytes = _get_master_schema(version)
+    try:
+        master_schema = json.loads(master_schema_bytes.decode('utf-8'))
+    except ValueError as e:  # In Python 3 we can be more specific with
+        # json.decoder.JSONDecodeError, but that
+        # doesn't exist in Python 2.
+        msg = ('The master schema is not a valid JSON file. The schema cannot '
+               'be validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
+
+    try:
+        jsonschema.validate(schema, master_schema)
+    except jsonschema.exceptions.ValidationError as e:
+        raise_from(SchemaError('The schema is not valid.'), e)
+    except jsonschema.exceptions.SchemaError as e:
+        msg = ('The master schema is not valid. The schema cannot be '
+               'validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)

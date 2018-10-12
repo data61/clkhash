@@ -4,10 +4,10 @@ import unittest
 from future.builtins import zip
 
 from clkhash.bloomfilter import stream_bloom_filters
-from clkhash.key_derivation import hkdf, generate_key_lists, DEFAULT_KEY_SIZE
+from clkhash.field_formats import FieldHashingProperties, StringSpec
+from clkhash.key_derivation import DEFAULT_KEY_SIZE, generate_key_lists, hkdf
 from clkhash.schema import Schema
-from clkhash.hashing_properties import HashingProperties
-from clkhash.field_formats import FieldHashingProperties, FieldHashingPropertiesV1, StringSpec
+
 
 class TestKeyDerivation(unittest.TestCase):
 
@@ -21,14 +21,17 @@ class TestKeyDerivation(unittest.TestCase):
                     self.assertEqual(len(key), key_size)
 
     def test_generate_key_lists(self):
-        master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
+        master_secrets = ['No, I am your father'.encode(),
+                          "No... that's not true! That's impossible!".encode()]
         for num_keys in (1, 10):
             key_lists = generate_key_lists(master_secrets, num_keys)
             self.assertEqual(len(key_lists), num_keys)
             for l in key_lists:
                 self.assertEqual(len(l), len(master_secrets))
             for key in key_lists[0]:
-                self.assertEqual(len(key), DEFAULT_KEY_SIZE, msg='key should be of size "default_key_size"')
+                self.assertEqual(len(key), DEFAULT_KEY_SIZE,
+                                 msg='key should be of size '
+                                     '"default_key_size"')
 
     def test_fail_generate_key_lists(self):
         with self.assertRaises(TypeError):
@@ -39,85 +42,45 @@ class TestKeyDerivation(unittest.TestCase):
         keys_1 = hkdf(master_secret, 5, salt=b'and pepper')
         keys_2 = hkdf(master_secret, 5, salt=b'and vinegar')
         for k1, k2 in zip(keys_1, keys_2):
-            self.assertNotEqual(k1, k2, msg='using different salts should result in different keys')
+            self.assertNotEqual(k1, k2,
+                                msg='using different salts should result in '
+                                    'different keys')
 
     def test_compare_to_legacy(self):
         # Identifier: 'ANY freetext'
+
+        fhp = FieldHashingProperties(
+            ngram=2,
+            hash_type='doubleHash',
+            k=10
+        )
+
         schema = Schema(
             l=1024,
-            hashing_properties=HashingProperties(k=10, hash_type='doubleHash', hash_prevent_singularity=False),
-            xor_folds=0,
-            kdf_hash='SHA256',
             kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
             kdf_key_size=64,
-            kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
-            kdf_type='HKDF',
-            fields=[
-                StringSpec(
-                    identifier='ANY text 1',
-                    hashing_properties=FieldHashingPropertiesV1(
-                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
-                        weight=1
-                    ),
-                    description=None,
-                    case=StringSpec._DEFAULT_CASE,
-                    min_length=0,
-                    max_length=None
-                ),
-                StringSpec(
-                    identifier='ANY text 2',
-                    hashing_properties=FieldHashingPropertiesV1(
-                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
-                        weight=1
-                    ),
-                    description=None,
-                    case=StringSpec._DEFAULT_CASE,
-                    min_length=0,
-                    max_length=None
-                ),
-                StringSpec(
-                    identifier='ANY text 3',
-                    hashing_properties=FieldHashingPropertiesV1(
-                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
-                        weight=1
-                    ),
-                    description=None,
-                    case=StringSpec._DEFAULT_CASE,
-                    min_length=0,
-                    max_length=None
-                ),
-                StringSpec(
-                    identifier='ANY text 4',
-                    hashing_properties=FieldHashingPropertiesV1(
-                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
-                        weight=1
-                    ),
-                    description=None,
-                    case=StringSpec._DEFAULT_CASE,
-                    min_length=0,
-                    max_length=None
-                )
-            ]
+            kdf_salt=base64.b64decode(
+                'SCbL2zHNnmsckfzchsNkZY9XoHk96P'
+                '/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+            fields=[StringSpec(identifier='ANY text {}'.format(i + 1),
+                               hashing_properties=fhp)
+                    for i in range(4)]
         )
 
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
-        master_secrets = ['No, I am your father'.encode(), "No... that's not true! That's impossible!".encode()]
+        master_secrets = ['No, I am your father'.encode(),
+                          "No... that's not true! That's impossible!".encode()]
         keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
-        keys_legacy = generate_key_lists(master_secrets, len(row), kdf='legacy')
+        keys_legacy = generate_key_lists(master_secrets, len(row),
+                                         kdf='legacy')
         bloom_hkdf = next(stream_bloom_filters([row], keys_hkdf, schema))
         bloom_legacy = next(stream_bloom_filters([row], keys_legacy, schema))
         hkdf_count = bloom_hkdf[0].count()
         legacy_count = bloom_legacy[0].count()
-        # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will map each Bobby to different bits.
-        self.assertLessEqual(legacy_count, schema.hashing_properties.k * 6) # 6 bi-grams
+        # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will
+        # map each Bobby to different bits.
+        self.assertLessEqual(legacy_count,
+                             fhp.k * 6)  # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 

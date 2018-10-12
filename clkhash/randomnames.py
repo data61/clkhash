@@ -25,7 +25,7 @@ from typing import (Iterable, List, Optional,
 from future.builtins import range
 
 from clkhash.field_formats import FieldSpec
-from clkhash.schema import Schema
+from clkhash import schema
 
 
 def load_csv_data(resource_name):
@@ -81,7 +81,7 @@ class NameList:
     with open(os.path.join(os.path.dirname(__file__),
                            'data',
                            'randomnames-schema.json')) as f:
-        SCHEMA = Schema.from_json_file(f)
+        SCHEMA = schema.from_json_file(f)
     del f
 
     def __init__(self, n):
