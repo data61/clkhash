@@ -9,7 +9,7 @@ from math import ceil
 
 from clkhash.bloomfilter import (
     blake_encode_ngrams, double_hash_encode_ngrams,
-    double_hash_encode_ngrams_non_singular, NgramEncodings)
+    double_hash_encode_ngrams_non_singular, hashing_function_from_properties)
 from clkhash.schema import GlobalHashingProperties
 
 
@@ -95,7 +95,7 @@ class TestNgramEncodings(unittest.TestCase):
         with self.assertRaises(
                 ValueError,
                 msg='Expected ValueError on invalid encoding.'):
-            NgramEncodings.from_properties(properties)
+            hashing_function_from_properties(properties)
 
 def randomBitarray(numBytes):
     ba = bitarray()

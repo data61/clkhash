@@ -229,21 +229,20 @@ class NgramEncodings(Enum):
     def __call__(self, *args):
         return self.value(*args)
 
-    @classmethod
-    def from_properties(cls,
-                        properties  # type: GlobalHashingProperties
-                        ):
-        # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-        if properties.hash_type == 'doubleHash':
-            if properties.hash_prevent_singularity:
-                return cls.DOUBLE_HASH_NON_SINGULAR
-            else:
-                return cls.DOUBLE_HASH
-        elif properties.hash_type == 'blakeHash':
-            return cls.BLAKE_HASH
+def hashing_function_from_properties(
+                    properties  # type: GlobalHashingProperties
+                    ):
+    # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
+    if properties.hash_type == 'doubleHash':
+        if properties.hash_prevent_singularity:
+            return double_hash_encode_ngrams_non_singular # NgramEncodings.DOUBLE_HASH_NON_SINGULAR
         else:
-            msg = "Unsupported hash type '{}'".format(properties.hash_type)
-            raise ValueError(msg)
+            return double_hash_encode_ngrams # NgramEncodings.DOUBLE_HASH
+    elif properties.hash_type == 'blakeHash':
+        return blake_encode_ngrams # NgramEncodings.BLAKE_HASH
+    else:
+        msg = "Unsupported hash type '{}'".format(properties.hash_type)
+        raise ValueError(msg)
 
 
 def fold_xor(bloomfilter,  # type: bitarray
@@ -304,7 +303,7 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
     xor_folds = hash_properties.xor_folds
     hash_l = hash_properties.l * 2 ** xor_folds
     hash_k = hash_properties.k
-    hash_function = NgramEncodings.from_properties(hash_properties)
+    hash_function = hashing_function_from_properties(hash_properties)
 
     bloomfilter = bitarray(hash_l)
     bloomfilter.setall(False)
