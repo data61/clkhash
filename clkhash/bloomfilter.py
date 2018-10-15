@@ -4,12 +4,9 @@
 Generate a Bloom filter
 """
 
-import base64
 import hmac
 import math
 import struct
-from enum import Enum
-from functools import partial
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Sequence, Text, Tuple
 
@@ -39,8 +36,10 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     # type: (...) -> bitarray
     """ Computes the double hash encoding of the provided ngrams with the given keys.
 
-        Using the method from
-        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+        Using the method from:
+        Schnell, R., Bachteler, T., & Reiher, J. (2011).
+        A Novel Error-Tolerant Anonymous Linking Code.
+        http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
 
         :param ngrams: list of n-grams to be encoded
         :param keys: hmac secret keys for md5 and sha1 as bytes
@@ -208,42 +207,20 @@ def blake_encode_ngrams(ngrams,  # type: Iterable[str]
     return bf
 
 
-class NgramEncodings(Enum):
-    """ The available schemes for encoding n-grams.
-
-    ..
-      the slightly awkward looking construction with the calls to partial and the overwrite of __call__ are due to
-      compatibility issues with Python 2.7.
-    """
-    DOUBLE_HASH = partial(double_hash_encode_ngrams)
-    """ the initial encoding scheme as described in Schnell, R., Bachteler, T., & Reiher, J. (2011). A Novel
-    Error-Tolerant Anonymous Linking Code. Also see :meth:`double_hash_encode_ngrams`"""
-    BLAKE_HASH = partial(blake_encode_ngrams)
-    """ uses the BLAKE2 hash function, which is one of the fastest modern hash functions, and does less hash function
-    calls compared to the DOUBLE_HASH based schemes. It avoids one of the exploitable weaknesses of the DOUBLE_HASH
-    scheme. Also see :meth:`blake_encode_ngrams`"""
-    DOUBLE_HASH_NON_SINGULAR = partial(double_hash_encode_ngrams_non_singular)
-    """ very similar to DOUBLE_HASH, but avoids singularities in the encoding. Also see
-    :meth:`double_hash_encode_ngrams_non_singular`"""
-
-    def __call__(self, *args):
-        return self.value(*args)
-
-    @classmethod
-    def from_properties(cls,
-                        properties  # type: GlobalHashingProperties
-                        ):
-        # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-        if properties.hash_type == 'doubleHash':
-            if properties.hash_prevent_singularity:
-                return cls.DOUBLE_HASH_NON_SINGULAR
-            else:
-                return cls.DOUBLE_HASH
-        elif properties.hash_type == 'blakeHash':
-            return cls.BLAKE_HASH
+def hashing_function_from_properties(
+                    properties  # type: GlobalHashingProperties
+                    ):
+    # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
+    if properties.hash_type == 'doubleHash':
+        if properties.hash_prevent_singularity:
+            return double_hash_encode_ngrams_non_singular
         else:
-            msg = "Unsupported hash type '{}'".format(properties.hash_type)
-            raise ValueError(msg)
+            return double_hash_encode_ngrams
+    elif properties.hash_type == 'blakeHash':
+        return blake_encode_ngrams
+    else:
+        msg = "Unsupported hash type '{}'".format(properties.hash_type)
+        raise ValueError(msg)
 
 
 def fold_xor(bloomfilter,  # type: bitarray
@@ -304,7 +281,7 @@ def crypto_bloom_filter(record,  # type: Sequence[Text]
     xor_folds = hash_properties.xor_folds
     hash_l = hash_properties.l * 2 ** xor_folds
     hash_k = hash_properties.k
-    hash_function = NgramEncodings.from_properties(hash_properties)
+    hash_function = hashing_function_from_properties(hash_properties)
 
     bloomfilter = bitarray(hash_l)
     bloomfilter.setall(False)
