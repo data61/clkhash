@@ -7,8 +7,6 @@ Generate a Bloom filter
 import hmac
 import math
 import struct
-from enum import Enum
-from functools import partial
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
@@ -38,8 +36,10 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     """
     Computes the double hash encoding of the ngrams with the given keys.
 
-    Using the method from
-    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+        Using the method from:
+        Schnell, R., Bachteler, T., & Reiher, J. (2011).
+        A Novel Error-Tolerant Anonymous Linking Code.
+        http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
 
     :param ngrams: list of n-grams to be encoded
     :param keys: hmac secret keys for md5 and sha1 as bytes
@@ -240,53 +240,19 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
     return bf
 
 
-class NgramEncodings(Enum):
-    """ The available schemes for encoding n-grams.
-
-    ..
-      the slightly awkward looking construction with the calls to partial
-      and the overwrite of __call__ are due to
-      compatibility issues with Python 2.7.
-    """
-    DOUBLE_HASH = partial(double_hash_encode_ngrams)
-    """ the initial encoding scheme as described in Schnell, R., Bachteler,
-    T., & Reiher, J. (2011). A Novel
-    Error-Tolerant Anonymous Linking Code. Also see
-    :meth:`double_hash_encode_ngrams`"""
-    BLAKE_HASH = partial(blake_encode_ngrams)
-    """ uses the BLAKE2 hash function, which is one of the fastest modern
-    hash functions, and does less hash function
-    calls compared to the DOUBLE_HASH based schemes. It avoids one of the
-    exploitable weaknesses of the DOUBLE_HASH
-    scheme. Also see :meth:`blake_encode_ngrams`"""
-    DOUBLE_HASH_NON_SINGULAR = partial(
-        double_hash_encode_ngrams_non_singular)
-    """ very similar to DOUBLE_HASH, but avoids singularities in the
-    encoding. Also see
-    :meth:`double_hash_encode_ngrams_non_singular`"""
-
-    def __call__(self, *args):
-        return self.value(*args)
-
-
 def hashing_function_from_properties(
-        fhp  # type: FieldHashingProperties
-):
+                    properties  # type: GlobalHashingProperties
+                    ):
     # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-    """
-    Get the hashing function for this field
-    :param fhp: hashing properties for this field
-    :return: the hashing function
-    """
-    if fhp.hash_type == 'doubleHash':
-        if fhp.prevent_singularity:
-            return NgramEncodings.DOUBLE_HASH_NON_SINGULAR
+    if properties.hash_type == 'doubleHash':
+        if properties.hash_prevent_singularity:
+            return double_hash_encode_ngrams_non_singular
         else:
-            return NgramEncodings.DOUBLE_HASH
-    elif fhp.hash_type == 'blakeHash':
-        return NgramEncodings.BLAKE_HASH
+            return double_hash_encode_ngrams
+    elif properties.hash_type == 'blakeHash':
+        return blake_encode_ngrams
     else:
-        msg = "Unsupported hash type '{}'".format(fhp.hash_type)
+        msg = "Unsupported hash type '{}'".format(properties.hash_type)
         raise ValueError(msg)
 
 
