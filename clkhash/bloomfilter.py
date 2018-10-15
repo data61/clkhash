@@ -241,18 +241,23 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
 
 
 def hashing_function_from_properties(
-                    properties  # type: GlobalHashingProperties
-                    ):
+        fhp  # type: FieldHashingProperties
+        ):
     # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
-    if properties.hash_type == 'doubleHash':
-        if properties.hash_prevent_singularity:
+    """
+     Get the hashing function for this field
+     :param fhp: hashing properties for this field
+     :return: the hashing function
+     """
+    if fhp.hash_type == 'doubleHash':
+        if fhp.prevent_singularity:
             return double_hash_encode_ngrams_non_singular
         else:
             return double_hash_encode_ngrams
-    elif properties.hash_type == 'blakeHash':
+    elif fhp.hash_type == 'blakeHash':
         return blake_encode_ngrams
     else:
-        msg = "Unsupported hash type '{}'".format(properties.hash_type)
+        msg = "Unsupported hash type '{}'".format(fhp.hash_type)
         raise ValueError(msg)
 
 
