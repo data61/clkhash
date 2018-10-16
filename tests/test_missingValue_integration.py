@@ -1,4 +1,4 @@
-from clkhash.schema import Schema
+from clkhash import schema
 from clkhash.clk import generate_clks
 
 
@@ -15,10 +15,10 @@ def test_missing_value_integration():
                  format=dict(type='integer'),
                  hashing=dict(ngram=1, missingValue=dict(sentinel='NA', replaceWith='42')))
         ])
-    schema = Schema.from_json_dict(schema_dict)
+    s = schema.from_json_dict(schema_dict)
 
     pii = [['Bob', '42'], ['null', 'NA']]
 
-    clks = generate_clks(pii, schema=schema, keys=('sec1', 'sec2'), validate=True, callback=None)
+    clks = generate_clks(pii, schema=s, keys=('sec1', 'sec2'))
     assert len(clks) == 2
     assert clks[0] == clks[1]

@@ -137,11 +137,11 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
     key_lists = generate_key_lists(
         keys,
         len(schema.fields),
-        key_size=schema.hashing_globals.kdf_key_size,
-        salt=schema.hashing_globals.kdf_salt,
-        info=schema.hashing_globals.kdf_info,
-        kdf=schema.hashing_globals.kdf_type,
-        hash_algo=schema.hashing_globals.kdf_hash)
+        key_size=schema.kdf_key_size,
+        salt=schema.kdf_salt,
+        info=schema.kdf_info,
+        kdf=schema.kdf_type,
+        hash_algo=schema.kdf_hash)
 
     if validate:
         validate_entries(schema.fields, pii_data)

@@ -16,7 +16,7 @@ class TestFieldFormats(unittest.TestCase):
                 pattern=r'[5-9',  # This is syntactically incorrect.
                 description='foo'),
             hashing=dict(
-                ngram=1))
+                ngram=1, k=20))
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
@@ -50,7 +50,7 @@ class TestFieldFormats(unittest.TestCase):
         # Finally, check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='null')
@@ -77,7 +77,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -119,7 +119,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
-        self.assertEqual(spec.hashing_properties.weight, 0)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         spec_dict['hashing']['missingValue'] = dict(sentinel='N/A')
@@ -129,7 +129,7 @@ class TestFieldFormats(unittest.TestCase):
 
     def test_string_nonregex_init(self):
         hashing_properties = field_formats.FieldHashingProperties(
-            ngram=2, encoding='utf-8')
+            ngram=2, k=20)
         spec = field_formats.StringSpec(
             identifier='first name',
             hashing_properties=hashing_properties,
@@ -158,7 +158,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -178,7 +178,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                weight=0))
+                k=20))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -202,7 +202,7 @@ class TestFieldFormats(unittest.TestCase):
                 type='integer',
                 description='buzz'),
             hashing=dict(
-                ngram=1,
+                ngram=1, k=20,
                 positional=True))
 
         spec = field_formats.spec_from_json_dict(regex_spec)
@@ -259,7 +259,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 1)
         self.assertIs(spec.hashing_properties.positional, True)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
@@ -277,8 +277,7 @@ class TestFieldFormats(unittest.TestCase):
                 description='phoenix dactylifera'),
             hashing=dict(
                 ngram=0,
-                positional=False,
-                weight=1))
+                k=20))
 
         spec = field_formats.spec_from_json_dict(regex_spec)
 
@@ -346,7 +345,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 0)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 1)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check for graceful fail if format spec is invalid
         spec.format = 'invalid%'
@@ -359,7 +358,7 @@ class TestFieldFormats(unittest.TestCase):
             format=dict(
                 type='date',
                 format='%Y:%m-%d'),
-            hashing=dict(ngram=0))
+            hashing=dict(ngram=0, k=20))
 
         spec = field_formats.spec_from_json_dict(regex_spec)
         from datetime import date
@@ -376,8 +375,7 @@ class TestFieldFormats(unittest.TestCase):
                 description='fizz'),
             hashing=dict(
                 ngram=2,
-                positional=False,
-                weight=2.57))
+                k=20))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -403,7 +401,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.assertEqual(spec.hashing_properties.ngram, 2)
         self.assertIs(spec.hashing_properties.positional, False)
-        self.assertEqual(spec.hashing_properties.weight, 2.57)
+        self.assertEqual(spec.hashing_properties.k, 20)
 
         # check missing values
         spec_dict['hashing']['missingValue']=dict(sentinel='', replaceWith='omg')

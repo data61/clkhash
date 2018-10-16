@@ -9,7 +9,7 @@ from clkhash.validate_data import (EntryError, FormatError,
 
 class FieldsMaker(unittest.TestCase):
     def setUp(self):
-        ascii_hashing = FieldHashingProperties(encoding='ascii', ngram=2)
+        ascii_hashing = FieldHashingProperties(encoding='ascii', ngram=2, k=20)
         self.fields = [
             StringSpec(
                 identifier='given name',

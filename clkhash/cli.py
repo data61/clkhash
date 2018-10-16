@@ -8,9 +8,12 @@ import shutil
 import click
 
 import clkhash
-from clkhash import benchmark as bench, clk, randomnames, validate_data, describe as descr
-from clkhash.rest_client import project_upload_clks, run_get_result_text, run_get_status, project_create, run_create, \
-    server_get_status, ServiceError, format_run_status, watch_run_status
+from clkhash import (benchmark as bench, clk, randomnames, validate_data,
+                     describe as descr)
+from clkhash.rest_client import (project_upload_clks, run_get_result_text,
+                                 run_get_status, project_create, run_create,
+                                 server_get_status, ServiceError,
+                                 format_run_status, watch_run_status)
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -65,7 +68,7 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
     Use "-" for CLK_JSON to write JSON to stdout.
     """
 
-    schema_object = clkhash.schema.Schema.from_json_file(schema_file=schema)
+    schema_object = clkhash.schema.from_json_file(schema_file=schema)
     header = True
     if not check_header:
         header = 'ignore'

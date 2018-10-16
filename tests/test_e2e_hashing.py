@@ -1,10 +1,100 @@
 import base64
+import os
 import unittest
 
-from clkhash import bloomfilter, clk, randomnames
-from clkhash.key_derivation import generate_key_lists
-from clkhash.schema import GlobalHashingProperties, Schema
+from clkhash import bloomfilter, clk, randomnames, schema
 from clkhash.field_formats import FieldHashingProperties, StringSpec
+from clkhash.key_derivation import generate_key_lists
+from clkhash.schema import Schema
+from clkhash.serialization import deserialize_bitarray
+from clkhash.stats import OnlineMeanVariance
+
+TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
+
+
+def _test_data_file_path(file_name):
+    return os.path.join(TEST_DATA_DIRECTORY, file_name)
+
+
+def _test_schema(file_name):
+    with open(_test_data_file_path(file_name)) as f:
+        return schema.from_json_file(f)
+
+
+def _test_stats(pii, schema, keys):
+    counts = [deserialize_bitarray(c).count() for c in
+              clk.generate_clks(pii, schema, keys)]
+    print('_test_stats: counts = ', counts)
+    ov = OnlineMeanVariance()
+    ov.update(counts)
+    return ov.mean(), ov.std()
+
+
+class TestV2(unittest.TestCase):
+
+    def test_compare_v1_and_v2(self):
+        pii = randomnames.NameList(100).names
+        schema_v1 = randomnames.NameList.SCHEMA
+        # this v2 schema should be equivalent to the above v1 schema
+        schema_v2 = _test_schema('randomnames-schema-v2.json')
+        keys = ('secret', 'sshh')
+        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, keys),
+                                clk.generate_clks(pii, schema_v2, keys)):
+            self.assertEqual(clkv1, clkv2)
+
+    def test_compare_k_and_num_bits(self):
+        def mkSchema(hashing_properties):
+            return Schema(
+                l=1024,
+                xor_folds=1,
+                kdf_type='HKDF',
+                kdf_hash='SHA256',
+                kdf_salt=base64.b64decode(
+                    'SCbL2zHNnmsckfzchsNkZY9XoHk96P'
+                    '/G5nUBrM7ybymlEFsMV6PAeDZCNp3r'
+                    'fNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+                kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+                kdf_key_size=64,
+                fields=[
+                    StringSpec(
+                        identifier='name',
+                        hashing_properties=hashing_properties,
+                        description=None,
+                        case=StringSpec._DEFAULT_CASE,
+                        min_length=1,
+                        max_length=50
+                    )
+                ]
+            )
+
+        pii = [('An',), ('Fred',), ('Philhowe',), ('MuhlbachBereznyz',)]
+        keys = ('secret', 'sshh')
+
+        schema_k = mkSchema(FieldHashingProperties(
+            encoding=FieldHashingProperties._DEFAULT_ENCODING,
+            ngram=2,
+            k=20,
+            positional=False,
+            hash_type='doubleHash'
+        ))
+
+        mean_k, std_k = _test_stats(pii, schema_k, keys)
+        print('test_compare_k_and_num_bits k: ', mean_k, std_k)
+
+        schema_num_bits = mkSchema(FieldHashingProperties(
+            encoding=FieldHashingProperties._DEFAULT_ENCODING,
+            ngram=2,
+            num_bits=int(round(mean_k)),
+            positional=False,
+            hash_type='doubleHash'
+        ))
+        mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, keys)
+        print('test_compare_k_and_num_bits num_bits: ', mean_num_bits,
+              std_num_bits)
+
+        self.assertGreater(std_k, 2 * std_num_bits,
+                           'Standard deviation for num_bits should be'
+                           ' < half that for the equivalent k')
 
 
 class TestNamelistHashable(unittest.TestCase):
@@ -33,21 +123,21 @@ class TestNamelistHashable(unittest.TestCase):
             "Expected at least 80 hashes to be exactly the same")
 
 
-class TestHashingWithDifferentWeights(unittest.TestCase):
+class TestHashingWithDifferentK(unittest.TestCase):
+    """Used to test weights, but now field value for k incorporates the old
+    weight"""
+
     def test_different_weights(self):
         schema = Schema(
-            version=1,
-            hashing_globals=GlobalHashingProperties(
-                k=30,
-                kdf_hash='SHA256',
-                kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
-                kdf_key_size=64,
-                kdf_salt=base64.b64decode('SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
-                kdf_type='HKDF',
-                l=1024,
-                hash_type='blakeHash',
-                xor_folds=0,
-            ),
+            l=1024,
+            xor_folds=0,
+            kdf_hash='SHA256',
+            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+            kdf_key_size=64,
+            kdf_salt=base64.b64decode(
+                'SCbL2zHNnmsckfzchsNkZY9XoHk96P'
+                '/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+            kdf_type='HKDF',
             fields=[
                 StringSpec(
                     identifier='some info',
@@ -55,7 +145,7 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         ngram=2,
                         positional=False,
-                        weight=1
+                        k=20
                     ),
                     description=None,
                     case=StringSpec._DEFAULT_CASE,
@@ -68,16 +158,16 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
         pii = [['Deckard']]
         keys = generate_key_lists(('secret',), 1)
 
-        schema.fields[0].hashing_properties.weight = 0
+        schema.fields[0].hashing_properties.k = 0
         bf0 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.weight = 1
+        schema.fields[0].hashing_properties.k = 20
         bf1 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.weight = 2
+        schema.fields[0].hashing_properties.k = 40
         bf2 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.weight = 1.5
+        schema.fields[0].hashing_properties.k = 30
         bf15 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         self.assertEqual(bf0[0].count(), 0)
@@ -87,5 +177,5 @@ class TestHashingWithDifferentWeights(unittest.TestCase):
         self.assertGreater(n1, 0)
         self.assertGreater(n15, n1)
         self.assertGreater(n2, n15)
-        self.assertLessEqual(n15, round(n1*1.5))
-        self.assertLessEqual(n2, n1*2)
+        self.assertLessEqual(n15, round(n1 * 1.5))
+        self.assertLessEqual(n2, n1 * 2)

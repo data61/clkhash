@@ -10,12 +10,12 @@ from __future__ import unicode_literals
 import abc
 import re
 from datetime import datetime
-from typing import Any, cast, Dict, Iterable, Optional, Text, Union
+from typing import Any, Dict, Iterable, Optional, Text, cast
 
 from future.builtins import range, super
 from six import add_metaclass
 
-from clkhash.backports import re_compile_full, strftime, raise_from
+from clkhash.backports import raise_from, re_compile_full, strftime
 
 
 class InvalidEntryError(ValueError):
@@ -33,13 +33,16 @@ class InvalidSchemaError(ValueError):
 
 
 class MissingValueSpec(object):
-    """ Stores the information about how to find and treat missing values.
+    """ Stores the information about how to find and treat missing
+        values.
 
-        :ivar str sentinel: sentinel is the string that identifies a missing value e.g.: 'N/A', ''.
-                            the sentinel will not be validated against the feature format definition
-        :ivar str replaceWith: defines the string which replaces the sentinel whenever present,
-                               can be 'None', then sentinel will not be replaced.
-
+        :ivar str sentinel: sentinel is the string that identifies a
+        missing value e.g.: 'N/A', ''.
+        The sentinel will not be validated against the
+        feature format definition
+        :ivar str replaceWith: defines the string which replaces the
+        sentinel whenever present, can be 'None', then sentinel will
+         not be replaced.
     """
 
     def __init__(self,
@@ -48,7 +51,8 @@ class MissingValueSpec(object):
                  ):
         # type: (...) -> None
         self.sentinel = sentinel
-        self.replace_with = replace_with if replace_with is not None else sentinel
+        self.replace_with = (replace_with if replace_with is not None
+                             else sentinel)
 
     @classmethod
     def from_json_dict(cls, json_dict):
@@ -60,30 +64,34 @@ class MissingValueSpec(object):
 
 
 class FieldHashingProperties(object):
-    """ Stores the settings used to hash a field. This includes the
-        encoding and tokenisation parameters.
+    """
+    Stores the settings used to hash a field.
+
+    This includes the encoding and tokenisation parameters.
 
         :ivar str encoding: The encoding to use when converting the
             string to bytes. Refer to
-            `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`_
+            `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`
             for possible values.
         :ivar int ngram: The n in n-gram. Possible values are 0, 1, and
             2.
         :ivar bool positional: Controls whether the n-grams are
             positional.
-        :ivar float weight: Controls the weight of the field in the
-            Bloom filter.
+        :ivar int num_bits: dynamic k = num_bits / number of n-grams
+        :ivar int k: max number of bits per n-gram
     """
     _DEFAULT_ENCODING = 'utf-8'
     _DEFAULT_POSITIONAL = False
-    _DEFAULT_WEIGHT = 1
 
     def __init__(self,
                  ngram,  # type: int
-                 encoding=_DEFAULT_ENCODING,  # type: str
-                 weight=_DEFAULT_WEIGHT,  # type: Union[int, float]
+                 encoding=_DEFAULT_ENCODING,      # type: str
                  positional=_DEFAULT_POSITIONAL,  # type: bool
-                 missing_value=None  # type: Optional[MissingValueSpec]
+                 hash_type='blakeHash',           # type: str
+                 prevent_singularity=None,        # type: Optional[bool]
+                 num_bits=None,                   # type: Optional[int]
+                 k=None,                          # type: Optional[int]
+                 missing_value=None               # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
@@ -99,19 +107,38 @@ class FieldHashingProperties(object):
             msg = '{} is not a valid Python encoding.'
             raise_from(ValueError(msg.format(encoding)), e)
 
-        if weight < 0:
-            msg = 'weight should be non-negative but is {}.'
-            raise ValueError(msg.format(weight))
+        if prevent_singularity is not None and hash_type != 'doubleHash':
+            raise ValueError("Prevent_singularity must only be specified"
+                             " with hash_type doubleHash.")
+
+        if not num_bits and not k:
+            raise ValueError('One of num_bits or k must be specified.')
 
         self.ngram = ngram
         self.encoding = encoding
         self.positional = positional
-        self.weight = weight
+        self.hash_type = hash_type
+        self.prevent_singularity = prevent_singularity
+        self.num_bits = num_bits
+        self.k = k
         self.missing_value = missing_value
+
+    def get_k(self,
+              num_ngrams  # type: int
+              ):
+        # type: (...) -> int
+        """
+        Provide a k, number of bits to set for each ngram in the field value.
+        :param num_ngrams: number of ngrams in the field value
+        :return: k
+        """
+        return (int(round(self.num_bits / num_ngrams)) if self.num_bits
+                else (self.k if self.k else 0))
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
-        """ returns 'str_in' if it is not equals to the 'sentinel' as defined in the missingValue section of
+        """ returns 'str_in' if it is not equals to the 'sentinel' as
+        defined in the missingValue section of
         the schema. Else it will return the 'replaceWith' value.
 
         :param str_in:
@@ -124,27 +151,39 @@ class FieldHashingProperties(object):
         else:
             return str_in
 
-    @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> FieldHashingProperties
-        """ Make a :class:`FieldHashingProperties` object from a
-            dictionary.
 
-            :param dict json_dict:
-                The dictionary must have have an 'ngram' key. It may have
-                'positional' and 'weight' keys; if these are missing, then
-                they are filled with the default values. The encoding is
-                always set to the default value.
-            :return: A :class:`FieldHashingProperties` instance.
-        """
-        return cls(
-            ngram=json_dict['ngram'],
-            positional=json_dict.get(
-                'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
-            weight=json_dict.get(
-                'weight', FieldHashingProperties._DEFAULT_WEIGHT),
-            missing_value=MissingValueSpec.from_json_dict(
-                json_dict['missingValue']) if 'missingValue' in json_dict else None)
+def fhp_from_json_dict(
+        json_dict  # type: Dict[str, Any]
+    ):
+    # type: (...) -> FieldHashingProperties
+    """
+    Make a :class:`FieldHashingProperties` object from a dictionary.
+
+        :param dict json_dict:
+            The dictionary must have have an 'ngram' key
+            and one of k or num_bits. It may have
+            'positional' key; if missing a default is used.
+            The encoding is
+            always set to the default value.
+        :return: A :class:`FieldHashingProperties` instance.
+    """
+    h = json_dict.get('hash', {'type': 'blakeHash'})
+    num_bits = json_dict.get('numBits')
+    k = json_dict.get('k')
+    if not num_bits and not k:
+        num_bits = 200 # default for v2 schema
+    return FieldHashingProperties(
+        ngram=json_dict['ngram'],
+        positional=json_dict.get(
+            'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
+        hash_type=h['type'],
+        prevent_singularity=h.get('prevent_singularity'),
+        num_bits=num_bits,
+        k=k,
+        missing_value=MissingValueSpec.from_json_dict(
+            json_dict[
+                'missingValue']) if 'missingValue' in json_dict else None
+    )
 
 
 @add_metaclass(abc.ABCMeta)
@@ -156,12 +195,12 @@ class FieldSpec(object):
         :ivar str identifier: The name of the field.
         :ivar str description: Description of the field format.
         :ivar FieldHashingProperties hashing_properties: The properties
-            for hashing.
+            for hashing. None if field ignored.
     """
 
     def __init__(self,
                  identifier,  # type: str
-                 hashing_properties,  # type: FieldHashingProperties
+                 hashing_properties,  # type: Optional[FieldHashingProperties]
                  description=None  # type: Optional[str]
                  ):
         # type: (...) -> None
@@ -173,8 +212,10 @@ class FieldSpec(object):
         self.description = description
 
     @classmethod
-    def from_json_dict(cls, field_dict):
-        # type: (Dict[str, Any]) -> FieldSpec
+    def from_json_dict(cls,
+                       field_dict  # type: Dict[str, Any]
+                       ):
+        # type: (...) -> FieldSpec
         """ Initialise a FieldSpec object from a dictionary of
             properties.
 
@@ -187,8 +228,7 @@ class FieldSpec(object):
         """
         identifier = field_dict['identifier']
         description = field_dict['format'].get('description')
-        hashing_properties = FieldHashingProperties.from_json_dict(
-            field_dict['hashing'])
+        hashing_properties = fhp_from_json_dict(field_dict['hashing']) if 'hashing' in field_dict else None
 
         result = cls.__new__(cls)  # type: ignore
         result.identifier = identifier
@@ -211,45 +251,53 @@ class FieldSpec(object):
             :param str str_in: String to validate.
             :raises InvalidEntryError: When entry is invalid.
         """
-        try:
-            str_in.encode(encoding=self.hashing_properties.encoding)
-        except UnicodeEncodeError as e:
-            msg = ("Expected entry that can be encoded in {}. Read '{}'."
-                   .format(self.hashing_properties.encoding, str_in))
-            e_new = InvalidEntryError(msg)
-            e_new.field_spec = self
-            raise_from(e_new, e)
+        if self.hashing_properties:  # else its Ignore
+            try:
+                str_in.encode(encoding=self.hashing_properties.encoding)
+            except UnicodeEncodeError as err:
+                msg = ("Expected entry that can be encoded in {}. Read '{}'."
+                       .format(self.hashing_properties.encoding, str_in))
+                e_new = InvalidEntryError(msg)
+                e_new.field_spec = self
+                raise_from(e_new, err)
+
 
     def is_missing_value(self, str_in):
         # type: (Text) -> bool
         """ tests if 'str_in' is the sentinel value for this field
 
             :param str str_in: String to test if it stands for missing value
-            :return: True if a missing value is defined for this field and str_in matches this value
+            :return: True if a missing value is defined for this field and
+            str_in matches this value
 
         """
-        if self.hashing_properties.missing_value is not None:
-            if self.hashing_properties.missing_value.sentinel == str_in:
-                return True
-        return False
+        return (self.hashing_properties is not None and
+            self.hashing_properties.missing_value is not None and
+            self.hashing_properties.missing_value.sentinel == str_in)
 
     def format_value(self, str_in):
         # type: (Text) -> Text
-        """ formats the value 'str_in' for hashing according to this field's spec.
+        """ formats the value 'str_in' for hashing according to this field's
+        spec.
 
             There are several reasons why this might be necessary:
 
-            1. This field contains missing values which have to be replaced by some other string
-            2. There are several different ways to describe a specific value for this field, e.g.: all of '+65', ' 65',
+            1. This field contains missing values which have to be replaced
+            by some other string
+            2. There are several different ways to describe a specific value
+            for this field, e.g.: all of '+65', ' 65',
                '65' are valid representations of the integer 65.
-            3. Entries of this field might contain elements with no entropy, e.g. dates might be formatted as
-               yyyy-mm-dd, thus all dates will have '-' at the same place. These artifacts have no value for entity
+            3. Entries of this field might contain elements with no entropy,
+            e.g. dates might be formatted as
+               yyyy-mm-dd, thus all dates will have '-' at the same place.
+               These artifacts have no value for entity
                resolution and should be removed.
 
             :param str str_in: the string to format
-            :return: a string representation of 'str_in' which is ready to be hashed
+            :return: a string representation of 'str_in' which is ready to
+            be hashed
         """
-        if self.is_missing_value(str_in):
+        if self.hashing_properties and self.is_missing_value(str_in):
             return self.hashing_properties.replace_missing_value(str_in)
         else:
             return self._format_regular_value(str_in)
@@ -259,7 +307,8 @@ class FieldSpec(object):
         """ overwrite this if you want to modify 'str_in' before hashing.
 
             :param str_in:
-            :return: a string representation of 'str_in' which is ready to be hashed
+            :return: a string representation of 'str_in' which is ready to
+            be hashed
         """
         return str_in
 
@@ -276,6 +325,12 @@ class StringSpec(FieldSpec):
         characters into bytes. This is stored in `hashing_properties`
         since it is needed for hashing.
 
+        :ivar str encoding: The encoding to use when converting the
+            string to bytes. Refer to
+            `Python's documentation
+            <https://docs.python.org/3/library/codecs.html#standard
+            -encodings>`_
+            for possible values.
         :ivar regex: Compiled regular expression that entries must
             conform to. Present only if the specification is regex-
             -based.
@@ -353,8 +408,10 @@ class StringSpec(FieldSpec):
         self.regex_based = regex_based
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> StringSpec
+    def from_json_dict(cls,
+                       json_dict  # type: Dict[str, Any]
+                       ):
+        # type: (...) -> StringSpec
         """ Make a StringSpec object from a dictionary containing its
             properties.
 
@@ -372,7 +429,7 @@ class StringSpec(FieldSpec):
                       super().from_json_dict(json_dict))
 
         format_ = json_dict['format']
-        if 'encoding' in format_:
+        if 'encoding' in format_ and result.hashing_properties:
             result.hashing_properties.encoding = format_['encoding']
 
         if 'pattern' in format_:
@@ -491,8 +548,10 @@ class IntegerSpec(FieldSpec):
         self.maximum = maximum
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> IntegerSpec
+    def from_json_dict(cls,
+                       json_dict  # type: Dict[str, Any]
+                       ):
+        # type: (...) -> IntegerSpec
         """ Make a IntegerSpec object from a dictionary containing its
             properties.
 
@@ -539,7 +598,8 @@ class IntegerSpec(FieldSpec):
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
-            return  # to stop PyCharm thinking that value might be undefined later
+            return  # to stop PyCharm thinking that value might be undefined
+            #  later
 
         if self.minimum is not None and value < self.minimum:
             msg = ("Expected integer value of at least {}. Read '{}'."
@@ -557,13 +617,17 @@ class IntegerSpec(FieldSpec):
 
     def _format_regular_value(self, str_in):
         # type: (Text) -> Text
-        """ we need to reformat integer strings, as there can be different strings for the same integer. The
-            strategy of unification here is to first parse the integer string to an Integer type. Thus all of
-            '+13', ' 13', '13' will be parsed to 13. We then convert the integer value to an unambiguous string
+        """ we need to reformat integer strings, as there can be different
+        strings for the same integer. The
+            strategy of unification here is to first parse the integer
+            string to an Integer type. Thus all of
+            '+13', ' 13', '13' will be parsed to 13. We then convert the
+            integer value to an unambiguous string
             (no whitespaces, leading '-' for negative numbers, no leading '+').
 
             :param str_in: integer string
-            :return: integer string without whitespaces, leading '-' for negative numbers, no leading '+'
+            :return: integer string without whitespaces, leading '-' for
+            negative numbers, no leading '+'
         """
         try:
             value = int(str_in, base=10)
@@ -578,9 +642,11 @@ class IntegerSpec(FieldSpec):
 class DateSpec(FieldSpec):
     """ Represents a field that holds dates.
 
-       Dates are specified as full-dates in a format that can be described as a *strptime()* (C89 standard) compatible
+       Dates are specified as full-dates in a format that can be described
+       as a *strptime()* (C89 standard) compatible
        format string.
-       E.g.: the format for the standard internet format `RFC3339 <https://tools.ietf.org/html/rfc3339>`_
+       E.g.: the format for the standard internet format `RFC3339
+       <https://tools.ietf.org/html/rfc3339>`_
        (e.g. 1996-12-19) is '%Y-%m-%d'.
 
         :ivar str format: The format of the date.
@@ -605,8 +671,10 @@ class DateSpec(FieldSpec):
         self.format = format
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> DateSpec
+    def from_json_dict(cls,
+                       json_dict  # type: Dict[str, Any]
+    ):
+        # type: (...) -> DateSpec
         """ Make a DateSpec object from a dictionary containing its
             properties.
 
@@ -654,7 +722,8 @@ class DateSpec(FieldSpec):
 
     def _format_regular_value(self, str_in):
         # type: (Text) -> Text
-        """ we overwrite default behaviour as we want to hash the numbers only, no fillers like '-', or '/'
+        """ we overwrite default behaviour as we want to hash the numbers
+        only, no fillers like '-', or '/'
 
         :param str str_in: date string
         :return: str date string with format DateSpec.OUTPUT_FORMAT
@@ -663,7 +732,8 @@ class DateSpec(FieldSpec):
             dt = datetime.strptime(str_in, self.format)
             return strftime(dt, DateSpec.OUTPUT_FORMAT)
         except ValueError as e:
-            msg = "Unable to format date value '{}'. Reason: {}".format(str_in, e)
+            msg = "Unable to format date value '{}'. Reason: {}".format(str_in,
+                                                                        e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise_from(e_new, e)
@@ -695,8 +765,10 @@ class EnumSpec(FieldSpec):
         self.values = set(values)
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> EnumSpec
+    def from_json_dict(cls,
+                       json_dict  # type: Dict[str, Any]
+                       ):
+        # type: (...) -> EnumSpec
         """ Make a EnumSpec object from a dictionary containing its
             properties.
 
@@ -750,7 +822,7 @@ class Ignore(FieldSpec):
         # type: (...) -> None
         # noinspection PyCompatibility
         super().__init__('' if identifier is None else identifier,
-                         FieldHashingProperties(ngram=0, weight=0))
+                         None)
 
     def validate(self, str_in):
         pass
@@ -765,8 +837,10 @@ FIELD_TYPE_MAP = {
 }
 
 
-def spec_from_json_dict(json_dict):
-    # type: (Dict[str, Any]) -> FieldSpec
+def spec_from_json_dict(
+        json_dict  # type: Dict[str, Any]
+):
+    # type: (...) -> FieldSpec
     """ Turns a dictionary into the appropriate object.
 
         :param dict json_dict: A dictionary with properties.
