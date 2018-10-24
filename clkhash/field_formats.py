@@ -123,17 +123,19 @@ class FieldHashingProperties(object):
         self.k = k
         self.missing_value = missing_value
 
-    def get_k(self,
-              num_ngrams  # type: int
-              ):
-        # type: (...) -> int
+    def ks(self, num_ngrams):
+        # type (int) -> [int]
         """
-        Provide a k, number of bits to set for each ngram in the field value.
+        Provide a k for each ngram in the field value.
         :param num_ngrams: number of ngrams in the field value
-        :return: k
+        :return: [ k, ... ] a k value for each of num_ngrams such that the sum is exactly num_bits
         """
-        return (int(round(self.num_bits / num_ngrams)) if self.num_bits
-                else (self.k if self.k else 0))
+        if self.num_bits:
+            k = int(self.num_bits / num_ngrams)
+            residue = self.num_bits % num_ngrams
+            return ([k + 1] * residue) + ([k] * (num_ngrams - residue))
+        else:
+            return [self.k if self.k else 0] * num_ngrams
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
