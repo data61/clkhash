@@ -95,7 +95,7 @@ class TestEncoding(unittest.TestCase):
         common_tokens = [str(i) for i in range(65)]
         e1 = common_tokens + ['e1']          # 66 tokens
         e2 = common_tokens + ['e2a', 'e2b']  # 67 tokens
-        tok_sim = 2 * len(common_tokens) / (len(e1) + len(e2))
+        tok_sim = 2.0 * len(common_tokens) / (len(e1) + len(e2))
 
         fhp = FieldHashingProperties(ngram=2, num_bits=100,
                                      hash_type='doubleHash')
@@ -108,7 +108,7 @@ class TestEncoding(unittest.TestCase):
         b1 = f(e1)
         b2 = f(e2)
         intersect = b1 & b2
-        sim = 2 * intersect.count() / (b1.count() + b2.count())
+        sim = 2.0 * intersect.count() / (b1.count() + b2.count())
         # print('test_bug210: bit counts: b1 = {}, b2 = {}, intersect = {}'
         #       ', tok_sim = {}, sim = {}'
         #       .format(b1.count(),
