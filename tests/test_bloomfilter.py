@@ -2,7 +2,6 @@ import random
 import unittest
 from copy import copy
 
-from bitarray import bitarray
 from future.builtins import range
 
 from clkhash.bloomfilter import (blake_encode_ngrams,
@@ -91,6 +90,34 @@ class TestEncoding(unittest.TestCase):
             self.assertGreater(bf_ns.count(), 1)
             self.assertEqual(bf, bf_ns)
 
+    def test_bug210(self):
+        # https://github.com/n1analytics/clkhash/issues/210
+        common_tokens = [str(i) for i in range(65)]
+        e1 = common_tokens + ['e1']          # 66 tokens
+        e2 = common_tokens + ['e2a', 'e2b']  # 67 tokens
+        tok_sim = 2 * len(common_tokens) / (len(e1) + len(e2))
+
+        fhp = FieldHashingProperties(ngram=2, num_bits=100,
+                                     hash_type='doubleHash')
+        f = lambda tokens: double_hash_encode_ngrams(
+            tokens,
+            (self.key_sha1, self.key_md5),
+            fhp.ks(len(tokens)),
+            1024,
+            fhp.encoding)
+        b1 = f(e1)
+        b2 = f(e2)
+        intersect = b1 & b2
+        sim = 2 * intersect.count() / (b1.count() + b2.count())
+        # print('test_bug210: bit counts: b1 = {}, b2 = {}, intersect = {}'
+        #       ', tok_sim = {}, sim = {}'
+        #       .format(b1.count(),
+        #               b2.count(),
+        #               intersect.count(),
+        #               tok_sim, sim))
+        self.assertGreater(sim, 0.9 * tok_sim)
+        # 0.9 to allow for some collisions
+
 
 class TestNgramEncodings(unittest.TestCase):
     def test_from_properties_invalid_hash(self):
@@ -104,8 +131,5 @@ class TestNgramEncodings(unittest.TestCase):
             hashing_function_from_properties(fhp)
 
 
-def randomBitarray(numBytes):
-    ba = bitarray()
-    ba.frombytes(
-        random.getrandbits(numBytes * 8).to_bytes(numBytes, byteorder='big'))
-    return ba
+
+
