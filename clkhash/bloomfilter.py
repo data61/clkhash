@@ -28,7 +28,7 @@ except ImportError:
 
 def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
                               keys,     # type: Sequence[bytes]
-                              k,        # type: int
+                              ks,       # type: Sequence[int]
                               l,        # type: int
                               encoding  # type: str
                               ):
@@ -43,7 +43,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
 
     :param ngrams: list of n-grams to be encoded
     :param keys: hmac secret keys for md5 and sha1 as bytes
-    :param k: number of hash functions to use for each ngram
+    :param ks: ks[i] is k value to use for ngram[i]
     :param l: length of the output bitarray
     :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -54,7 +54,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     bf = bitarray(l)
     bf.setall(False)
 
-    for m in ngrams:
+    for m, k in zip(ngrams, ks):
         sha1hm = int(
             hmac.new(key_sha1, m.encode(encoding=encoding), sha1).hexdigest(),
             16) % l
@@ -69,7 +69,7 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
 
 def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
                                            keys,     # type: Sequence[bytes]
-                                           k,        # type: int
+                                           ks,       # type: Sequence[int]
                                            l,        # type: int
                                            encoding  # type: str
                                            ):
@@ -109,7 +109,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
     :param keys: tuple with (key_sha1, key_md5).
         That is, (hmac secret keys for sha1 as bytes, hmac secret keys for
         md5 as bytes)
-    :param k: number of hash functions to use for each ngram
+    :param ks: ks[i] is k value to use for ngram[i]
     :param l: length of the output bitarray
     :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -119,7 +119,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
     key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
-    for m in ngrams:
+    for m, k in zip(ngrams, ks):
         m_bytes = m.encode(encoding=encoding)
 
         sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
@@ -143,7 +143,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
 
 def blake_encode_ngrams(ngrams,   # type: Iterable[str]
                         keys,     # type: Sequence[bytes]
-                        k,        # type: int
+                        ks,       # type: Sequence[int]
                         l,        # type: int
                         encoding  # type: str
                         ):
@@ -207,7 +207,7 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
 
     :param ngrams: list of n-grams to be encoded
     :param keys: secret key for blake2 as bytes
-    :param k: number of hash functions to use for each ngram
+    :param ks: ks[i] is k value to use for ngram[i]
     :param l: length of the output bitarray (has to be a power of 2)
     :param encoding: the encoding to use when turning the ngrams to bytes
 
@@ -225,7 +225,7 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
     bf = bitarray(l)
     bf.setall(False)
 
-    for m in ngrams:
+    for m, k in zip(ngrams, ks):
         random_shorts = []  # type: List[int]
         num_macs = (k + 31) // 32
         for i in range(num_macs):
@@ -243,7 +243,7 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
 def hashing_function_from_properties(
         fhp  # type: FieldHashingProperties
         ):
-    # type: (...) -> Callable[[Iterable[str], Sequence[bytes], int, int, str], bitarray]
+    # type: (...) -> Callable[[Iterable[str], Sequence[bytes], Sequence[int], int, str], bitarray]
     """
      Get the hashing function for this field
      :param fhp: hashing properties for this field
@@ -325,8 +325,9 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
         if fhp:
             ngrams = list(tokenize(field.format_value(entry)))
             hash_function = hashing_function_from_properties(fhp)
-            k = fhp.get_k(len(ngrams))
-            bloomfilter |= hash_function(ngrams, key, k, hash_l, fhp.encoding)
+            bloomfilter |= hash_function(ngrams, key,
+                                         fhp.ks(len(ngrams)),
+                                         hash_l, fhp.encoding)
 
     c1 = bloomfilter.count()
     bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
