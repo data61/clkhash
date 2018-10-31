@@ -1,4 +1,4 @@
-rec_id, given_name, surname, street_number, address_1, address_2, suburb, postcode, state, date_of_birth, age, phone_number, soc_sec_id, blocking_number
+rec_id,given_name,surname,street_number,address_1,address_2,suburb,postcode,state,date_of_birth,age,phone_number,soc_sec_id,blocking_number
 851389,   nathan,wildle, 60, pindari crescent, swansea, atwell, 3181, tas, 19920124, 20, 04 57498441, 8756846, 4
 397122,   isabella, morrison, 8, coane street, , jamboree heights, 4670, wa, 19520329, 13, 03 25810053, 3271940, 7
 195823,   daniel, geue, 12, , , wakeley, 3144, wa, 19550107, , 08 28293914, 4199116, 2
