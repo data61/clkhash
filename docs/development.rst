@@ -45,7 +45,8 @@ Type Checking
 Packaging
 ---------
 
-The ``clkutil`` command line tool can be frozen into an exe using PyInstaller::
+The ``clkutil`` command line tool can be frozen into an exe using
+`PyInstaller <https://pyinstaller.readthedocs.io>`_::
 
     pyinstaller cli.spec
 
