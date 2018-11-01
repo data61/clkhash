@@ -217,8 +217,7 @@ def _get_master_schema(version):
         raise_from(SchemaError(msg), e)
 
     try:
-        schema_bytes = pkgutil.get_data('clkhash',
-                                        'master-schemas/{}'.format(file_name))
+        schema_bytes = pkgutil.get_data('clkhash', '{}'.format(file_name))
     except IOError as e:  # In Python 3 we can be more specific with
         # FileNotFoundError, but that doesn't exist in
         # Python 2.
