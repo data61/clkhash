@@ -1,5 +1,4 @@
 environment:
-
   INCLUDE_CLI: 1
 
   matrix:
@@ -17,6 +16,14 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 install:
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  - "python -m pip install --upgrade pip"
+
   # We need wheel installed to build wheels
   - "%PYTHON%\\python.exe -m pip install -U wheel setuptools"
   # We need our development dependencies for testing
@@ -37,13 +44,14 @@ test_script:
 
 after_test:
   - "%PYTHON%\\python.exe -m codecov"
+  - "%PYTHON%\\scripts\\pyinstaller.exe cli.spec"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "%PYTHON%\\pyinstaller.exe cli.spec"
+  - ps: "ls dist"
 
 
 # Note Appveyor has only a small allocation for artifacts
 artifacts:
-#  # bdist_wheel puts your built wheel in the dist directory
+  # bdist_wheel puts your built wheel in the dist directory
   - path: dist\*
 
 #on_success:
