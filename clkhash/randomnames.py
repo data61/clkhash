@@ -14,6 +14,7 @@ TODO: Add RESTfull api to generate reasonable name data as requested
 from __future__ import print_function
 
 import csv
+import json
 import math
 import os
 import pkgutil
@@ -78,11 +79,11 @@ class NameList:
     """ Randomly generated PII records.
     """
 
-    with open(os.path.join(os.path.dirname(__file__),
-                           'data',
-                           'randomnames-schema.json')) as f:
-        SCHEMA = schema.from_json_file(f)
-    del f
+    randomname_schema_bytes = pkgutil.get_data('clkhash', 'data/randomnames-schema.json')
+    if randomname_schema_bytes is None:
+        raise Exception("Couldn't locate package data. Please file a bug report.")
+    randomname_schema = json.loads(randomname_schema_bytes.decode())
+    SCHEMA = schema.from_json_dict(randomname_schema)
 
     def __init__(self, n):
         # type: (int) -> None

@@ -4,6 +4,7 @@ from __future__ import print_function
 import json
 import os
 import shutil
+from multiprocessing import freeze_support
 
 import click
 
@@ -311,4 +312,5 @@ def generate_default_schema(output):
 
 
 if __name__ == "__main__":
+    freeze_support()
     cli()

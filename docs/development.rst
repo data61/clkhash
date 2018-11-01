@@ -41,3 +41,14 @@ Type Checking
     $ pip install mypy
     $ mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
 
+
+Packaging
+---------
+
+The ``clkutil`` command line tool can be frozen into an exe using
+`PyInstaller <https://pyinstaller.readthedocs.io>`_::
+
+    pyinstaller cli.spec
+
+
+Look for `clkutil.exe` in the `dist` directory.
