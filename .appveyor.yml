@@ -37,11 +37,14 @@ test_script:
 
 after_test:
   - "%PYTHON%\\python.exe -m codecov"
+  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - "%PYTHON%\\pyinstaller.exe cli.spec"
+
 
 # Note Appveyor has only a small allocation for artifacts
-#artifacts:
+artifacts:
 #  # bdist_wheel puts your built wheel in the dist directory
-#  - path: dist\*
+  - path: dist\*
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.

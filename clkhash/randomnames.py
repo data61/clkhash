@@ -33,7 +33,7 @@ def load_csv_data(resource_name):
     # type: (str) -> List[str]
     """ Loads first column of specified CSV file from package data.
     """
-    data_bytes = pkgutil.get_data('clkhash', '{}'.format(resource_name))
+    data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
     if data_bytes is None:
         raise ValueError("No data resource found with name {}".format(resource_name))
     else:
@@ -79,8 +79,8 @@ class NameList:
     """ Randomly generated PII records.
     """
 
-    randomname_schema_bytes = pkgutil.get_data('clkhash', 'randomnames-schema.json')
-    randomname_schema = json.loads(randomname_schema_bytes)
+    randomname_schema_bytes = pkgutil.get_data('clkhash', 'data/randomnames-schema.json')
+    randomname_schema = json.loads(randomname_schema_bytes.decode())
     SCHEMA = schema.from_json_dict(randomname_schema)
 
     def __init__(self, n):

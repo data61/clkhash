@@ -22,7 +22,7 @@ with codecs.open('README.md', 'r', 'utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.12.0',
+    version='0.13.0-dev',
     description='Hash utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -32,7 +32,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov'],
     packages=find_packages(exclude=['tests']),
-    package_data={'clkhash': ['data/*.csv', 'data/*.json', 'master-schemas/*.json']},
+    package_data={'clkhash': ['data/*.csv', 'data/*.json', 'schemas/*.json']},
     project_urls={
         'Documentation': 'http://clkhash.readthedocs.io/',
         'Source': 'https://github.com/n1analytics/clkhash',
