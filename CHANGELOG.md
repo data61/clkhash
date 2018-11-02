@@ -1,3 +1,8 @@
+## 0.12.1
+
+- Support packaging the command line tool into a windows executable.
+- Additional testing
+
 ## 0.12.0
 
 - New describe command added to cli
