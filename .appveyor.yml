@@ -50,6 +50,7 @@ test_script:
 after_test:
   - "%PYTHON%\\python.exe -m codecov"
   - "%PYTHON%\\scripts\\pyinstaller.exe cli.spec"
+  - ".\\dist\\clkutil.exe --version"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
   - ps: "ls dist"
 
