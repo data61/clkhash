@@ -2,4 +2,4 @@ sphinx>=1.7
 typing>=3.6
 nbsphinx>=0.3
 ipython
-sphinxcontrib-programoutput
+sphinxcontrib-programoutput==0.13
