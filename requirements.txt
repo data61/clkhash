@@ -1,4 +1,4 @@
-bashplotlib
+bashplotlib==0.6.5
 bitarray==0.8.3
 click==6.7
 cryptography==2.3.1
