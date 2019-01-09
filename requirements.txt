@@ -8,9 +8,9 @@ futures==3.2.0; python_version < '3.2'
 jsonschema==2.6.0
 mypy_extensions==0.4.1
 pyblake2==1.1.2; python_version < '3.6'
-pytest==3.8.1
+pytest==4.1.0
 pytest-cov==2.6.0
-requests==2.20.0
+requests==2.21.0
 requests-mock==1.5.2
 six==1.11.0
 tqdm==4.26.0
