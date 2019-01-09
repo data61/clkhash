@@ -3,7 +3,7 @@ bitarray==0.8.3
 click==6.7
 cryptography==2.3.1
 enum34==1.1.6; python_version < '3.4'
-future==0.16.0
+future==0.17.1
 futures==3.2.0; python_version < '3.2'
 jsonschema==2.6.0
 mypy_extensions==0.4.1
