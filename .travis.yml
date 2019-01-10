@@ -11,8 +11,8 @@ python:
 matrix:
   allow_failures:
     - python: 'nightly'
-    - 'pypy'
-    - 'pypy3'
+    - python: 'pypy'
+    - python: 'pypy3'
 
   include:
     - python: '3.7-dev'
