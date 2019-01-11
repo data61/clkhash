@@ -19,6 +19,8 @@ p1_20_true = get_tokenizer(
     FieldHashingProperties(ngram=1, k=20, positional=True)
 )
 
+dummy = get_tokenizer(None)
+
 class TestTokenizer(unittest.TestCase):
 
     def test_unigram_1(self):
@@ -62,8 +64,13 @@ class TestTokenizer(unittest.TestCase):
                          [' a', 'ab', 'ba', 'ab', 'b '])
 
     def test_invalid_n(self):
+        fhp = FieldHashingProperties(ngram=2, k=20, positional=True)
+        fhp.ngram = -6
         with self.assertRaises(
                 ValueError,
                 msg='Expected raise ValueError on invalid n.'):
-            tok = get_tokenizer(FieldHashingProperties(ngram=-6, k=20, positional=True))
+            tok = get_tokenizer(fhp)
             tok('prawn')
+
+    def test_dummy(self):
+        self.assertEqual(list(dummy('jobs')), [])
