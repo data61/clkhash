@@ -65,6 +65,20 @@ class TestFieldFormats(unittest.TestCase):
         regex_spec['hashing']['missingValue']['replaceWith'] = 'cat'
         spec = field_formats.spec_from_json_dict(regex_spec)
         self.assertEqual('cat', spec.hashing_properties.replace_missing_value('null'))
+        # check invalid format specs
+        hashing_properties = field_formats.FieldHashingProperties(
+            ngram=2, k=20)
+        with self.assertRaises(ValueError):
+            spec = field_formats.StringSpec(
+                identifier='regex',
+                hashing_properties=hashing_properties,
+                case='casey',
+                regex=r'dog(.dog)*')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec = field_formats.StringSpec(
+                identifier='regex',
+                hashing_properties=hashing_properties,
+                regex=r'[5-9')
 
     def test_string_nonregex_from_json_dict(self):
         spec_dict = dict(
@@ -143,6 +157,18 @@ class TestFieldFormats(unittest.TestCase):
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate('hi')
         spec.validate('hello this is fine')
+        spec.validate('Hello This is FINE!')
+        spec.case = 'lower'
+        spec.validate('hello you')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('Hello You')
+        spec.case = 'upper'
+        spec.validate('HELLO SHOUTY')
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('Hello You')
+        spec.case = 'casey'
+        with self.assertRaises(ValueError):
+            spec.validate('boomboom')
 
         # Check random metadata.
         self.assertEqual(spec.identifier, 'first name')
@@ -150,6 +176,24 @@ class TestFieldFormats(unittest.TestCase):
 
         # Check the hashing specs.
         self.assertTrue(hasattr(spec, 'hashing_properties'))
+        # check invalid field specs
+        with self.assertRaises(ValueError):
+            field_formats.StringSpec(
+                identifier='first name',
+                hashing_properties=hashing_properties,
+                case='mixed',
+                min_length=-5)
+        with self.assertRaises(ValueError):
+            field_formats.StringSpec(
+                identifier='first name',
+                hashing_properties=hashing_properties,
+                case='mixed',
+                max_length=-1)
+        with self.assertRaises(ValueError):
+            field_formats.StringSpec(
+                identifier='first name',
+                hashing_properties=hashing_properties,
+                case='caseychasey')
 
     def test_string_default_encoding_nonregex(self):
         spec_dict = dict(
@@ -223,6 +267,11 @@ class TestFieldFormats(unittest.TestCase):
             spec.validate(str(math.pi))
         with self.assertRaises(field_formats.InvalidEntryError):
             spec.validate(str(-math.pi))
+        # or strings
+        with self.assertRaises(field_formats.InvalidEntryError):
+            spec.validate('boom')
+        with self.assertRaises(ValueError):
+            spec.format_value('boom')
 
         # There are several valid integer strings for one integer
         for int_str in ['  10', '10  ', '+10', ' +10 ']:
@@ -365,6 +414,8 @@ class TestFieldFormats(unittest.TestCase):
         from clkhash.field_formats import DateSpec
         d = date.today()
         assert spec.format_value(d.strftime(regex_spec['format']['format'])) == d.strftime(DateSpec.OUTPUT_FORMAT)
+        with self.assertRaises(ValueError):
+            spec.format_value('yesterday')
 
     def test_enum(self):
         spec_dict = dict(

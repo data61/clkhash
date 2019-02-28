@@ -382,13 +382,13 @@ class StringSpec(FieldSpec):
                    "'mixed'")
             raise ValueError(msg.format(case))
 
-        if regex_based and min_length < 0:
+        if min_length < 0:
             msg = 'min_length must be non-negative, but is {}'
             raise ValueError(msg.format(min_length))
 
         # type checker thinks max_length is of type None
         # noinspection PyTypeChecker
-        if regex_based and max_length is not None and max_length <= 0:
+        if max_length is not None and max_length <= 0:
             msg = 'max_length must be positive, but is {}'
             raise ValueError(msg.format(max_length))
 
