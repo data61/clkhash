@@ -1,4 +1,9 @@
 environment:
+  global:
+    TWINE_USERNAME: confidentialcomputing
+    TWINE_PASSWORD:
+      secure: 8iJVrN3C/NidiVaa4MArSaNepgPz/AnBn2AC6i0EomM=
+
   INCLUDE_CLI: 1
 
   matrix:
@@ -45,6 +50,7 @@ test_script:
 after_test:
   - "%PYTHON%\\python.exe -m codecov"
   - "%PYTHON%\\scripts\\pyinstaller.exe cli.spec"
+  - ".\\dist\\clkutil.exe --version"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
   - ps: "ls dist"
 
@@ -54,7 +60,7 @@ artifacts:
   # bdist_wheel puts your built wheel in the dist directory
   - path: dist\*
 
-#on_success:
-#  You can use this step to upload your artifacts to a public website.
-#  See Appveyor's documentation for more details. Or you can simply
-#  access your wheels from the Appveyor "artifacts" tab for your build.
+deploy_script:
+  - ps: if ($env:APPVEYOR_REPO_TAG -eq $TRUE) { pip install twine; twine upload dist/* }
+
+deploy: on
