@@ -3,7 +3,6 @@ sudo: false
 dist: xenial
 
 python:
-  - '3.5'
   - 'nightly'
   - 'pypy'
   - 'pypy3'
