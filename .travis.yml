@@ -25,10 +25,13 @@ matrix:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - MYPY_TYPING=1
         - INCLUDE_CLI=1
+    - python: '3.5'
+        - SKIP_TEST_NB=1
     - python: '2.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
+        - SKIP_TEST_NB=1
 
 
 install:
@@ -39,5 +42,5 @@ install:
 
 script:
   - if [ "${MYPY_TYPING}" == "1" ]; then mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls; fi
-  - pytest --cov=clkhash --nbval-lax
+  - if [ "${SKIP_TEST_NB}" == "1" ]; then pytest --cov=clkhash; else pytest --cov=clkhash --nbval-lax; fi
   - codecov
