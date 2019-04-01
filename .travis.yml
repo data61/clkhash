@@ -26,6 +26,7 @@ matrix:
         - MYPY_TYPING=1
         - INCLUDE_CLI=1
     - python: '3.5'
+      env:
         - SKIP_TEST_NB=1
     - python: '2.7'
       env:
