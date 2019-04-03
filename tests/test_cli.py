@@ -491,7 +491,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertIn('receipt_token', alice_upload)
 
         out_early = get_coord_results()
-        self.assertEquals("", out_early)
+        self.assertEqual("", out_early)
 
         # Upload Bob (subset of clks uploaded)
         bob_upload = self.run_command_load_json_output(

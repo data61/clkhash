@@ -33,22 +33,21 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
                               encoding  # type: str
                               ):
     # type: (...) -> bitarray
-    """
-    Computes the double hash encoding of the ngrams with the given keys.
+    """ Computes the double hash encoding of the ngrams with the given keys.
 
-        Using the method from:
-        Schnell, R., Bachteler, T., & Reiher, J. (2011).
-        A Novel Error-Tolerant Anonymous Linking Code.
-        http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
+            Using the method from:
+            Schnell, R., Bachteler, T., & Reiher, J. (2011).
+            A Novel Error-Tolerant Anonymous Linking Code.
+            http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
 
-    :param ngrams: list of n-grams to be encoded
-    :param keys: hmac secret keys for md5 and sha1 as bytes
-    :param ks: ks[i] is k value to use for ngram[i]
-    :param l: length of the output bitarray
-    :param encoding: the encoding to use when turning the ngrams to bytes
+        :param ngrams: list of n-grams to be encoded
+        :param keys: hmac secret keys for md5 and sha1 as bytes
+        :param ks: ks[i] is k value to use for ngram[i]
+        :param l: length of the output bitarray
+        :param encoding: the encoding to use when turning the ngrams to bytes
 
-    :return: bitarray of length l with the bits set which correspond to
-    the encoding of the ngrams
+        :return: bitarray of length l with the bits set which correspond to
+                 the encoding of the ngrams
     """
     key_sha1, key_md5 = keys
     bf = bitarray(l)
@@ -74,47 +73,44 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
                                            encoding  # type: str
                                            ):
     # type: (...) -> bitarray.bitarray
-    """
-    computes the double hash encoding of the n-grams with the given keys.
+    """ computes the double hash encoding of the n-grams with the given keys.
 
-    The original construction of [Schnell2011]_ displays an abnormality for
-    certain inputs:
-      An n-gram can be encoded into just one bit irrespective of the number
-      of k.
+        The original construction of [Schnell2011]_ displays an abnormality for
+        certain inputs:
 
-    Their construction goes as follows: the :math:`k` different indices
-    :math:`g_i` of the Bloom filter for an n-gram
-    :math:`x` are defined as:
+            An n-gram can be encoded into just one bit irrespective of the number
+            of k.
 
-    .. math::
-      g_{i}(x) = (h_1(x) + i h_2(x)) \mod l
+        Their construction goes as follows: the :math:`k` different indices
+        :math:`g_i` of the Bloom filter for an n-gram
+        :math:`x` are defined as:
 
-    with :math:`0 \leq i < k` and :math:`l` is the length of the Bloom
-    filter. If the value of the hash of :math:`x` of
-    the second hash function is a multiple of :math:`l`, then
+        .. math:: g_{i}(x) = (h_1(x) + i h_2(x)) \\mod l
 
-    .. math::
-      h_2(x) = 0 \mod l
+        with :math:`0 \\leq i < k` and :math:`l` is the length of the Bloom
+        filter. If the value of the hash of :math:`x` of
+        the second hash function is a multiple of :math:`l`, then
 
-    and thus
+        .. math:: h_2(x) = 0 \\mod l
 
-    .. math::
-      g_i(x) = h_1(x) \mod l,
+        and thus
 
-    irrespective of the value :math:`i`. A discussion of this potential flaw
-    can be found
-    `here <https://github.com/n1analytics/clkhash/issues/33>`_.
+        .. math:: g_i(x) = h_1(x) \\mod l,
 
-    :param ngrams: list of n-grams to be encoded
-    :param keys: tuple with (key_sha1, key_md5).
-        That is, (hmac secret keys for sha1 as bytes, hmac secret keys for
-        md5 as bytes)
-    :param ks: ks[i] is k value to use for ngram[i]
-    :param l: length of the output bitarray
-    :param encoding: the encoding to use when turning the ngrams to bytes
+        irrespective of the value :math:`i`. A discussion of this potential flaw
+        can be found
+        `here <https://github.com/n1analytics/clkhash/issues/33>`_.
 
-    :return: bitarray of length l with the bits set which correspond to the
-    encoding of the ngrams
+        :param ngrams: list of n-grams to be encoded
+        :param keys: tuple with (key_sha1, key_md5).
+               That is, (hmac secret keys for sha1 as bytes, hmac secret keys for
+               md5 as bytes)
+        :param ks: ks[i] is k value to use for ngram[i]
+        :param l: length of the output bitarray
+        :param encoding: the encoding to use when turning the ngrams to bytes
+
+        :return: bitarray of length l with the bits set which correspond to the
+                 encoding of the ngrams
     """
     key_sha1, key_md5 = keys
     bf = bitarray(l)
@@ -148,71 +144,70 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
                         encoding  # type: str
                         ):
     # type: (...) -> bitarray.bitarray
-    """
-    Computes the encoding of the ngrams using the BLAKE2 hash function.
+    """ Computes the encoding of the ngrams using the BLAKE2 hash function.
 
-    We deliberately do not use the double hashing scheme as proposed in [
-    Schnell2011]_, because this
-    would introduce an exploitable structure into the Bloom filter. For more
-    details on the
-    weakness, see [Kroll2015]_.
+        We deliberately do not use the double hashing scheme as proposed in [
+        Schnell2011]_, because this
+        would introduce an exploitable structure into the Bloom filter. For more
+        details on the
+        weakness, see [Kroll2015]_.
 
-    In short, the double hashing scheme only allows for :math:`l^2`
-    different encodings for any possible n-gram,
-    whereas the use of :math:`k` different independent hash functions gives
-    you :math:`\sum_{j=1}^{k}{\\binom{l}{j}}`
-    combinations.
-
-
-    **Our construction**
-
-    It is advantageous to construct Bloom filters using a family of hash
-    functions with the property of
-    `k-independence <https://en.wikipedia.org/wiki/K-independent_hashing>`_
-    to compute the indices for an entry.
-    This approach minimises the change of collisions.
-
-    An informal definition of *k-independence* of a family of hash functions
-    is, that if selecting a function at random
-    from the family, it guarantees that the hash codes of any designated k
-    keys are independent random variables.
-
-    Our construction utilises the fact that the output bits of a
-    cryptographic hash function are uniformly distributed,
-    independent, binary random variables (well, at least as close to as
-    possible. See [Kaminsky2011]_ for an analysis).
-    Thus, slicing the output of a cryptographic hash function into k
-    different slices gives you k independent random
-    variables.
-
-    We chose Blake2 as the cryptographic hash function mainly for two reasons:
-
-    * it is fast.
-    * in keyed hashing mode, Blake2 provides MACs with just one hash
-    function call instead of the
-      two calls in the HMAC construction used in the double hashing scheme.
+        In short, the double hashing scheme only allows for :math:`l^2`
+        different encodings for any possible n-gram,
+        whereas the use of :math:`k` different independent hash functions gives
+        you :math:`\\sum_{j=1}^{k}{\\binom{l}{j}}`
+        combinations.
 
 
-    .. warning::
-       Please be aware that, although this construction makes the attack of
-       [Kroll2015]_ infeasible, it is most likely
-       not enough to ensure security. Or in their own words:
+        **Our construction**
 
-         | However, we think that using independent hash functions alone
-         will not be sufficient to ensure security,
-           since in this case other approaches (maybe related to or at least
-           inspired through work from the
-           area of Frequent Itemset Mining) are promising to detect at least
-           the most frequent atoms automatically.
+        It is advantageous to construct Bloom filters using a family of hash
+        functions with the property of
+        `k-independence <https://en.wikipedia.org/wiki/K-independent_hashing>`_
+        to compute the indices for an entry.
+        This approach minimises the change of collisions.
 
-    :param ngrams: list of n-grams to be encoded
-    :param keys: secret key for blake2 as bytes
-    :param ks: ks[i] is k value to use for ngram[i]
-    :param l: length of the output bitarray (has to be a power of 2)
-    :param encoding: the encoding to use when turning the ngrams to bytes
+        An informal definition of *k-independence* of a family of hash functions
+        is, that if selecting a function at random
+        from the family, it guarantees that the hash codes of any designated k
+        keys are independent random variables.
 
-    :return: bitarray of length l with the bits set which correspond to the
-    encoding of the ngrams
+        Our construction utilises the fact that the output bits of a
+        cryptographic hash function are uniformly distributed,
+        independent, binary random variables (well, at least as close to as
+        possible. See [Kaminsky2011]_ for an analysis).
+        Thus, slicing the output of a cryptographic hash function into k
+        different slices gives you k independent random
+        variables.
+
+        We chose Blake2 as the cryptographic hash function mainly for two reasons:
+
+        * it is fast.
+        * in keyed hashing mode, Blake2 provides MACs with just one hash
+          function call instead of the two calls in the HMAC construction used
+          in the double hashing scheme.
+
+
+        .. warning::
+           Please be aware that, although this construction makes the attack of
+           [Kroll2015]_ infeasible, it is most likely
+           not enough to ensure security. Or in their own words:
+
+             | However, we think that using independent hash functions alone
+               will not be sufficient to ensure security,
+               since in this case other approaches (maybe related to or at least
+               inspired through work from the
+               area of Frequent Itemset Mining) are promising to detect at least
+               the most frequent atoms automatically.
+
+        :param ngrams: list of n-grams to be encoded
+        :param keys: secret key for blake2 as bytes
+        :param ks: ks[i] is k value to use for ngram[i]
+        :param l: length of the output bitarray (has to be a power of 2)
+        :param encoding: the encoding to use when turning the ngrams to bytes
+
+        :return: bitarray of length l with the bits set which correspond to the
+                 encoding of the ngrams
     """
     key, = keys  # Unpack.
 
@@ -244,11 +239,10 @@ def hashing_function_from_properties(
         fhp  # type: FieldHashingProperties
         ):
     # type: (...) -> Callable[[Iterable[str], Sequence[bytes], Sequence[int], int, str], bitarray]
+    """ Get the hashing function for this field
+        :param fhp: hashing properties for this field
+        :return: the hashing function
     """
-     Get the hashing function for this field
-     :param fhp: hashing properties for this field
-     :return: the hashing function
-     """
     if fhp.hash_type == 'doubleHash':
         if fhp.prevent_singularity:
             return double_hash_encode_ngrams_non_singular
@@ -341,7 +335,7 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
                          ):
     # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
     """ Compute composite Bloom filters (CLKs) for every record in an
-    iterable dataset.
+        iterable dataset.
 
         :param dataset: An iterable of indexable records.
         :param schema: An instantiated Schema instance
