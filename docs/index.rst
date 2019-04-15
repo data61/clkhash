@@ -16,7 +16,7 @@ Install with pip::
 .. hint::
 
    If you are interested in comparing CLKs (i.e carrying out record linkage) you might want to check
-   out `anonlink <https://github.com/n1analytics/anonlink>`_ - our Python library for computing
+   out `anonlink <https://github.com/data61/anonlink>`_ - our Python library for computing
    similarity scores, and best guess matches between two sets of cryptographic linkage keys.
 
 
@@ -35,7 +35,7 @@ Table of Contents
 External Links
 --------------
 
-* `clkhash on Github <https://github.com/n1analytics/clkhash/>`_
+* `clkhash on Github <https://github.com/data61/clkhash/>`_
 * `clkhash on PyPi <https://pypi.org/project/clkhash/>`_
 
 

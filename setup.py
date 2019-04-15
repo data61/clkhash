@@ -26,7 +26,7 @@ setup(
     description='Hash utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
-    url='https://github.com/n1analytics/clkhash',
+    url='https://github.com/data61/clkhash',
     license='Apache',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
@@ -35,8 +35,8 @@ setup(
     package_data={'clkhash': ['data/*.csv', 'data/*.json', 'schemas/*.json']},
     project_urls={
         'Documentation': 'http://clkhash.readthedocs.io/',
-        'Source': 'https://github.com/n1analytics/clkhash',
-        'Tracker': 'https://github.com/n1analytics/clkhash/issues',
+        'Source': 'https://github.com/data61/clkhash',
+        'Tracker': 'https://github.com/data61/clkhash/issues',
     },
     entry_points={
         'console_scripts': [

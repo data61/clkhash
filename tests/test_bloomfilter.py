@@ -91,7 +91,7 @@ class TestEncoding(unittest.TestCase):
             self.assertEqual(bf, bf_ns)
 
     def test_bug210(self):
-        # https://github.com/n1analytics/clkhash/issues/210
+        # https://github.com/data61/clkhash/issues/210
         common_tokens = [str(i) for i in range(65)]
         e1 = common_tokens + ['e1']          # 66 tokens
         e2 = common_tokens + ['e2a', 'e2b']  # 67 tokens

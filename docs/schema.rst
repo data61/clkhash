@@ -16,7 +16,7 @@ The hashing-schema is a detailed description of exactly what is fed to the hashi
 along with any configuration for the hashing itself.
 
 The format of the hashing schema is defined in a separate ``JSON Schema`` document
-`schemas/v1.json <https://github.com/n1analytics/clkhash/blob/master/clkhash/schemas/v1.json>`_.
+`schemas/v1.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v1.json>`_.
 
 
 Basic Structure
@@ -149,7 +149,7 @@ Choose one of:
 name                type    optional description
 =================== ======= ======== ===========
 type                string  no       must be set to "doubleHash"
-prevent_singularity boolean yes      see discussion in https://github.com/n1analytics/clkhash/issues/33
+prevent_singularity boolean yes      see discussion in https://github.com/data61/clkhash/issues/33
 =================== ======= ======== ===========
 
 * *blake hash*

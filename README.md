@@ -5,10 +5,10 @@ Python implementation of cryptographic longterm key hashing. Supports Python ver
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
 
-[![codecov](https://codecov.io/gh/n1analytics/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/n1analytics/clkhash)
+[![codecov](https://codecov.io/gh/data61/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/data61/clkhash)
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/n1analytics/clkhash.svg?branch=master)](https://travis-ci.org/n1analytics/clkhash)
-[![Requirements Status](https://requires.io/github/n1analytics/clkhash/requirements.svg?branch=master)](https://requires.io/github/n1analytics/clkhash/requirements/?branch=master)
+[![Build Status](https://travis-ci.org/data61/clkhash.svg?branch=master)](https://travis-ci.org/data61/clkhash)
+[![Requirements Status](https://requires.io/github/data61/clkhash/requirements.svg?branch=master)](https://requires.io/github/data61/clkhash/requirements/?branch=master)
 
 ## Installation
 
