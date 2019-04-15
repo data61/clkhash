@@ -15,9 +15,12 @@ Install with pip::
 
 .. hint::
 
-   If you are interested in comparing CLKs (i.e carrying out record linkage) you might want to check
-   out `anonlink <https://github.com/data61/anonlink>`_ - our Python library for computing
-   similarity scores, and best guess matches between two sets of cryptographic linkage keys.
+   If you are interested in comparing CLK encodings (i.e carrying out record linkage)
+   you might want to check out 
+   `anonlink <https://github.com/data61/anonlink>`_ and 
+   `anonlink-entity-service <https://github.com/data61/anonlink-entity-service>`__
+   - our Python library and REST service for computing
+   similarity scores, and matching between sets of cryptographic linkage keys.
 
 
 Table of Contents
