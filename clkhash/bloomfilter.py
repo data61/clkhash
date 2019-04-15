@@ -99,7 +99,7 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
 
         irrespective of the value :math:`i`. A discussion of this potential flaw
         can be found
-        `here <https://github.com/n1analytics/clkhash/issues/33>`_.
+        `here <https://github.com/data61/clkhash/issues/33>`_.
 
         :param ngrams: list of n-grams to be encoded
         :param keys: tuple with (key_sha1, key_md5).

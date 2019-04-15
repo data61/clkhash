@@ -62,7 +62,7 @@
       "required": ["type"],
       "properties": {
         "type": {"enum": ["doubleHash"]},
-        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/n1analytics/clkhash/issues/33"}
+        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/data61/clkhash/issues/33"}
       }
     },
     "blakeHash": {

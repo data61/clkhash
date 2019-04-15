@@ -1,7 +1,7 @@
 void setBuildStatus(String message, String state) {
   step([
     $class: "GitHubCommitStatusSetter",
-    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/n1analytics/clkhash"],
+    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/data61/clkhash"],
     contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'jenkins'],
     statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
   ]);

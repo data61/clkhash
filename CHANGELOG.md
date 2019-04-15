@@ -63,7 +63,7 @@ The [hashing schema documentation](http://clkhash.readthedocs.io/en/latest/schem
 * Command line tool is now officially supported on Windows.
 
 We now build clkhash with continuous integration tools that anyone 
-can access [Travis CI](https://travis-ci.org/n1analytics/clkhash/) 
+can access [Travis CI](https://travis-ci.org/data61/clkhash/) 
 and [AppVeyor](https://ci.appveyor.com/project/hardbyte/clkhash).
 
 ## 0.9.0
