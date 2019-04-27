@@ -31,6 +31,12 @@ matrix:
     - python: '3.5'
       env:
         - SKIP_TEST_NB=1
+    - python: 'pypy'
+      env:
+        - SKIP_TEST_NB=1
+    - python: 'pypy3'
+      env:
+        - SKIP_TEST_NB=1
     - python: '2.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
@@ -39,16 +45,6 @@ matrix:
 
     # OSX + Python is officially supported by Travis CI as of April 2011
     # https://docs.travis-ci.com/user/reference/osx/
-    - os: osx
-      osx_image: xcode8.3
-      python: "3.8-dev"
-      env:
-        - SKIP_TEST_NB=1
-    - os: osx
-      osx_image: xcode10.2
-      python: "3.8-dev"
-      env:
-        - SKIP_TEST_NB=1
     - os: osx
       osx_image: xcode8.3
       python: "3.6-dev"
