@@ -6,16 +6,15 @@ dist: xenial
 
 python:
   - '3.7'
-  - 'nightly'
 
 matrix:
   allow_failures:
     - python: 'nightly'
-    - python: 'pypy'
-    - python: 'pypy3'
-    - os: osx
 
   include:
+    - python: 'nightly'
+      env:
+        - SKIP_TEST_NB=1
     - python: '3.8-dev'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
