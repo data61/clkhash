@@ -58,3 +58,13 @@ script:
   - if [ "${MYPY_TYPING}" == "1" ]; then mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls; fi
   - if [ "${SKIP_TEST_NB}" == "1" ]; then pytest --cov=clkhash; else pytest --cov=clkhash --nbval-lax; fi
   - codecov
+
+deploy:
+  provider: pypi
+  user: confidentialcomputing
+  password:
+    secure: "YbtfcQqgZE/C8+a9pukhMDmbum1dNvt/tQVHBMHO3RWsuJF4MbIUqg2vZs1N0hJEmPXkMYTcs7839UUGE2n1xLxwmgCMIbtL+QW6rB3F84Szb4PjBjeSXDCoXatLkd5O9DLCCwwo+I0StNTmPuy/YMpvQJcygoTE5OT4xLo1Ah6nxu2lAWxxAekVSgToX+tRd7FCNn8GrPBvHt3jZ8pvbgIY4g5TXg1CLLoKP/tem3/xDcw2lBJw+iFdHmrK9oBKTOzoGZjhSVykI8+lIlMtGjWx62WQKXnQVdD4rtw/hK9EpvE/AFW8Gu7LSVSr9wsWNcUsE1ZSYNtOzCEFCsG6t1dAPS/RJ3jK64ahjPEgjoRh2CNtT6z0Pz8y2Z64YbBMXbyuGEM1K5+bKncQRa0QMd+CdSAElEKj5SgUkEjxU9QDKxIznXFItrNsiLNFWjW1/8oKxcgu36Hd85L9zx4iw53eG++1tjqLuOU50SQKi5QvN8OkLPwOoxeguXpFh72j6JJxfK2SmH1ACRFvD4PsF0eSQVRV2vnnfv2Z8Oc0g84drsqFokLozu57Yb2R0tzNRc/YopGN7w53I4EuK7ZYD/ZgtmfB5XIuNKsUSgkk5hSdbFZgS/vPIZdIxM1cUD9ukttSkXCmOQ/M6upczPGyW1bEcPeP/snmzVdiz7mCGFI="
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel"
+  skip_cleanup: true

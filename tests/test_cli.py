@@ -324,7 +324,7 @@ class TestHasherSchema(CLITestHelper):
 
 
 @unittest.skipUnless("TEST_ENTITY_SERVICE" in os.environ,
-                     "Set envvar TEST_ENTITY_SERVICE to run. Disabled for jenkins")
+                     "Set environment variable TEST_ENTITY_SERVICE to a URL to run anonlink-entity-service tests")
 class TestCliInteractionWithService(CLITestHelper):
 
     def setUp(self):
