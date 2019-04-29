@@ -1,24 +1,25 @@
 language: python
 sudo: false
+os:
+  - linux
 dist: xenial
 
 python:
-  - 'nightly'
-  - 'pypy'
-  - 'pypy3'
+  - '3.7'
 
 matrix:
   allow_failures:
     - python: 'nightly'
-    - python: 'pypy'
-    - python: 'pypy3'
 
   include:
-    - python: '3.7-dev'
+    - python: 'nightly'
+      env:
+        - SKIP_TEST_NB=1
+    - python: '3.8-dev'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
-        - MYPY_TYPING=1
         - INCLUDE_CLI=1
+        - SKIP_TEST_NB=1
     - python: '3.6'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
@@ -27,12 +28,25 @@ matrix:
     - python: '3.5'
       env:
         - SKIP_TEST_NB=1
+    - python: 'pypy'
+      env:
+        - SKIP_TEST_NB=1
+    - python: 'pypy3'
+      env:
+        - SKIP_TEST_NB=1
     - python: '2.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
         - SKIP_TEST_NB=1
 
+    # OSX + Python is officially supported by Travis CI as of April 2011
+    # https://docs.travis-ci.com/user/reference/osx/
+    - os: osx
+      osx_image: xcode8.3
+      python: "3.6-dev"
+      env:
+        - SKIP_TEST_NB=1
 
 install:
   - if [ "${MYPY_TYPING}" == "1" ]; then travis_retry pip install mypy; fi
