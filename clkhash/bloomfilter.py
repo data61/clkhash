@@ -209,7 +209,7 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
         :return: bitarray of length l with the bits set which correspond to the
                  encoding of the ngrams
     """
-    key, = keys  # Unpack.
+    key = keys[0]  # We only need the first key
 
     log_l = int(math.log(l, 2))
     if not 2 ** log_l == l:
