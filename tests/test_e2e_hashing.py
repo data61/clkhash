@@ -179,3 +179,62 @@ class TestHashingWithDifferentK(unittest.TestCase):
         self.assertGreater(n2, n15)
         self.assertLessEqual(n15, round(n1 * 1.5))
         self.assertLessEqual(n2, n1 * 2)
+
+
+class TestHashingWithDifferentHashFunctions(unittest.TestCase):
+    """Schema allows to define the hash function on a per field basis."""
+
+    def test_different_hash_functions(self):
+        schema = Schema(
+            l=1024,
+            xor_folds=0,
+            kdf_hash='SHA256',
+            kdf_info=base64.b64decode('c2NoZW1hX2V4YW1wbGU='),
+            kdf_key_size=64,
+            kdf_salt=base64.b64decode(
+                'SCbL2zHNnmsckfzchsNkZY9XoHk96P'
+                '/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA=='),
+            kdf_type='HKDF',
+            fields=[
+                StringSpec(
+                    identifier='some info',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        k=25,
+                        hash_type='blakeHash'
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                ),
+                StringSpec(
+                    identifier='some other very important info',
+                    hashing_properties=FieldHashingProperties(
+                        encoding=FieldHashingProperties._DEFAULT_ENCODING,
+                        ngram=2,
+                        positional=False,
+                        k=25,
+                        hash_type='doubleHash'
+                    ),
+                    description=None,
+                    case=StringSpec._DEFAULT_CASE,
+                    min_length=0,
+                    max_length=None
+                )
+            ]
+        )
+
+        pii = [['Deckard', 'Cane']]
+        keys = generate_key_lists(('secret1', 'secret2'), 2)
+        blake_field = schema.fields[0]
+        double_hash_field = schema.fields[1]
+
+        bf = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
+
+        schema.fields = [double_hash_field, blake_field]
+        bf_reversed = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
+
+        self.assertNotEqual(bf[0], bf_reversed[0])
