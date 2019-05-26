@@ -414,6 +414,35 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
 
+    def test_create_project_2_party(self):
+        out = self._create_project(project_args={'parties': '2'})
+
+        self.assertIn('project_id', out)
+        self.assertIn('result_token', out)
+        self.assertIn('update_tokens', out)
+
+        self.assertGreaterEqual(len(out['project_id']), 16)
+        self.assertGreaterEqual(len(out['result_token']), 16)
+        self.assertGreaterEqual(len(out['update_tokens']), 2)
+
+    def test_create_project_multi_party(self):
+        out = self._create_project(
+            project_args={'parties': '3', 'type': 'groups'})
+
+        self.assertIn('project_id', out)
+        self.assertIn('result_token', out)
+        self.assertIn('update_tokens', out)
+
+        self.assertGreaterEqual(len(out['project_id']), 16)
+        self.assertGreaterEqual(len(out['result_token']), 16)
+        self.assertGreaterEqual(len(out['update_tokens']), 3)
+
+    def test_create_project_invalid_parties_type(self):
+        with pytest.raises(AssertionError) as exec_info:
+            self._create_project(project_args={'parties': '3'})
+
+        assert "requires result type 'groups'"  in exec_info.value.args[0]
+
     def test_create_project_bad_type(self):
         with pytest.raises(AssertionError) as exec_info:
             self._create_project(project_args={'type': 'invalid'})
@@ -548,3 +577,77 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertIn('permutation', bob_res)
         self.assertIn('rows', bob_res)
 
+    def test_multi_party_upload_and_results(self):
+        project, run = self._create_project_and_run(
+            {'type': 'groups', 'parties': '3'})
+
+        def get_coord_results():
+            # Get results from coordinator
+            return self.run_command_capture_output(
+                [
+                    'results',
+                    '--server', self.url,
+                    '--project', project['project_id'],
+                    '--run', run['run_id'],
+                    '--apikey', project['result_token']
+                ]
+            )
+
+        # Upload Alice
+        alice_upload = self.run_command_load_json_output(
+            [
+                'upload',
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][0],
+                self.clk_file.name
+            ]
+        )
+        self.assertIn('receipt_token', alice_upload)
+
+        out_early = get_coord_results()
+        self.assertEqual("", out_early)
+
+        # Upload Bob (subset of clks uploaded)
+        bob_upload = self.run_command_load_json_output(
+            [
+                'upload',
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][1],
+                self.clk_file_2.name
+            ]
+        )
+
+        self.assertIn('receipt_token', bob_upload)
+
+        out_early = get_coord_results()
+        self.assertEqual("", out_early)
+
+        # Upload Charlie (we're lazy and just reuse Bob)
+        charlie_upload = self.run_command_load_json_output(
+            [
+                'upload',
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--apikey', project['update_tokens'][2],
+                self.clk_file_2.name
+            ]
+        )
+
+        self.assertIn('receipt_token', charlie_upload)
+
+        # Give the server a small amount of time to process
+        time.sleep(10.0)
+
+        results = get_coord_results()
+        res = json.loads(results)
+        self.assertIn('groups', res)
+
+        # Recall that Bob and Charlie have the same samples. These form
+        # half of Alice's samples.
+        groups = res['groups']
+        assert self.SAMPLES * .45 <= len(groups) <= self.SAMPLES * .55
+
+        number_of_groups_of_three = sum(len(group) == 3 for group in groups)
+        assert number_of_groups_of_three >= .9 * len(groups)

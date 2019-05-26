@@ -159,6 +159,9 @@ def create_project(type, schema, server, name, parties, output, verbose):
     else:
         raise ValueError("Schema must be provided when creating new linkage project")
 
+    if parties > 2 and type != 'groups':
+        raise ValueError("Multi-party linkage requires result type 'groups'")
+
     name = name if name is not None else ''
 
     # Creating new project
