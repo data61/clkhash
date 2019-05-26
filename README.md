@@ -9,6 +9,7 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/data61/clkhash.svg?branch=master)](https://travis-ci.org/data61/clkhash)
 [![Requirements Status](https://requires.io/github/data61/clkhash/requirements.svg?branch=master)](https://requires.io/github/data61/clkhash/requirements/?branch=master)
+[![Downloads](https://pepy.tech/badge/clkhash)](https://pepy.tech/project/clkhash)
 
 ## Installation
 
