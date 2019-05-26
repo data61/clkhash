@@ -133,14 +133,17 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
 @click.option('--type', default='permutations',
-              type=click.Choice(['mapping', 'permutations', 'similarity_scores']),
+              type=click.Choice(['mapping', 'permutations',
+                                 'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this project")
+@click.option('--parties', default=2, type=int,
+              help="Number of parties in the project")
 @click.option('-o','--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
-def create_project(type, schema, server, name, output, verbose):
+def create_project(type, schema, server, name, parties, output, verbose):
     """Create a new project on an entity matching server.
 
     See entity matching service documentation for details on mapping type and schema
@@ -160,7 +163,8 @@ def create_project(type, schema, server, name, output, verbose):
 
     # Creating new project
     try:
-        project_creation_reply = project_create(server, schema_json, type, name)
+        project_creation_reply = project_create(
+            server, schema_json, type, name, parties=parties)
     except ServiceError as e:
         log("Unexpected response - {}".format(e.status_code))
         log(e.text)
