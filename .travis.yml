@@ -27,9 +27,9 @@ script:
 
 
 jobs:
-  #fast_finish: true
   allow_failures:
     - python: 'nightly'
+    - python: '3.8-dev'
 
   include:
 
@@ -64,7 +64,6 @@ jobs:
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - SKIP_TEST_NB=1
     - stage: Integration
       python: '3.6'
       env:
