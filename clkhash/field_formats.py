@@ -849,7 +849,7 @@ def spec_from_json_dict(
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
-    if 'ignored' in json_dict:
+    if 'ignored' in json_dict and json_dict['ignored']:
         return Ignore(json_dict['identifier'])
     type_str = json_dict['format']['type']
     spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
