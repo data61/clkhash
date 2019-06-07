@@ -48,7 +48,6 @@ jobs:
     - python: '3.6'
       env:
         - INCLUDE_CLI=1
-        - INCLUDE_NB_TEST=1
     - python: '2.7'
       env:
         - INCLUDE_CLI=1
@@ -65,7 +64,7 @@ jobs:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
     - stage: Integration
-      python: '3.6'
+      python: '3.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
