@@ -96,7 +96,7 @@ def convert_v1_to_v2(
     clk_hash = clk_config['hash']
 
     def convert_feature(f):
-        if 'ignored' in f:
+        if 'ignored' in f and f['ignored']:
             return f
 
         hashing = f['hashing']
