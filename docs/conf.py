@@ -57,9 +57,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'CLK hash'
-copyright = '2018, N1 Analytics'
-author = 'N1 Analytics'
+project = 'clkhash'
+copyright = '2019, Data61'
+author = 'Confidential Computing'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

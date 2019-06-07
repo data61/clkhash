@@ -1,3 +1,12 @@
+## 0.13.0
+
+- Fix mismatch between double hash and blake hash key requirement.
+- Update to use newer anonlink-entity-service api.
+- Updates to dependencies.
+- Better test coverage
+- CI now executes tutorial notebooks
+- CI now automatically releases to PyPi
+
 ## 0.12.1
 
 - Support packaging the command line tool into a windows executable.
