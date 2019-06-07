@@ -3,3 +3,7 @@ typing>=3.6
 nbsphinx>=0.3
 ipython==7.5.0
 sphinxcontrib-programoutput
+numpy
+pandas
+recordlinkage
+requests
