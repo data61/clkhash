@@ -25,11 +25,13 @@ class InvalidEntryError(ValueError):
 
 
 class InvalidSchemaError(ValueError):
-    """ The schema is not valid.
+    """Raised if the schema of a field specification is invalid.
 
-        This exception is raised if, for example, a regular expression
-        included in the schema is not syntactically correct.
+    For example, a regular expression included in the schema is not
+    syntactically correct.
     """
+    json_field_spec = None  # type: Optional[dict]
+    field_spec_index = None # type: Optional[int]
 
 
 class MissingValueSpec(object):
@@ -444,6 +446,7 @@ class StringSpec(FieldSpec):
             except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 e_new = InvalidSchemaError(msg)
+                e_new.json_field_spec = json_dict
                 raise_from(e_new, e)
             result.regex_based = True
 
@@ -846,9 +849,10 @@ def spec_from_json_dict(
         json_dict  # type: Dict[str, Any]
 ):
     # type: (...) -> FieldSpec
-    """ Turns a dictionary into the appropriate object.
+    """ Turns a dictionary into the appropriate FieldSpec object.
 
         :param dict json_dict: A dictionary with properties.
+        :raises InvalidEntryError:
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """

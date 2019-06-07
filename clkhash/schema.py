@@ -15,7 +15,7 @@ import jsonschema
 from future.builtins import map
 
 from clkhash.backports import raise_from
-from clkhash.field_formats import FieldSpec, spec_from_json_dict
+from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
@@ -26,6 +26,21 @@ class SchemaError(Exception):
     """ The user-defined schema is invalid.
     """
 
+    def __init__(self,
+                 msg,                               # type: str
+                 errors=None                        # type: Sequence[InvalidSchemaError]
+                 ):
+        self.msg = msg
+        self.errors = [] if errors is None else errors
+        super(SchemaError, self).__init__(msg)
+
+    def __str__(self):
+        detail = ""
+        for i, e in enumerate(self.errors, start=1):
+            detail += "Error {} in feature at index {} - {}\n".format(i, e.field_spec_index, str(e))
+            detail += "Invalid spec:\n{}\n---\n".format(e.json_field_spec)
+
+        return self.msg + '\n\n' + detail
 
 class MasterSchemaError(Exception):
     """ Master schema missing? Corrupted? Otherwise surprising? This is
@@ -141,6 +156,8 @@ def from_json_dict(dct, validate=True):
             key with all the globals.
     :param validate: (default True) Raise an exception if the
             schema does not conform to the master schema.
+    :raises SchemaError: An exception containing details about why
+            the schema is not valid.
     :return: the Schema
     """
     if validate:
@@ -174,8 +191,22 @@ def from_json_dict(dct, validate=True):
                 else None)
     kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
 
-    fields = list(map(spec_from_json_dict, dct['features']))
-    return Schema(fields, l, xor_folds,
+    # Try to parse each feature config and store any errors encountered
+    # for reporting.
+    feature_errors = []
+    feature_configs = []
+
+    for i, feature_config in enumerate(dct['features']):
+        try:
+            feature_configs.append(spec_from_json_dict(feature_config))
+        except InvalidSchemaError as e:
+            e.field_spec_index = i
+            feature_errors.append(e)
+
+    if len(feature_errors):
+        raise SchemaError("Schema was invalid", feature_errors)
+
+    return Schema(feature_configs, l, xor_folds,
                   kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
 
@@ -268,7 +299,7 @@ def validate_schema_dict(schema):
     try:
         jsonschema.validate(schema, master_schema)
     except jsonschema.exceptions.ValidationError as e:
-        raise_from(SchemaError('The schema is not valid.'), e)
+        raise_from(SchemaError('The schema is not valid.\n\n' + str(e)), e)
     except jsonschema.exceptions.SchemaError as e:
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')
