@@ -169,11 +169,14 @@ def fhp_from_json_dict(
             always set to the default value.
         :return: A :class:`FieldHashingProperties` instance.
     """
+
+    # Note the (duplicate) defaults from v2 schema:
+    hashing_strategy = json_dict.get('strategy', {"numBits": 200})
     h = json_dict.get('hash', {'type': 'blakeHash'})
-    num_bits = json_dict.get('numBits')
-    k = json_dict.get('k')
-    if not num_bits and not k:
-        num_bits = 200 # default for v2 schema
+
+    num_bits = hashing_strategy.get('numBits')
+    k = hashing_strategy.get('k')
+
     return FieldHashingProperties(
         ngram=json_dict['ngram'],
         positional=json_dict.get(

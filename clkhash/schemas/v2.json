@@ -72,7 +72,9 @@
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
         "description": {"type": "string"},
-        "format": {"oneOf": [
+        "format": {
+          "required": ["type"],
+          "oneOf": [
             {"$ref": "#/definitions/textFormat"},
             {"$ref": "#/definitions/textPatternFormat"},
             {"$ref": "#/definitions/numberFormat"},

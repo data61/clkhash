@@ -16,8 +16,10 @@ The hashing-schema is a detailed description of exactly what is fed to the hashi
 along with any configuration for the hashing itself.
 
 The format of the hashing schema is defined in a separate ``JSON Schema`` document
-`schemas/v1.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v1.json>`_.
+`schemas/v2.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v2.json>`_.
 
+Earlier versions of the hashing schema will continue to work, internally they are converted to
+``v2``.
 
 Basic Structure
 ---------------
