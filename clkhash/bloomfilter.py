@@ -319,9 +319,10 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
         if fhp:
             ngrams = list(tokenize(field.format_value(entry)))
             hash_function = hashing_function_from_properties(fhp)
-            bloomfilter |= hash_function(ngrams, key,
-                                         fhp.ks(len(ngrams)),
-                                         hash_l, fhp.encoding)
+            if ngrams:
+                bloomfilter |= hash_function(ngrams, key,
+                                             fhp.ks(len(ngrams)),
+                                             hash_l, fhp.encoding)
 
     c1 = bloomfilter.count()
     bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
