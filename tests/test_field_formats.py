@@ -16,7 +16,7 @@ class TestFieldFormats(unittest.TestCase):
                 pattern=r'[5-9',  # This is syntactically incorrect.
                 description='foo'),
             hashing=dict(
-                ngram=1, k=20))
+                ngram=1, strategy=dict(k=20)))
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
@@ -91,7 +91,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                k=20))
+                strategy=dict(k=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -239,17 +239,21 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.encoding, 'utf-8')
 
     def test_integer(self):
-        regex_spec = dict(
-            identifier='Z',
-            format=dict(
+        json_spec = {
+            'identifier': 'Z',
+            'format': {
                 # Missing 'minimum' and 'maximum'.
-                type='integer',
-                description='buzz'),
-            hashing=dict(
-                ngram=1, k=20,
-                positional=True))
+                'type': 'integer',
+                'description': 'buzz'
+            },
+            'hashing': {
+                'ngram': 1,
+                'strategy': {'k': 20},
+                'positional': True
+            }
+        }
 
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(json_spec)
 
         # `minimum` and `maximum` should be None.
         self.assertIsNone(spec.minimum)
@@ -279,9 +283,10 @@ class TestFieldFormats(unittest.TestCase):
             self.assertEqual('10', spec.format_value(int_str))
 
         # Ok, let's put a 'minimum' and 'maximum' in.
-        regex_spec['format']['minimum'] = 8
-        regex_spec['format']['maximum'] = 12
-        spec = field_formats.spec_from_json_dict(regex_spec)
+
+        json_spec['format']['minimum'] = 8
+        json_spec['format']['maximum'] = 12
+        spec = field_formats.spec_from_json_dict(json_spec)
 
         # These are too small, thus invalid.
         with self.assertRaises(field_formats.InvalidEntryError):
@@ -311,24 +316,22 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
-        regex_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        json_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
+        spec = field_formats.spec_from_json_dict(json_spec)
         # validating the sentinel should work
         spec.validate('None')
         self.assertEqual('42', spec.hashing_properties.replace_missing_value('None'))
 
     def test_date(self):
-        regex_spec = dict(
-            identifier='dates',
-            format=dict(
-                type='date',
-                format='%Y-%m-%d',
-                description='phoenix dactylifera'),
-            hashing=dict(
-                ngram=0,
-                k=20))
+        json_spec = {
+            'identifier': 'dates',
+            'format': {
+                'type': 'date', 'format': '%Y-%m-%d',
+                'description': 'phoenix dactylifera'},
+            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+        }
 
-        spec = field_formats.spec_from_json_dict(regex_spec)
+        spec = field_formats.spec_from_json_dict(json_spec)
 
         # These are valid dates.
         spec.validate('1946-06-14')
@@ -418,15 +421,12 @@ class TestFieldFormats(unittest.TestCase):
             spec.format_value('yesterday')
 
     def test_enum(self):
-        spec_dict = dict(
-            identifier='testingAllTheEnums',
-            format=dict(
-                type='enum',
-                values=['dogs', 'cats', u'fërrets'],
-                description='fizz'),
-            hashing=dict(
-                ngram=2,
-                k=20))
+        spec_dict = {
+            'identifier': 'testingAllTheEnums',
+            'format': {
+                'type': 'enum',
+                'values': ['dogs', 'cats', u'fërrets'],
+                'description': 'fizz'}, 'hashing': {'ngram': 2, 'strategy': {'k': 20}}}
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
