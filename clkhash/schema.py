@@ -113,7 +113,8 @@ def convert_v1_to_v2(
         if 'weight' in hashing:
             del hashing['weight']
 
-        hashing['k'] = int(round(weight * k))
+        hashing['strategy'] = {}
+        hashing['strategy']['k'] = int(round(weight * k))
         hashing['hash'] = clk_hash
         return x
 
