@@ -28,8 +28,9 @@ class SchemaError(Exception):
 
     def __init__(self,
                  msg,                               # type: str
-                 errors=None                        # type: Sequence[InvalidSchemaError]
+                 errors=None                        # type: Optional[Sequence[InvalidSchemaError]]
                  ):
+        # type: (...) -> None
         self.msg = msg
         self.errors = [] if errors is None else errors
         super(SchemaError, self).__init__(msg)
@@ -41,6 +42,7 @@ class SchemaError(Exception):
             detail += "Invalid spec:\n{}\n---\n".format(e.json_field_spec)
 
         return self.msg + '\n\n' + detail
+
 
 class MasterSchemaError(Exception):
     """ Master schema missing? Corrupted? Otherwise surprising? This is
