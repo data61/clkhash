@@ -25,7 +25,9 @@
       },
       "hashing": {
         "ngram": 2,
-        "k": 15,
+        "strategy": {
+          "k": 15
+        },
         "hash": {"type": "doubleHash"}
       }
     },
@@ -39,7 +41,9 @@
       "hashing": {
         "ngram": 1,
         "positional": true,
-        "k": 30,
+        "strategy": {
+          "k": 30
+        },
         "hash": {"type": "doubleHash"}
       }
     },
@@ -51,7 +55,9 @@
       },
       "hashing": {
         "ngram": 1,
-        "k": 60,
+        "strategy": {
+          "k": 60
+        },
         "hash": {"type": "doubleHash"}
       }
     }

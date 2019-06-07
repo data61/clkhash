@@ -27,7 +27,9 @@
       "hashing": {
         "hash": {"type": "doubleHash"},
         "ngram": 2,
-        "numBits": 200
+        "strategy": {
+          "numBits": 200
+        }
       }
     },
     {
@@ -42,7 +44,9 @@
       "hashing": {
         "hash": {"type": "blakeHash"},
         "ngram": 2,
-        "k": 20
+        "strategy": {
+          "k": 20
+        }
       }
     },
     {
