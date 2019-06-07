@@ -56,10 +56,13 @@
     },
     "ignoreFeature": {
       "type": "object",
-      "required": ["identifier","ignored"],
+      "required": ["identifier", "ignored"],
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
-        "ignored":  {"enum": [true]},
+        "ignored":  {
+          "type": "boolean",
+          "const": true
+        },
         "description": {"type": "string"}
       }
     },
@@ -136,6 +139,7 @@
     },
     "hashingConfig": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["ngram"],
       "properties": {
         "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
@@ -144,9 +148,26 @@
           ],
           "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
         },
-        "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf": [
-          {"numBits": {"type": "number", "minimum": 1, "default": 200, "description": "dynamic k = numBits / number of n-grams"}},
-          {"k": {"type": "number", "minimum": 1, "default": 20, "description": "max number of bits per n-gram"}}
+        "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf":
+        [
+          {
+            "required": ["numBits"],
+            "numBits": {
+              "type": "number",
+              "minimum": 1,
+              "default": 200,
+              "description": "dynamic k = numBits / number of n-grams"
+            }
+          },
+          {
+            "required": ["k"],
+            "k": {
+              "type": "number",
+              "minimum": 1,
+              "default": 20,
+              "description": "max number of bits per n-gram"
+            }
+          }
         ]},
         "ngram": {"type": "integer", "minimum": 1, "default": 2},
         "positional": {"type": "boolean", "default": false},
