@@ -22,7 +22,7 @@ install:
   - travis_retry pip install -e .
 
 script:
-  - if [ "${INCLUDE_NB_TEST}" == "1" ]; then pytest --cov=clkhash --nbval-lax; else pytest --cov=clkhash; fi
+  - pytest --cov=clkhash
   - codecov
 
 
@@ -57,6 +57,16 @@ jobs:
     - os: osx
       osx_image: xcode8.3
       python: "3.6-dev"
+
+
+    - stage: Integration
+      name: Test Notebooks
+      python: 3.7
+      before_install:
+        - travis_retry pip install -U -r docs/doc-requirements.txt
+      script:
+        - pytest --cov=clkhash --nbval-lax docs -x --sanitize-with docs/tutorial_sanitize.cfg
+        - codecov
 
     - stage: Integration
       python: '3.8-dev'
