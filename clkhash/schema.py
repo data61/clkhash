@@ -67,7 +67,7 @@ class Schema:
         # type: (...) -> None
         """ Create a Schema.
             :param fields: the features or field definitions
-            :param l: The length of the resulting hash in bits. This is the
+            :param l: The length of the resulting encoding in bits. This is the
                 length after XOR folding.
             :param xor_folds: The number of XOR folds to perform on the hash.
             :param kdf_type: The key derivation function to use. Currently,
