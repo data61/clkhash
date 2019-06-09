@@ -145,7 +145,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 @click.option('--name', type=str, help="Name to give this project")
 @click.option('--parties', default=2, type=int,
               help="Number of parties in the project")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
 def create_project(type, schema, server, name, parties, output, verbose):
     """Create a new project on an entity matching server.
@@ -175,7 +175,7 @@ def create_project(type, schema, server, name, parties, output, verbose):
     except ServiceError as e:
         log("Unexpected response - {}".format(e.status_code))
         log(e.text)
-        raise SystemExit
+        raise SystemExit(-1)
     else:
         log("Project created")
 
