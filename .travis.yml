@@ -65,7 +65,7 @@ jobs:
       before_install:
         - travis_retry pip install -U -r docs/doc-requirements.txt
       script:
-        - pytest --cov=clkhash --nbval-lax docs -x --sanitize-with docs/tutorial_sanitize.cfg
+        - pytest --cov=clkhash --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
         - codecov
 
     - stage: Integration
