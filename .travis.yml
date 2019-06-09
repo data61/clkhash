@@ -75,7 +75,6 @@ jobs:
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - INCLUDE_NB_TEST=1
     - stage: Integration
       python: '2.7'
       env:
