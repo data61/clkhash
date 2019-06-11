@@ -18,7 +18,7 @@ import clkhash
 import clkhash.cli
 from clkhash import randomnames
 
-from tests import temporary_file, create_temp_file, SIMPLE_SCHEMA_PATH, RANDOMNAMES_SCHEMA_PATH
+from tests import *
 
 
 class CLITestHelper(unittest.TestCase):
@@ -100,7 +100,9 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, [])
-        for expected_command in 'hash', 'upload', 'create', 'results', 'generate', 'benchmark':
+        expected_commands = ['benchmark', 'create', 'create-project', 'generate',
+                             'hash', 'upload',  'results', 'validate-schema']
+        for expected_command in expected_commands:
             assert expected_command in result.output
 
     def test_version(self):
@@ -133,6 +135,41 @@ class BasicCLITests(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['benchmark'])
         assert 'hashes in' in result.output
+
+
+class TestSchemaValidationCommand(unittest.TestCase):
+
+    @staticmethod
+    def validate_schema(schema_path):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, [
+            'validate-schema', schema_path
+        ])
+        return result
+
+    def test_good_v1_schema(self):
+        for schema_path in GOOD_SCHEMA_V1_PATH, SIMPLE_SCHEMA_PATH:
+            result = self.validate_schema(schema_path)
+            assert result.exit_code == 0
+            assert 'schema is valid' in result.output
+
+    def test_bad_v1_schema(self):
+        result = self.validate_schema(BAD_SCHEMA_V1_PATH)
+        assert result.exit_code == -1
+        assert 'schema is not valid.' in result.output
+        assert "'l' is a required property" in result.output
+
+
+    def test_good_v2_schema(self):
+        for schema_path in GOOD_SCHEMA_V2_PATH, RANDOMNAMES_SCHEMA_PATH:
+            result = self.validate_schema(schema_path)
+            assert result.exit_code == 0
+            assert 'schema is valid' in result.output
+
+    def test_bad_v1_schema(self):
+        result = self.validate_schema(BAD_SCHEMA_V2_PATH)
+        assert result.exit_code == -1
+        assert 'schema is not valid.' in result.output
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
