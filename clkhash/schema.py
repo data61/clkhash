@@ -21,7 +21,6 @@ from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
                             2: 'v2.json'}  # type: Dict[Hashable, Text]
 
-
 class SchemaError(Exception):
     """ The user-defined schema is invalid.
     """
@@ -233,15 +232,16 @@ def from_json_file(schema_file, validate=True):
 
 
 def _get_master_schema(version):
-    # type: (Hashable) -> bytes
-    """ Loads the master schema of given version as bytes.
+    # type: (Hashable) -> dict
+    """ Loads the master schema of given version
 
         :param version: The version of the master schema whose path we
             wish to retrieve.
         :raises SchemaError: When the schema version is unknown. This
             usually means that either (a) clkhash is out of date, or (b)
             the schema version listed is incorrect.
-        :return: Bytes of the schema.
+        :raises MasterSchemaError: When the master schema is invalid.
+        :return: Dict object of the (json) master schema.
     """
     try:
         file_name = MASTER_SCHEMA_FILE_NAMES[version]
@@ -252,6 +252,10 @@ def _get_master_schema(version):
 
     try:
         schema_bytes = pkgutil.get_data('clkhash', 'schemas/{}'.format(file_name))
+        if schema_bytes is None:
+            msg = ('The master schema could not be loaded. The schema cannot be '
+                   'validated. Please file a bug report.')
+            raise MasterSchemaError(msg)
     except IOError as e:  # In Python 3 we can be more specific with
         # FileNotFoundError, but that doesn't exist in
         # Python 2.
@@ -259,12 +263,16 @@ def _get_master_schema(version):
                'validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)
 
-    if schema_bytes is None:
-        msg = ('The master schema could not be loaded. The schema cannot be '
-               'validated. Please file a bug report.')
-        raise MasterSchemaError(msg)
-
-    return schema_bytes
+    try:
+        master_schema = json.loads(schema_bytes.decode('utf-8'))
+        return master_schema
+    except ValueError as e:
+        # In Python 3 we can be more specific with
+        # json.decoder.JSONDecodeError, but that
+        # doesn't exist in Python 2.
+        msg = ('The master schema is not a valid JSON file. The schema cannot '
+               'be validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
 
 
 def validate_schema_dict(schema):
@@ -288,15 +296,7 @@ def validate_schema_dict(schema):
     else:
         raise SchemaError('A format version is expected in the schema.')
 
-    master_schema_bytes = _get_master_schema(version)
-    try:
-        master_schema = json.loads(master_schema_bytes.decode('utf-8'))
-    except ValueError as e:  # In Python 3 we can be more specific with
-        # json.decoder.JSONDecodeError, but that
-        # doesn't exist in Python 2.
-        msg = ('The master schema is not a valid JSON file. The schema cannot '
-               'be validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+    master_schema = _get_master_schema(version)
 
     try:
         jsonschema.validate(schema, master_schema)
