@@ -856,7 +856,7 @@ def spec_from_json_dict(
     """ Turns a dictionary into the appropriate FieldSpec object.
 
         :param dict json_dict: A dictionary with properties.
-        :raises InvalidEntryError:
+        :raises InvalidSchemaError:
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
