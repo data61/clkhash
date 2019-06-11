@@ -1,6 +1,6 @@
 {
   "id": "https://schema.n1analytics.com/entityservice/hashing-schema.json",
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "hashing-schema",
   "type": "object",
   "required": ["version", "clkConfig", "features"],
@@ -29,17 +29,17 @@
           "default": 1024,
           "description": "the length of a clk in number of bits"
         },
-        "xorFolds": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 0,
-          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk AFTER the XOR folding!"
-        },
         "kdf": {
           "type": "object",
           "oneOf": [
             {"$ref": "#/definitions/hkdf"}
           ]
+        },
+        "xorFolds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk AFTER the XOR folding!"
         }
       }
     },
@@ -47,7 +47,7 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": {"enum": ["HKDF"]},
+        "type": {"type": "string", "const": "HKDF"},
         "hash": {"enum": ["SHA256", "SHA512"], "default": "SHA256"},
         "salt": {"type": "string", "description": "base64 encoded bytes"},
         "info": {"type": "string", "description": "base64 encoded bytes"},
@@ -89,7 +89,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": {"enum": ["string"]},
+        "type": {"const": "string"},
         "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
         "case": {"enum": ["upper", "lower", "mixed"]},
         "minLength": {"type": "integer", "minimum": 0},
@@ -102,7 +102,7 @@
       "required": ["type", "pattern"],
       "additionalProperties": false,
       "properties": {
-        "type": {"enum": ["string"]},
+        "type": {"const": "string"},
         "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
         "pattern": {"type": "string", "description": "asRegEx"},
         "description": {"type": "string"}
@@ -113,7 +113,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": {"enum": ["integer"]},
+        "type": {"const": "integer"},
         "minimum": {"type": "integer"},
         "maximum": {"type": "integer"},
         "description": {"type": "string"}
@@ -124,7 +124,7 @@
       "required": ["type", "format"],
       "additionalProperties": false,
       "properties": {
-        "type": {"enum": ["date"]},
+        "type": {"const": "date"},
         "format": {"type": "string", "description": "describes the format of the date in 'strptime' format"},
         "description": {"type": "string"}
       }
@@ -134,7 +134,7 @@
       "required": ["type", "values"],
       "additionalProperties": false,
       "properties": {
-        "type": {"enum": ["enum"]},
+        "type": {"const": "enum"},
         "values": {"type": "array", "items": {"type": "string"}},
         "description": {"type": "string"}
       }
