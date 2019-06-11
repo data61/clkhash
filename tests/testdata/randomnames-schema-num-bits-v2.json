@@ -25,7 +25,9 @@
       },
       "hashing": {
         "ngram": 2,
-        "numBits": 100,
+        "strategy": {
+          "numBits": 100
+        },
         "hash": {"type": "doubleHash"}
       }
     },
@@ -39,7 +41,9 @@
       "hashing": {
         "ngram": 1,
         "positional": true,
-        "numBits": 200,
+        "strategy": {
+          "numBits": 200
+        },
         "hash": {"type": "doubleHash"}
       }
     },
@@ -51,7 +55,9 @@
       },
       "hashing": {
         "ngram": 1,
-        "numBits": 400,
+        "strategy": {
+          "numBits": 400
+        },
         "hash": {"type": "doubleHash"}
       }
     }
