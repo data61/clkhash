@@ -202,7 +202,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                k=20))
+                strategy=dict(k=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -222,7 +222,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 ngram=1,
                 positional=True,
-                k=20))
+                strategy=dict(k=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -410,7 +410,7 @@ class TestFieldFormats(unittest.TestCase):
             format=dict(
                 type='date',
                 format='%Y:%m-%d'),
-            hashing=dict(ngram=0, k=20))
+            hashing=dict(ngram=0, strategy=dict(k=20)))
 
         spec = field_formats.spec_from_json_dict(regex_spec)
         from datetime import date
