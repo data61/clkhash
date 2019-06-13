@@ -60,7 +60,6 @@
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
         "ignored":  {
-          "type": "boolean",
           "const": true
         },
         "description": {"type": "string"}
@@ -142,7 +141,7 @@
     "hashingConfig": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ngram"],
+      "required": ["ngram", "strategy"],
       "properties": {
         "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
             {"$ref": "#/definitions/doubleHash"},
@@ -150,7 +149,7 @@
           ],
           "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
         },
-        "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf":
+        "strategy": {"type": "object", "oneOf":
         [
           {
             "required": ["numBits"],

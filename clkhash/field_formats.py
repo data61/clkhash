@@ -171,13 +171,7 @@ def fhp_from_json_dict(
             always set to the default value.
         :return: A :class:`FieldHashingProperties` instance.
     """
-
-    # Loading default values directly from v2 master schema
-    from clkhash.schema import _get_master_schema
-    master_schema = _get_master_schema(version=2)
-    default_hashing_strategy = master_schema['definitions']['hashingConfig']['properties']['strategy']['default']
-
-    hashing_strategy = json_dict.get('strategy', default_hashing_strategy)
+    hashing_strategy = json_dict.get('strategy')
     h = json_dict.get('hash', {'type': 'blakeHash'})
 
     num_bits = hashing_strategy.get('numBits')
