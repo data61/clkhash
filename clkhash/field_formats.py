@@ -163,15 +163,12 @@ def fhp_from_json_dict(
     """
     Make a :class:`FieldHashingProperties` object from a dictionary.
 
-        :param dict json_dict:
-            The dictionary must have have an 'ngram' key
-            and one of k or num_bits. It may have
-            'positional' key; if missing a default is used.
-            The encoding is
-            always set to the default value.
-        :return: A :class:`FieldHashingProperties` instance.
+    :param dict json_dict:
+        Conforming to the `hashingConfig` definition
+        in the `v2` linkage schema.
+    :return: A :class:`FieldHashingProperties` instance.
     """
-    hashing_strategy = json_dict.get('strategy')
+    hashing_strategy = json_dict['strategy']
     h = json_dict.get('hash', {'type': 'blakeHash'})
 
     num_bits = hashing_strategy.get('numBits')
@@ -265,7 +262,6 @@ class FieldSpec(object):
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
                 raise_from(e_new, err)
-
 
     def is_missing_value(self, str_in):
         # type: (Text) -> bool
