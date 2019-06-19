@@ -4,6 +4,7 @@ import io
 import json
 import os
 import unittest
+from jsonschema import ValidationError
 
 from clkhash import schema
 from clkhash.schema import SchemaError, MasterSchemaError
@@ -95,6 +96,24 @@ class TestSchemaValidation(unittest.TestCase):
         schema_repr = repr(s)
         assert "v2" in schema_repr
         assert "12 fields" in schema_repr
+
+    def test_validation_of_invalid_ignored(self):
+        schema_dict = {
+            'version': 2,
+            'clkConfig': {
+                'l': 1024,
+                'kdf': {
+                    'type': 'HKDF'}},
+            'features': [
+                {
+                    'identifier': 'rec_id',
+                    'ignored': False}]
+        }
+        try:
+            schema.from_json_dict(schema_dict)
+        except Exception as e:
+            # checking that jsonschema validation failed
+            self.assertTrue(isinstance(e.__cause__, ValidationError))
 
 
 class TestSchemaLoading(unittest.TestCase):
