@@ -470,13 +470,12 @@ class TestFieldFormats(unittest.TestCase):
             'identifier': 'testingIgnored',
             'ignored': True}
         spec = field_formats.spec_from_json_dict(spec_dict)
-        # clkhash handles ingored fields by setting hashing properties to None.
-        self.assertIsNone(spec.hashing_properties)
+        self.assertIsInstance(spec, field_formats.Ignore)
         self.assertEqual(spec.identifier, 'testingIgnored')
         spec_dict = {
             'identifier': 'testingIgnored',
             'ignored': False}
-        with self.assertRaises(field_formats.InvalidEntryError):
+        with self.assertRaises(field_formats.InvalidSchemaError):
             field_formats.spec_from_json_dict(spec_dict)
         spec_dict = {
             'identifier': 'ignoredDates',
@@ -486,7 +485,7 @@ class TestFieldFormats(unittest.TestCase):
             'hashing': {'ngram': 0, 'strategy': {'k': 20}}
         }
         spec = field_formats.spec_from_json_dict(spec_dict)
-        self.assertIsNone(spec.hashing_properties)
+        self.assertIsInstance(spec, field_formats.Ignore)
         self.assertEqual(spec.identifier, 'ignoredDates')
         spec_dict = {
             'identifier': 'notIgnoredDates',
@@ -497,4 +496,5 @@ class TestFieldFormats(unittest.TestCase):
         }
         spec = field_formats.spec_from_json_dict(spec_dict)
         self.assertIsNotNone(spec.hashing_properties)
+        self.assertIsInstance(spec, field_formats.DateSpec)
         self.assertEqual(spec.identifier, 'notIgnoredDates')
