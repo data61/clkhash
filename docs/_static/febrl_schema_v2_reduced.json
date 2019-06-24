@@ -18,37 +18,37 @@
     {
       "identifier": "given_name",
       "format": { "type": "string", "encoding": "utf-8", "maxLength": 64 },
-      "hashing": { "ngram": 2, "strategy": {"numBits": 100}, "hash": {"type": "doubleHash"} }
+      "hashing": { "ngram": 2, "strategy": {"numBits": 200}, "hash": {"type": "doubleHash"} }
     },
     {
       "identifier": "surname",
       "format": { "type": "string", "encoding": "utf-8", "maxLength": 64 },
-      "hashing": { "ngram": 2, "strategy": {"numBits": 100}, "hash": {"type": "doubleHash"} }
+      "hashing": { "ngram": 2, "strategy": {"numBits": 200}, "hash": {"type": "doubleHash"} }
     },
     {
       "identifier": "street_number",
       "format": { "type": "integer" },
-      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits": 100}, "missingValue": {"sentinel": ""} }
+      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits": 200}, "missingValue": {"sentinel": ""} }
     },
     {
       "identifier": "address_1",
       "format": { "type": "string", "encoding": "utf-8" },
-      "hashing": { "ngram": 2, "strategy": {"numBits":  100} }
+      "hashing": { "ngram": 2, "strategy": {"numBits":  200} }
     },
     {
       "identifier": "address_2",
       "format": { "type": "string", "encoding": "utf-8" },
-      "hashing": { "ngram": 2, "strategy": {"numBits":  100} }
+      "hashing": { "ngram": 2, "strategy": {"numBits":  200} }
     },
     {
       "identifier": "suburb",
       "format": { "type": "string", "encoding": "utf-8" },
-      "hashing": { "ngram": 2, "strategy": {"numBits":  100} }
+      "hashing": { "ngram": 2, "strategy": {"numBits":  200} }
     },
     {
       "identifier": "postcode",
       "format": { "type": "integer", "minimum": 100, "maximum": 9999 },
-      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits":  100} }
+      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits":  200} }
     },
     {
       "identifier": "state",
@@ -58,7 +58,7 @@
     {
       "identifier": "date_of_birth",
       "format": { "type": "integer" },
-      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits":  100}, "missingValue": {"sentinel": ""} }
+      "hashing": { "ngram": 1, "positional": true, "strategy": {"numBits":  200}, "missingValue": {"sentinel": ""} }
     },
     {
       "identifier": "soc_sec_id",
