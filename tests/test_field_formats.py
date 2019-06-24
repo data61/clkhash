@@ -465,3 +465,36 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.hashing_properties.missing_value.replace_with,
                          spec.hashing_properties.replace_missing_value(''))
 
+    def test_ignored(self):
+        spec_dict = {
+            'identifier': 'testingIgnored',
+            'ignored': True}
+        spec = field_formats.spec_from_json_dict(spec_dict)
+        self.assertIsInstance(spec, field_formats.Ignore)
+        self.assertEqual(spec.identifier, 'testingIgnored')
+        spec_dict = {
+            'identifier': 'testingIgnored',
+            'ignored': False}
+        with self.assertRaises(field_formats.InvalidSchemaError):
+            field_formats.spec_from_json_dict(spec_dict)
+        spec_dict = {
+            'identifier': 'ignoredDates',
+            'ignored': True,
+            'format': {
+                'type': 'date', 'format': '%Y-%m-%d'},
+            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+        }
+        spec = field_formats.spec_from_json_dict(spec_dict)
+        self.assertIsInstance(spec, field_formats.Ignore)
+        self.assertEqual(spec.identifier, 'ignoredDates')
+        spec_dict = {
+            'identifier': 'notIgnoredDates',
+            'ignored': False,
+            'format': {
+                'type': 'date', 'format': '%Y-%m-%d'},
+            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+        }
+        spec = field_formats.spec_from_json_dict(spec_dict)
+        self.assertIsNotNone(spec.hashing_properties)
+        self.assertIsInstance(spec, field_formats.DateSpec)
+        self.assertEqual(spec.identifier, 'notIgnoredDates')
