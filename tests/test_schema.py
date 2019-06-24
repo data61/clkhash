@@ -97,7 +97,8 @@ class TestSchemaValidation(unittest.TestCase):
         assert "v2" in schema_repr
         assert "12 fields" in schema_repr
 
-    def test_validation_of_invalid_ignored(self):
+    def test_validation_of_illdefined_not_ignored_feature(self):
+        # 'ignored' has to be true if 'format' and 'hashing' is missing
         schema_dict = {
             'version': 2,
             'clkConfig': {
@@ -109,11 +110,11 @@ class TestSchemaValidation(unittest.TestCase):
                     'identifier': 'rec_id',
                     'ignored': False}]
         }
-        try:
+        with self.assertRaises(Exception) as contextmanager:
             schema.from_json_dict(schema_dict)
-        except Exception as e:
-            # checking that jsonschema validation failed
-            self.assertTrue(isinstance(e.__cause__, ValidationError))
+
+        exception = contextmanager.exception
+        self.assertIsInstance(exception.__cause__, ValidationError)
 
 
 class TestSchemaLoading(unittest.TestCase):
