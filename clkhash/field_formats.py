@@ -849,8 +849,11 @@ def spec_from_json_dict(
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """
-    if 'ignored' in json_dict:
-        return Ignore(json_dict['identifier'])
-    type_str = json_dict['format']['type']
-    spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
+    try:
+        if json_dict.get('ignored', False):
+            return Ignore(json_dict['identifier'])
+        type_str = json_dict['format']['type']
+        spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
+    except KeyError as e:
+        raise InvalidSchemaError("the feature definition {} is incomplete. Must contain: {}".format(json_dict, e))
     return spec_type.from_json_dict(json_dict)
