@@ -88,7 +88,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": {"const": "string"},
+        "type": {"enum": ["string"]},
         "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
         "case": {"enum": ["upper", "lower", "mixed"]},
         "minLength": {"type": "integer", "minimum": 0},
@@ -101,7 +101,7 @@
       "required": ["type", "pattern"],
       "additionalProperties": false,
       "properties": {
-        "type": {"const": "string"},
+        "type": {"enum": ["string"]},
         "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
         "pattern": {"type": "string", "description": "asRegEx"},
         "description": {"type": "string"}
@@ -112,7 +112,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": {"const": "integer"},
+        "type": {"enum": ["integer"]},
         "minimum": {"type": "integer"},
         "maximum": {"type": "integer"},
         "description": {"type": "string"}
@@ -123,7 +123,7 @@
       "required": ["type", "format"],
       "additionalProperties": false,
       "properties": {
-        "type": {"const": "date"},
+        "type": {"enum": ["date"]},
         "format": {"type": "string", "description": "describes the format of the date in 'strptime' format"},
         "description": {"type": "string"}
       }
@@ -133,7 +133,7 @@
       "required": ["type", "values"],
       "additionalProperties": false,
       "properties": {
-        "type": {"const": "enum"},
+        "type": {"enum": ["enum"]},
         "values": {"type": "array", "items": {"type": "string"}},
         "description": {"type": "string"}
       }
