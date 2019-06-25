@@ -108,7 +108,7 @@ def convert_v1_to_v2(
         raise ValueError('Version {} not 1'.format(version))
 
     clk_config = dict['clkConfig']
-    k = clk_config['k']
+    k = clk_config.pop('k')
     clk_hash = clk_config['hash']
 
     def convert_feature(f):
