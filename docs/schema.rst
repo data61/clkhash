@@ -207,8 +207,8 @@ hashingConfig
 name          type                     optional description
 ============  ======================   ======== ===========
 ngram         integer                  no       specifies the n in n-gram (the tokenization of the input values).
+strategy      :ref:`schema/strategy`   no       the strategy for assigning bits to the encoding.
 positional    boolean                  yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
-strategy      :ref:`schema/strategy`   yes      the strategy for assigning bits to the encoding
 missingValue  :ref:`schema/missingV`   yes      allows to define how missing values are handled
 ============  ======================   ======== ===========
 
