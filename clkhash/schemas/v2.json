@@ -1,5 +1,5 @@
 {
-  "$id": "https://data61.github.io/schemas/clkhash/linkage-schema.json",
+  "$id": "https://data61.github.io/schemas/clkhash/linkage-schema-v2.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "linkage-schema",
   "type": "object",
