@@ -43,12 +43,12 @@ def test_missing_value_integration():
             "ngram": 1,
             "strategy": {
               "k": 20
-            },
-            "missingValue": {
+            }
+          },
+          "missingValue": {
               "sentinel": "NA",
               "replaceWith": "42"
             }
-          }
         }
       ]
     }
