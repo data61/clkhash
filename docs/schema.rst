@@ -1,32 +1,39 @@
 .. _schema:
 
-Hashing Schema
+Linkage Schema
 ==============
 
-As CLKs are usually used for privacy preserving linkage, it is important that participating organisations agree on how
-raw personally identifiable information is hashed to create the CLKs.
+As CLKs are usually used for privacy preserving linkage, it is important that
+participating organisations agree on how raw personally identifiable information
+is encoded to create the CLKs. The linkage schema allows putting more emphasis on
+particular features and provides a basic level of data validation.
 
-We call the configuration of how to create CLKs a *hashing schema*. The organisations agree on one hashing schema
-as configuration to ensure that their respective CLKs have been created in the same way.
+We call the configuration of how to create CLKs a *linkage schema*. The
+organisations agree on a linkage schema to ensure that their respective CLKs have
+been created in the same way.
 
-This aims to be an open standard such that different client implementations could take the schema
-and create identical CLKS given the same data.
+This aims to be an open standard such that different client implementations could
+take the schema and create identical CLKs given the same data (and secret keys).
 
-The hashing-schema is a detailed description of exactly what is fed to the hashing operation,
-along with any configuration for the hashing itself.
+The linkage schema is a detailed description of exactly how to carry out the
+encoding operation, along with any configuration for the low level hashing itself.
 
-The format of the hashing schema is defined in a separate ``JSON Schema`` document
-`schemas/v1.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v1.json>`_.
+The format of the linkage schema is defined in a separate
+`JSON Schema <https://json-schema.org/specification.html>`_ specification document -
+`schemas/v2.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v2.json>`_.
+
+Earlier versions of the linkage schema will continue to work, internally they
+are converted to the latest version (currently ``v2``).
 
 
 Basic Structure
 ---------------
 
-A hashing schema consists of three parts:
+A linkage schema consists of three parts:
 
-* :ref:`version <schema/version>`, contains the version number of the hashing schema
-* :ref:`clkConfig <schema/clkConfig>`, CLK wide configuration, independent of features
-* :ref:`features <schema/features>`, configuration that is specific to the individual features
+* :ref:`version <schema/version>`, contains the version number of the hashing schema.
+* :ref:`clkConfig <schema/clkConfig>`, CLK wide configuration, independent of features.
+* :ref:`features <schema/features>`, an array of configuration specific to individual features.
 
 
 Example Schema
@@ -35,57 +42,65 @@ Example Schema
 ::
 
     {
-      "version": 1,
+      "version": 2,
       "clkConfig": {
         "l": 1024,
-        "k": 20,
-        "hash": {
-          "type": "doubleHash"
-        },
         "kdf": {
-          "type": "HKDF"
+          "type": "HKDF",
+          "hash": "SHA256",
+          "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+          "info": "",
+          "keySize": 64
         }
       },
       "features": [
         {
-          "identifier": "index",
+          "identifier": "INDEX",
           "ignored": true
         },
         {
-          "identifier": "full name",
+          "identifier": "NAME freetext",
           "format": {
             "type": "string",
-            "maxLength": 30,
-            "encoding": "utf-8"
+            "encoding": "utf-8",
+            "case": "mixed",
+            "minLength": 3
           },
-          "hashing": { "ngram": 2 }
+          "hashing": {
+            "ngram": 2,
+            "numBits": 100,
+            "hash": {"type": "doubleHash"}
+          }
         },
         {
-          "identifier": "gender",
+          "identifier": "DOB YYYY/MM/DD",
           "format": {
-            "type": "enum",
-            "values": ["M", "F", "O"]
+            "type": "date",
+            "description": "Numbers separated by slashes, in the year, month, day order",
+            "format": "%Y/%m/%d"
           },
-          "hashing": { "ngram": 1 }
-        },
-        {
-          "identifier": "postcode",
-          "format": {
-            "type": "integer",
-            "minimum": 1000,
-            "maximum": 9999
-          },
-          "hashing":{
+          "hashing": {
             "ngram": 1,
             "positional": true,
-            "missingValue": {
-              "sentinel": "N/A",
-              "replaceWith": ""
-            }
+            "numBits": 200,
+            "hash": {"type": "doubleHash"}
+          }
+        },
+        {
+          "identifier": "GENDER M or F",
+          "format": {
+            "type": "enum",
+            "values": ["M", "F"]
+          },
+          "hashing": {
+            "ngram": 1,
+            "numBits": 400,
+            "hash": {"type": "doubleHash"}
           }
         }
       ]
     }
+
 
 A more advanced example can be found `here <_static/example_schema.json>`_.
 
@@ -111,10 +126,8 @@ Describes the general construction of the CLK.
 name     type                optional description
 ======== ==================  ======== ===========
 l        integer             no       the length of the CLK in bits
-k        integer             no       max number of indices per n-gram
-xorFolds integer             yes      number of XOR folds (as proposed in [Schnell2016]_).
 kdf      :ref:`schema/KDF`   no       defines the key derivation function used to generate individual secrets for each feature derived from the master secret
-hash     :ref:`schema/Hash`  no       defines the hashing scheme to encode the n-grams
+xorFolds integer             yes      number of XOR folds (as proposed in [Schnell2016]_).
 ======== ==================  ======== ===========
 
 
@@ -133,32 +146,6 @@ salt     string  yes      base64 encoded bytes
 info     string  yes      base64 encoded bytes
 keySize  integer yes      size of the generated keys in bytes
 ======== ======= ======== ===========
-
-
-.. _schema/Hash:
-
-Hash
-^^^^
-Describes and cofigures the hash that is used to encode the n-grams.
-
-Choose one of:
-
-* *double hash*, as described in [Schnell2011]_.
-
-=================== ======= ======== ===========
-name                type    optional description
-=================== ======= ======== ===========
-type                string  no       must be set to "doubleHash"
-prevent_singularity boolean yes      see discussion in https://github.com/data61/clkhash/issues/33
-=================== ======= ======== ===========
-
-* *blake hash*
-
-=================== ======= ======== ===========
-name                type    optional description
-=================== ======= ======== ===========
-type                string  no       must be set to "blakeHash"
-=================== ======= ======== ===========
 
 
 .. _schema/features:
@@ -188,11 +175,13 @@ description string                 yes      free text, ignored by clkhash
 
 featureConfig
 ~~~~~~~~~~~~~
-A feature is configured in three parts:
 
-* identifier, the name of the feature
+Each feature is configured by:
+
+* identifier, the human readable name. E.g. ``"First Name"``.
+* description, a human readable description of this feature.
 * format, describes the expected format of the values of this feature
-* hashing, configures the hashing
+* :ref:`hashing <schema/hashing>`, configures the hashing
 
 =========== =====================  ======== ===========
 name        type                   optional description
@@ -218,20 +207,61 @@ hashingConfig
 name          type                     optional description
 ============  ======================   ======== ===========
 ngram         integer                  no       specifies the n in n-gram (the tokenization of the input values).
+strategy      :ref:`schema/strategy`   no       the strategy for assigning bits to the encoding.
 positional    boolean                  yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
-weight        float                    yes      positive number, which adjusts the number of hash functions (k) used for encoding. Thus giving this feature more or less importance compared to others.
 missingValue  :ref:`schema/missingV`   yes      allows to define how missing values are handled
 ============  ======================   ======== ===========
+
+
+.. _schema/strategy:
+
+strategy
+^^^^^^^^
+
+An object where either ``numBits`` or ``k`` is defined.
+
+============  ======================   ======== ===========
+name          type                     optional description
+============  ======================   ======== ===========
+k             integer                  yes      max number of indices per n-gram
+numBits       integer                  yes      max number of indices per feature
+============  ======================   ======== ===========
+
+
+.. _schema/Hash:
+
+Hash
+^^^^
+Describes and configures the hash that is used to encode the n-grams.
+
+Choose one of:
+
+* *double hash*, as described in [Schnell2011]_.
+
+=================== ======= ======== ===========
+name                type    optional description
+=================== ======= ======== ===========
+type                string  no       must be set to "doubleHash"
+prevent_singularity boolean yes      see discussion in https://github.com/data61/clkhash/issues/33
+=================== ======= ======== ===========
+
+* *blake hash* (default)
+
+=================== ======= ======== ===========
+name                type    optional description
+=================== ======= ======== ===========
+type                string  no       must be set to "blakeHash"
+=================== ======= ======== ===========
 
 
 .. _schema/missingV:
 
 missingValue
 ^^^^^^^^^^^^^^
+
 Data sets are not always complete -- they can contain missing values.
-If specified, then clkhash will not check the format for these missing values, and will optionally replace them with the
-'replaceWith' value.
-This can be useful if the data
+If specified, then clkhash will not check the format for these missing values, and will optionally replace the ``sentinel`` with the
+``replaceWith`` value.
 
 ===========  =====================   ======== ===========
 name         type                    optional description

@@ -25,11 +25,13 @@ class InvalidEntryError(ValueError):
 
 
 class InvalidSchemaError(ValueError):
-    """ The schema is not valid.
+    """Raised if the schema of a field specification is invalid.
 
-        This exception is raised if, for example, a regular expression
-        included in the schema is not syntactically correct.
+    For example, a regular expression included in the schema is not
+    syntactically correct.
     """
+    json_field_spec = None  # type: Optional[dict]
+    field_spec_index = None # type: Optional[int]
 
 
 class MissingValueSpec(object):
@@ -161,19 +163,17 @@ def fhp_from_json_dict(
     """
     Make a :class:`FieldHashingProperties` object from a dictionary.
 
-        :param dict json_dict:
-            The dictionary must have have an 'ngram' key
-            and one of k or num_bits. It may have
-            'positional' key; if missing a default is used.
-            The encoding is
-            always set to the default value.
-        :return: A :class:`FieldHashingProperties` instance.
+    :param dict json_dict:
+        Conforming to the `hashingConfig` definition
+        in the `v2` linkage schema.
+    :return: A :class:`FieldHashingProperties` instance.
     """
+    hashing_strategy = json_dict['strategy']
     h = json_dict.get('hash', {'type': 'blakeHash'})
-    num_bits = json_dict.get('numBits')
-    k = json_dict.get('k')
-    if not num_bits and not k:
-        num_bits = 200 # default for v2 schema
+
+    num_bits = hashing_strategy.get('numBits')
+    k = hashing_strategy.get('k')
+
     return FieldHashingProperties(
         ngram=json_dict['ngram'],
         positional=json_dict.get(
@@ -262,7 +262,6 @@ class FieldSpec(object):
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
                 raise_from(e_new, err)
-
 
     def is_missing_value(self, str_in):
         # type: (Text) -> bool
@@ -441,6 +440,7 @@ class StringSpec(FieldSpec):
             except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 e_new = InvalidSchemaError(msg)
+                e_new.json_field_spec = json_dict
                 raise_from(e_new, e)
             result.regex_based = True
 
@@ -843,9 +843,10 @@ def spec_from_json_dict(
         json_dict  # type: Dict[str, Any]
 ):
     # type: (...) -> FieldSpec
-    """ Turns a dictionary into the appropriate object.
+    """ Turns a dictionary into the appropriate FieldSpec object.
 
         :param dict json_dict: A dictionary with properties.
+        :raises InvalidSchemaError:
         :returns: An initialised instance of the appropriate FieldSpec
             subclass.
     """

@@ -15,6 +15,7 @@ from clkhash.rest_client import (project_upload_clks, run_get_result_text,
                                  run_get_status, project_create, run_create,
                                  server_get_status, ServiceError,
                                  format_run_status, watch_run_status)
+from clkhash.schema import SchemaError
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
@@ -68,8 +69,11 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
 
     Use "-" for CLK_JSON to write JSON to stdout.
     """
-
-    schema_object = clkhash.schema.from_json_file(schema_file=schema)
+    try:
+        schema_object = clkhash.schema.from_json_file(schema_file=schema)
+    except SchemaError as e:
+        log(str(e))
+        raise SystemExit(-1)
     header = True
     if not check_header:
         header = 'ignore'
@@ -92,7 +96,7 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
             log("CLK data written to {}".format(clk_json.name))
 
 
-@cli.command('status', short_help='Get status of entity service')
+@cli.command('status', short_help='get status of entity service')
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
@@ -141,7 +145,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 @click.option('--name', type=str, help="Name to give this project")
 @click.option('--parties', default=2, type=int,
               help="Number of parties in the project")
-@click.option('-o','--output', type=click.File('w'), default='-')
+@click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
 def create_project(type, schema, server, name, parties, output, verbose):
     """Create a new project on an entity matching server.
@@ -171,7 +175,7 @@ def create_project(type, schema, server, name, parties, output, verbose):
     except ServiceError as e:
         log("Unexpected response - {}".format(e.status_code))
         log(e.text)
-        raise SystemExit
+        raise SystemExit(-1)
     else:
         log("Project created")
 
@@ -316,6 +320,28 @@ def generate_default_schema(output):
                                  'data',
                                  'randomnames-schema.json')
     shutil.copyfile(original_path, output)
+
+
+@cli.command('validate-schema', short_help="validate linkage schema")
+@click.argument('schema', type=click.File('r', lazy=True))
+def validate_schema(schema):
+    """Validate a linkage schema
+
+    Given a file containing a linkage schema, verify the schema is valid otherwise
+    print detailed errors.
+    """
+
+    try:
+        clkhash.schema.from_json_file(
+            schema_file=schema,
+            validate=True
+        )
+
+        log("schema is valid", color='green')
+
+    except SchemaError as e:
+        log(str(e))
+        raise SystemExit(-1)
 
 
 if __name__ == "__main__":

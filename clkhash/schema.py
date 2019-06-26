@@ -15,7 +15,7 @@ import jsonschema
 from future.builtins import map
 
 from clkhash.backports import raise_from
-from clkhash.field_formats import FieldSpec, spec_from_json_dict
+from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
@@ -25,6 +25,23 @@ MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
 class SchemaError(Exception):
     """ The user-defined schema is invalid.
     """
+
+    def __init__(self,
+                 msg,                               # type: str
+                 errors=None                        # type: Optional[Sequence[InvalidSchemaError]]
+                 ):
+        # type: (...) -> None
+        self.msg = msg
+        self.errors = [] if errors is None else errors
+        super(SchemaError, self).__init__(msg)
+
+    def __str__(self):
+        detail = ""
+        for i, e in enumerate(self.errors, start=1):
+            detail += "Error {} in feature at index {} - {}\n".format(i, e.field_spec_index, str(e))
+            detail += "Invalid spec:\n{}\n---\n".format(e.json_field_spec)
+
+        return self.msg + '\n\n' + detail
 
 
 class MasterSchemaError(Exception):
@@ -50,7 +67,7 @@ class Schema:
         # type: (...) -> None
         """ Create a Schema.
             :param fields: the features or field definitions
-            :param l: The length of the resulting hash in bits. This is the
+            :param l: The length of the resulting encoding in bits. This is the
                 length after XOR folding.
             :param xor_folds: The number of XOR folds to perform on the hash.
             :param kdf_type: The key derivation function to use. Currently,
@@ -87,16 +104,17 @@ def convert_v1_to_v2(
     :param dict: v1 schema dict
     :return: v2 schema dict
     """
+    dict = deepcopy(dict)
     version = dict['version']
     if version != 1:
         raise ValueError('Version {} not 1'.format(version))
 
     clk_config = dict['clkConfig']
-    k = clk_config['k']
+    k = clk_config.pop('k')
     clk_hash = clk_config['hash']
 
     def convert_feature(f):
-        if 'ignored' in f:
+        if f.get('ignored', False):
             return f
 
         hashing = f['hashing']
@@ -113,7 +131,8 @@ def convert_v1_to_v2(
         if 'weight' in hashing:
             del hashing['weight']
 
-        hashing['k'] = int(round(weight * k))
+        hashing['strategy'] = {}
+        hashing['strategy']['k'] = int(round(weight * k))
         hashing['hash'] = clk_hash
         return x
 
@@ -140,6 +159,8 @@ def from_json_dict(dct, validate=True):
             key with all the globals.
     :param validate: (default True) Raise an exception if the
             schema does not conform to the master schema.
+    :raises SchemaError: An exception containing details about why
+            the schema is not valid.
     :return: the Schema
     """
     if validate:
@@ -173,8 +194,23 @@ def from_json_dict(dct, validate=True):
                 else None)
     kdf_key_size = kdf.get('keySize', DEFAULT_KDF_KEY_SIZE)
 
-    fields = list(map(spec_from_json_dict, dct['features']))
-    return Schema(fields, l, xor_folds,
+    # Try to parse each feature config and store any errors encountered
+    # for reporting.
+    feature_errors = []
+    feature_configs = []
+
+    for i, feature_config in enumerate(dct['features']):
+        try:
+            feature_configs.append(spec_from_json_dict(feature_config))
+        except InvalidSchemaError as e:
+            e.field_spec_index = i
+            e.json_field_spec = feature_config
+            feature_errors.append(e)
+
+    if len(feature_errors):
+        raise SchemaError("Schema was invalid", feature_errors)
+
+    return Schema(feature_configs, l, xor_folds,
                   kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
 
@@ -199,15 +235,16 @@ def from_json_file(schema_file, validate=True):
 
 
 def _get_master_schema(version):
-    # type: (Hashable) -> bytes
-    """ Loads the master schema of given version as bytes.
+    # type: (Hashable) -> dict
+    """ Loads the master schema of given version
 
         :param version: The version of the master schema whose path we
             wish to retrieve.
         :raises SchemaError: When the schema version is unknown. This
             usually means that either (a) clkhash is out of date, or (b)
             the schema version listed is incorrect.
-        :return: Bytes of the schema.
+        :raises MasterSchemaError: When the master schema is invalid.
+        :return: Dict object of the (json) master schema.
     """
     try:
         file_name = MASTER_SCHEMA_FILE_NAMES[version]
@@ -218,6 +255,10 @@ def _get_master_schema(version):
 
     try:
         schema_bytes = pkgutil.get_data('clkhash', 'schemas/{}'.format(file_name))
+        if schema_bytes is None:
+            msg = ('The master schema could not be loaded. The schema cannot be '
+                   'validated. Please file a bug report.')
+            raise MasterSchemaError(msg)
     except IOError as e:  # In Python 3 we can be more specific with
         # FileNotFoundError, but that doesn't exist in
         # Python 2.
@@ -225,12 +266,16 @@ def _get_master_schema(version):
                'validated. Please file a bug report.')
         raise_from(MasterSchemaError(msg), e)
 
-    if schema_bytes is None:
-        msg = ('The master schema could not be loaded. The schema cannot be '
-               'validated. Please file a bug report.')
-        raise MasterSchemaError(msg)
-
-    return schema_bytes
+    try:
+        master_schema = json.loads(schema_bytes.decode('utf-8'))
+        return master_schema
+    except ValueError as e:
+        # In Python 3 we can be more specific with
+        # json.decoder.JSONDecodeError, but that
+        # doesn't exist in Python 2.
+        msg = ('The master schema is not a valid JSON file. The schema cannot '
+               'be validated. Please file a bug report.')
+        raise_from(MasterSchemaError(msg), e)
 
 
 def validate_schema_dict(schema):
@@ -254,20 +299,12 @@ def validate_schema_dict(schema):
     else:
         raise SchemaError('A format version is expected in the schema.')
 
-    master_schema_bytes = _get_master_schema(version)
-    try:
-        master_schema = json.loads(master_schema_bytes.decode('utf-8'))
-    except ValueError as e:  # In Python 3 we can be more specific with
-        # json.decoder.JSONDecodeError, but that
-        # doesn't exist in Python 2.
-        msg = ('The master schema is not a valid JSON file. The schema cannot '
-               'be validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+    master_schema = _get_master_schema(version)
 
     try:
         jsonschema.validate(schema, master_schema)
     except jsonschema.exceptions.ValidationError as e:
-        raise_from(SchemaError('The schema is not valid.'), e)
+        raise_from(SchemaError('The schema is not valid.\n\n' + str(e)), e)
     except jsonschema.exceptions.SchemaError as e:
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')

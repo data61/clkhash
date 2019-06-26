@@ -27,7 +27,9 @@
       "hashing": {
         "hash": {"type": "doubleHash"},
         "ngram": 2,
-        "numBits": 200
+        "strategy": {
+          "numBits": 200
+        }
       }
     },
     {
@@ -42,7 +44,9 @@
       "hashing": {
         "hash": {"type": "blakeHash"},
         "ngram": 2,
-        "k": 20
+        "strategy": {
+          "k": 20
+        }
       }
     },
     {
@@ -54,7 +58,8 @@
         "case": "upper"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -67,6 +72,7 @@
       },
       "hashing": {
         "ngram": 1,
+        "strategy": {"numBits":  200},
         "positional": true
       }
     },
@@ -79,6 +85,7 @@
       },
       "hashing": {
         "ngram": 1,
+        "strategy": {"numBits":  200},
         "positional": true
       }
     },
@@ -90,7 +97,8 @@
         "case": "lower"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -101,7 +109,8 @@
         "description": "'O' for other. If unknown leave empty."
       },
       "hashing": {
-        "ngram": 1
+        "ngram": 1,
+        "strategy": {"numBits":  100}
       }
     },
     {
@@ -114,6 +123,7 @@
       },
       "hashing": {
         "ngram": 1,
+        "strategy": {"numBits":  300},
         "positional": true
       }
     },
@@ -127,7 +137,8 @@
         "description": "Month and day of birth (eg: 1125)"
       },
       "hashing": {
-        "ngram": 2
+        "ngram": 2,
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -140,6 +151,7 @@
       },
       "hashing": {
         "ngram": 1,
+        "strategy": {"numBits":  200},
         "positional": true
       }
     },
@@ -152,6 +164,7 @@
       },
       "hashing": {
         "ngram": 1,
+        "strategy": {"numBits":  100},
         "positional": true
       }
     }
