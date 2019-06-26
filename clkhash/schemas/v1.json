@@ -1,5 +1,5 @@
 {
-  "id": "https://schema.n1analytics.com/entityservice/hashing-schema.json",
+  "id": "https://data61.github.io/schemas/clkhash/linkage-schema-v1.json",
   "$schema": "http://json-schema.org/schema#",
   "title": "hashing-schema",
   "type": "object",

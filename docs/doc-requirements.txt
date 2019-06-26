@@ -1,3 +1,4 @@
+anonlink>=0.12
 sphinx>=1.7
 typing>=3.6
 nbsphinx>=0.3

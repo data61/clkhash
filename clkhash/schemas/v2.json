@@ -1,7 +1,7 @@
 {
-  "id": "https://schema.n1analytics.com/entityservice/hashing-schema.json",
-  "$schema": "http://json-schema.org/schema#",
-  "title": "hashing-schema",
+  "$id": "https://data61.github.io/schemas/clkhash/linkage-schema-v2.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "linkage-schema",
   "type": "object",
   "required": ["version", "clkConfig", "features"],
   "properties": {
@@ -29,17 +29,17 @@
           "default": 1024,
           "description": "the length of a clk in number of bits"
         },
-        "xorFolds": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 0,
-          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk AFTER the XOR folding!"
-        },
         "kdf": {
           "type": "object",
           "oneOf": [
             {"$ref": "#/definitions/hkdf"}
           ]
+        },
+        "xorFolds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk AFTER the XOR folding!"
         }
       }
     },
@@ -47,7 +47,7 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": {"enum": ["HKDF"]},
+        "type": {"type": "string", "const": "HKDF"},
         "hash": {"enum": ["SHA256", "SHA512"], "default": "SHA256"},
         "salt": {"type": "string", "description": "base64 encoded bytes"},
         "info": {"type": "string", "description": "base64 encoded bytes"},
@@ -56,10 +56,12 @@
     },
     "ignoreFeature": {
       "type": "object",
-      "required": ["identifier","ignored"],
+      "required": ["identifier", "ignored"],
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
-        "ignored":  {"enum": [true]},
+        "ignored":  {
+          "const": true
+        },
         "description": {"type": "string"}
       }
     },
@@ -69,7 +71,9 @@
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
         "description": {"type": "string"},
-        "format": {"oneOf": [
+        "format": {
+          "required": ["type"],
+          "oneOf": [
             {"$ref": "#/definitions/textFormat"},
             {"$ref": "#/definitions/textPatternFormat"},
             {"$ref": "#/definitions/numberFormat"},
@@ -136,7 +140,8 @@
     },
     "hashingConfig": {
       "type": "object",
-      "required": ["ngram"],
+      "additionalProperties": false,
+      "required": ["ngram", "strategy"],
       "properties": {
         "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
             {"$ref": "#/definitions/doubleHash"},
@@ -144,9 +149,26 @@
           ],
           "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
         },
-        "strategy": {"type": "object", "default": {"numBits": 200}, "oneOf": [
-          {"numBits": {"type": "number", "minimum": 1, "default": 200, "description": "dynamic k = numBits / number of n-grams"}},
-          {"k": {"type": "number", "minimum": 1, "default": 20, "description": "max number of bits per n-gram"}}
+        "strategy": {"type": "object", "oneOf":
+        [
+          {
+            "required": ["numBits"],
+            "numBits": {
+              "type": "number",
+              "minimum": 1,
+              "default": 200,
+              "description": "dynamic k = numBits / number of n-grams"
+            }
+          },
+          {
+            "required": ["k"],
+            "k": {
+              "type": "number",
+              "minimum": 1,
+              "default": 20,
+              "description": "max number of bits per n-gram"
+            }
+          }
         ]},
         "ngram": {"type": "integer", "minimum": 1, "default": 2},
         "positional": {"type": "boolean", "default": false},

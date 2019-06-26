@@ -1,5 +1,6 @@
 ## 0.13.0
 
+- Fix example and test linkage schemas using v2.
 - Fix mismatch between double hash and blake hash key requirement.
 - Update to use newer anonlink-entity-service api.
 - Updates to dependencies.
