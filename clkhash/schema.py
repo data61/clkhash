@@ -204,6 +204,7 @@ def from_json_dict(dct, validate=True):
             feature_configs.append(spec_from_json_dict(feature_config))
         except InvalidSchemaError as e:
             e.field_spec_index = i
+            e.json_field_spec = feature_config
             feature_errors.append(e)
 
     if len(feature_errors):
