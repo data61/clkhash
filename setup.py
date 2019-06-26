@@ -10,7 +10,7 @@ requirements = [
         "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
-        "jsonschema>=3.0.1",
+        "jsonschema==2.6",
         "requests>=2.20",
         "tqdm>=4.24",
         "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5

@@ -21,6 +21,7 @@ from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
                             2: 'v2.json'}  # type: Dict[Hashable, Text]
 
+
 class SchemaError(Exception):
     """ The user-defined schema is invalid.
     """
@@ -103,6 +104,7 @@ def convert_v1_to_v2(
     :param dict: v1 schema dict
     :return: v2 schema dict
     """
+    dict = deepcopy(dict)
     version = dict['version']
     if version != 1:
         raise ValueError('Version {} not 1'.format(version))
