@@ -33,6 +33,7 @@ Table of Contents
    cli
    schema
    development
+   rest_client
    references
 
 External Links
