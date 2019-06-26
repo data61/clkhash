@@ -2,7 +2,7 @@ environment:
   global:
     TWINE_USERNAME: confidentialcomputing
     TWINE_PASSWORD:
-      secure: 8iJVrN3C/NidiVaa4MArSaNepgPz/AnBn2AC6i0EomM=
+      secure: v/CA7epn+w6NgHihL5rLRc8+lUbgNMsMsMp5/XPWSoI=
 
   INCLUDE_CLI: 1
 
@@ -61,6 +61,6 @@ artifacts:
   - path: dist\*
 
 deploy_script:
-  - ps: if ($env:APPVEYOR_REPO_TAG -eq $TRUE) { pip install twine; twine upload dist/* }
+  - ps: if ($env:APPVEYOR_REPO_TAG -eq $TRUE) { pip install twine; twine upload --skip-existing dist/* }
 
 deploy: on
