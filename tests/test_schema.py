@@ -114,7 +114,7 @@ class TestSchemaValidation(unittest.TestCase):
             schema.from_json_dict(schema_dict)
 
         exception = contextmanager.exception
-        self.assertIsInstance(exception.__cause__, ValidationError)
+        self.assertIsInstance(exception, SchemaError)
 
 
 class TestSchemaLoading(unittest.TestCase):
