@@ -17,6 +17,7 @@ from future.builtins import range
 import clkhash
 import clkhash.cli
 from clkhash import randomnames, rest_client
+from clkhash.rest_client import ServiceError
 
 from tests import *
 
@@ -398,8 +399,8 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def tearDown(self):
         super(TestCliInteractionWithService, self).tearDown()
-        #os.remove(self.clk_file.name)
-        #os.remove(self.clk_file_2.name)
+        os.remove(self.clk_file.name)
+        os.remove(self.clk_file_2.name)
 
         self.delete_created_projects()
 
@@ -408,6 +409,9 @@ class TestCliInteractionWithService(CLITestHelper):
             try:
                 rest_client.project_delete(self.url, project['project_id'], project['result_token'])
             except KeyError:
+                pass
+            except ServiceError:
+                # probably already deleted
                 pass
 
     def _create_project(self, project_args=None):
@@ -505,32 +509,37 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def test_delete_run(self):
         project, run = self._create_project_and_run()
-        self.run_command_load_json_output(
-            [
+
+        runner = CliRunner()
+
+        command = [
                 'delete',
                 '--server', self.url,
                 '--project', project['project_id'],
                 '--run', run['run_id'],
                 '--apikey', project['result_token']
             ]
-        )
-        # get runs and check it is gone?
-        status = rest_client.project_get_description(self.url, project['project_id'], project['result_token'])
-        assert status == 0
+        cli_result = runner.invoke(clkhash.cli.cli, command)
+        assert cli_result.exit_code == 0, cli_result.output
+
+        # TODO get runs and check it is gone?
 
 
     def test_delete_project(self):
         project, run = self._create_project_and_run()
 
-        self.run_command_load_json_output(
-            [
-                'delete-project',
-                '--server', self.url,
-                '--project', project['project_id'],
-                '--apikey', project['result_token']
-            ]
-        )
+        runner = CliRunner()
+        command = [
+            'delete-project',
+            '--server', self.url,
+            '--project', project['project_id'],
+            '--apikey', project['result_token']
+        ]
+        cli_result = runner.invoke(clkhash.cli.cli, command)
+        assert cli_result.exit_code == 0, cli_result.output
 
+        with pytest.raises(ServiceError):
+            rest_client.project_get_description(self.url, project['project_id'], project['result_token'])
 
     def test_create_with_optional_name(self):
         out = self._create_project({'name': 'testprojectname'})
