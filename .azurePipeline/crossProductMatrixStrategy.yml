@@ -1,0 +1,91 @@
+parameters:
+  pythonVersions: []
+  operatingSystems: []
+  architectures: []
+
+jobs:
+- job: 'test_and_publish'
+  strategy:
+    matrix:
+      ${{ each py in parameters.pythonVersions }}:
+        ${{ each os in parameters.operatingSystems }}:
+          ${{ each architecture in parameters.architectures }}:
+            ${{ format('{0}{1}{2}', py, os, architecture) }}:
+              pythonVersion: ${{ py }}
+              operatingSystem: ${{ os }}
+              architecture: ${{ architecture }}
+
+  pool:
+    vmImage: $(operatingSystem)
+
+  displayName: 'Test and publish for $(operatingSystem) Python$(pythonVersion) $(architecture)'
+
+  steps:
+# I would not have found on my own such a step. Thanks https://dvlup.com/2019/01/03/using-powershell-to-installing-msi-in-a-devops-build/
+# The solution I found was not working: it hanged forevever, using "msiexec /i"
+  - powershell: Invoke-WebRequest -Uri https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi -OutFile VCForPython27.msi
+    displayName: 'Download Microsoft Visual C++ 9.0 from https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi'
+    condition: eq(variables['pythonVersion'], 2.7)
+  - powershell: Start-Process VCForPython27.msi -ArgumentList "/q" -Wait 
+    displayName: 'Install Microsoft Visual C++ 9.0.'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], 2.7))
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(pythonVersion)'
+      architecture: '$(architecture)'
+
+  - script: |
+      python -m pip install -U pip
+      python -m pip install -U wheel setuptools codecov
+      python -m pip install -U -r requirements.txt
+      python -m pip install .
+    displayName: 'Install requirements'
+
+  - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
+    displayName: 'Test with pytest'
+    env:
+      INCLUDE_CLI: 1
+
+  - task: PublishTestResults@2
+    condition: succeeded()
+    displayName: 'Publish test results'
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: 'testResults.xml'
+      testRunTitle: 'Test results on a vm $(operatingSystem) ($(architecture)) for Python $(pythonVersion)'
+      failTaskOnFailedTests: true
+
+  - task: PublishCodeCoverageResults@1
+    # If the previous stage fail, we still want to run this one as the previous stage may fail because of a failing test.
+    condition: or(succeeded(), failed())
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: 'coverageReport.xml'
+      reportDirectory: 'htmlcov'
+      failIfCoverageEmpty: true
+
+  - script: python -m codecov --token $(CODECOV_TOKEN) --file coverageReport.xml
+    displayName: 'Send coverage to codecov'
+
+  - script: |
+      pyinstaller cli.spec
+      .\dist\clkutil.exe --version
+    displayName: 'Build clkutil.exe'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+
+  - script: python setup.py sdist bdist_wheel
+    displayName: 'Package'
+    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+
+  - script: |
+      pip install twine
+      twine upload -u $(PYPI_LOGIN) -p $(PYPI_PASSWORD) --skip-existing dist/*.whl
+    displayName: 'Send artifact to Pypi'
+    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: "$(operatingSystem) artifacts"
+      targetPath: dist/
+    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
