@@ -18,7 +18,7 @@ jobs:
   pool:
     vmImage: $(operatingSystem)
 
-  displayName: 'Test and publish for $(operatingSystem) Python$(pythonVersion) $(architecture)'
+  displayName: ${{ Test and publish for {0} Python {1} {2}, $(operatingSystem), $(pythonVersion), $(architecture)) }}
 
   steps:
 # I would not have found on my own such a step. Thanks https://dvlup.com/2019/01/03/using-powershell-to-installing-msi-in-a-devops-build/
@@ -58,7 +58,7 @@ jobs:
 
   - task: PublishCodeCoverageResults@1
     # If the previous stage fail, we still want to run this one as the previous stage may fail because of a failing test.
-    condition: or(succeeded(), failed())
+    condition: succeededOrFailed()
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: 'coverageReport.xml'
