@@ -20,6 +20,10 @@ jobs:
     operatingSystems: ['vs2017-win2016']
     architectures: ['x64', 'x86']
 
+- job:
+  steps:
+  - script: echo "##vso[build.addbuildtag] Automated"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
 #  - script: |
 #      pip install twine
 #      twine upload -u $(PYPI_LOGIN) -p $(PYPI_PASSWORD) --skip-existing dist/*.whl
