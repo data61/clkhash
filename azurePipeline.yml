@@ -2,13 +2,15 @@ trigger:
   branches: 
     include:
     - master
+    exclude:
+    - '*'
   tags:
     include:
-    - v*
+    - 'v*'
 pr:
   branches:
     include:
-    - *
+    - '*'
 
 jobs:
 - template: .azurePipeline/wholeBuild.yml  # Template reference
