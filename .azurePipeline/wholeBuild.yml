@@ -80,8 +80,8 @@ jobs:
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
   - task: PublishPipelineArtifact@0
-    displayName: 'Copy artifacts to staging directory'
+    displayName: 'Publish artifacts'
     condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
     inputs:
-      artifactName: Artifacts-$(operatingSystem)
-      targetPath: 'dist/*'
+      artifactName: Artifacts
+      targetPath: 'dist/'
