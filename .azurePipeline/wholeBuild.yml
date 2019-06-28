@@ -40,8 +40,10 @@ jobs:
       python -m pip install -U pip
       python -m pip install -U wheel setuptools codecov
       python -m pip install -U -r requirements.txt
-      python -m pip install .
     displayName: 'Install requirements'
+    
+  - script: python setup.py sdist bdist_wheel
+    displayName: 'Package'
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
@@ -49,8 +51,8 @@ jobs:
       INCLUDE_CLI: 1
 
   - task: PublishTestResults@2
+    displayName: 'Publish test results in Azure'
     condition: succeeded()
-    displayName: 'Publish test results'
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: 'testResults.xml'
@@ -58,6 +60,7 @@ jobs:
       failTaskOnFailedTests: true
 
   - task: PublishCodeCoverageResults@1
+    displayName: 'Publish code coverage in Azure'
     # If the previous stage fail, we still want to run this one as the previous stage may fail because of a failing test.
     condition: succeededOrFailed()
     inputs:
@@ -76,18 +79,10 @@ jobs:
     displayName: 'Build clkutil.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
-  - script: python setup.py sdist bdist_wheel
-    displayName: 'Package'
+# Copy all the created artifact when built from Python 3.7 on x86. Does not filter with the OS.
+  - task: CopyFiles@2
+    displayName: 'Copy artifacts to staging directory'
     condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
-
-  - script: |
-      pip install twine
-      twine upload -u $(PYPI_LOGIN) -p $(PYPI_PASSWORD) --skip-existing dist/*.whl
-    displayName: 'Send artifact to Pypi'
-    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
-
-  - task: PublishPipelineArtifact@0
     inputs:
-      artifactName: "$(operatingSystem) artifacts"
-      targetPath: dist/
-    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+      contents: 'dist/*'
+      targetFolder: $(Build.ArtifactStagingDirectory)
