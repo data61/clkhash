@@ -12,24 +12,28 @@ pr:
     include:
     - '*'
 
-jobs:
-- template: .azurePipeline/wholeBuild.yml  # Template reference
-  parameters:
-    pythonVersions: ['3.7', '3.6', '3.5', '2.7']
-#    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
-    operatingSystems: ['vs2017-win2016']
-    architectures: ['x64', 'x86']
-
-- job: publish
-  condition: succeeded()
+stages:
+- stage: build_stage
+  jobs:
+  - template: .azurePipeline/wholeBuild.yml  # Template reference
+    parameters:
+      pythonVersions: ['3.7', '3.6', '3.5', '2.7']
+  #    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
+      operatingSystems: ['vs2017-win2016']
+      architectures: ['x64', 'x86']
+        
+- stage: publish_stage
   displayName: "Publish all the artifacts"
-  pool:
-    vmImage: 'ubuntu-16.04'
-  steps:
-  - task: PublishPipelineArtifact@0
-    inputs:
-      artifactName: "Artifacts"
-      targetPath: $(Build.ArtifactStagingDirectory)
+  dependsOn: build_stage
+  jobs:
+  - job: publish_job
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: "Artifacts"
+        targetPath: $(Build.ArtifactStagingDirectory)
 
 #  - script: |
 #      pip install twine
