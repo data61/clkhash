@@ -79,10 +79,9 @@ jobs:
     displayName: 'Build clkutil.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
-# Copy all the created artifact when built from Python 3.7 on x86. Does not filter with the OS.
-  - task: CopyFiles@2
+  - task: PublishPipelineArtifact@0
     displayName: 'Copy artifacts to staging directory'
     condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
     inputs:
-      contents: 'dist/*'
-      targetFolder: $(Build.ArtifactStagingDirectory)
+      artifactName: Artifacts-$(operatingSystem)
+      targetPath: 'dist/*'
