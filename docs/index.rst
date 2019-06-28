@@ -33,6 +33,7 @@ Table of Contents
    cli
    schema
    development
+   devops
    rest_client
    references
 
