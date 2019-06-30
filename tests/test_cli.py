@@ -399,9 +399,11 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def tearDown(self):
         super(TestCliInteractionWithService, self).tearDown()
-        os.remove(self.clk_file.name)
-        os.remove(self.clk_file_2.name)
-
+        try:
+            os.remove(self.clk_file.name)
+            os.remove(self.clk_file_2.name)
+        except:
+            pass
         self.delete_created_projects()
 
     def delete_created_projects(self):
