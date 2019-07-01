@@ -22,7 +22,7 @@ with codecs.open('README.md', 'r', 'utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.13.0',
+    version='0.13.1-b2',
     description='Encoding utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
