@@ -1,4 +1,8 @@
 from setuptools import setup, find_packages
+import sys
+if sys.version_info[0] < 3:
+  import codecs
+  
 
 requirements = [
         "bitarray>=0.8",
@@ -15,9 +19,16 @@ requirements = [
         "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5
         "bashplotlib>=0.6.5"
     ]
-
-with open('README.md', 'r', encoding='utf-8') as f:
-    readme = f.read()
+if sys.version_info[0] < 3:
+    # Python 2.7 does not accept the parameter `encoding` to open a file
+    with codecs.open('README.md', 'r', 'utf-8') as f:
+        readme = f.read()
+else:
+    # But on Windows, something wrong happens when creating the package
+    # and using codecs.open. related issues are https://github.com/di/markdown-description-example/issues/4
+    # But this is not exactly the same either...
+    with open('README.md', 'r', encoding='utf-8') as f:
+        readme = f.read()
 
 setup(
     name="clkhash",
