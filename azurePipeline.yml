@@ -25,7 +25,7 @@ jobs:
 # In this step, if this build is triggered by a tag starting with a 'v', it will add a tag 'Automated' to the current build.
 # This tag if put on a commit from master should trigger the release pipeline.
   - script: echo "##vso[build.addbuildtag]Automated"
-    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
 #  - script: |
 #      pip install twine
 #      twine upload -u $(PYPI_LOGIN) -p $(PYPI_PASSWORD) --skip-existing dist/*.whl
