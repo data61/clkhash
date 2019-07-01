@@ -52,7 +52,7 @@ jobs:
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
-    condition: succeeded()
+    condition: succeededOrFailed()
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: 'testResults.xml'
@@ -72,6 +72,7 @@ jobs:
 
   - script: python -m codecov --token $(CODECOV_TOKEN) --file coverageReport.xml
     displayName: 'Send coverage to codecov'
+    condition: succeededOrFailed()
 
   - script: |
       pyinstaller cli.spec
