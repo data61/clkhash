@@ -6,7 +6,7 @@ trigger:
     - '*'
   tags:
     include:
-    - 'v*'
+    - ''
 pr:
   branches:
     include:
