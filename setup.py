@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import codecs
 
 requirements = [
         "bitarray>=0.8",
@@ -17,7 +16,7 @@ requirements = [
         "bashplotlib>=0.6.5"
     ]
 
-with codecs.open('README.md', 'r', 'utf-8') as f:
+with open('README.md', 'r', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
