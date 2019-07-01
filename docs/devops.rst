@@ -25,10 +25,10 @@ Only the packages created with ``Python 3.7`` and the ``x86``
 architecture are then published (in Azure).
 
 The build pipeline is triggered for every pushes on the master branch,
-for every tagged commit with the tag starting with a `v`, and for
-every pushes part of a pull request. We are not building on every push and
-on pull requests not to build twice the same code. For every tagged commit,
-the build pipeline will also add the Azure tag `Automated` which may trigger
+for every tagged commit, and for every pushes part of a pull
+request. We are not building on every push and
+pull requests not to build twice the same code. For every tagged commit,
+the build pipeline will also add the Azure tag `Automated` which will trigger
 automatically the release pipeline.
 
 The build pipeline does:
