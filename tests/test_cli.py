@@ -526,6 +526,12 @@ class TestCliInteractionWithService(CLITestHelper):
 
         # TODO get runs and check it is gone?
 
+        with pytest.raises(ServiceError):
+            rest_client.run_get_status(self.url,
+                                       project['project_id'],
+                                       project['result_token'],
+                                       run['run_id']
+                                       )
 
     def test_delete_project(self):
         project, run = self._create_project_and_run()

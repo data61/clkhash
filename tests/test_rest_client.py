@@ -50,6 +50,7 @@ class TestRestClientInteractionWithService(unittest.TestCase):
                                            project['result_token']
                                            )
             except ServiceError:
+                # probably already deleted in the test
                 pass
 
     def _create_project(self, schema=None, result_type='permutations', name='',
