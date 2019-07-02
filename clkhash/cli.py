@@ -279,10 +279,10 @@ def results(project, apikey, run, watch, server, output):
         log("No result yet")
 
 
-@cli.command('delete', short_help="delete a run on the entity service")
+@cli.command('delete', short_help="delete a run on the anonlink entity service")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
-@click.option('--run', help='Run ID to get results for')
+@click.option('--run', help='Run ID to delete')
 @click.option('--apikey', type=str, help="Project Authorization Token")
 @click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
 def delete(server, project, run, apikey, verbose):
@@ -303,7 +303,7 @@ def delete(server, project, run, apikey, verbose):
         log("Run deleted")
 
 
-@cli.command('delete-project', short_help="create a run on the entity service")
+@cli.command('delete-project', short_help="delete a project on the anonlink entity service")
 @click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
