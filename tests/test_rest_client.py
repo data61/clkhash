@@ -20,32 +20,60 @@ from tests import (SAMPLE_DATA_PATH_1, SAMPLE_DATA_PATH_2,
                      "jenkins")
 class TestRestClientInteractionWithService(unittest.TestCase):
 
-    def setUp(self):
-        super(TestRestClientInteractionWithService, self).setUp()
-        self.url = os.environ['TEST_ENTITY_SERVICE']
+    @classmethod
+    def setup_class(cls):
+        cls.url = os.environ['TEST_ENTITY_SERVICE']
 
         schema_object = clkhash.schema.from_json_file(
             schema_file=open(SAMPLE_DATA_SCHEMA_PATH, 'rt'))
         keys = ('secret', 'key')
-        self.clk_data_1 = json.dumps(
+        cls.clk_data_1 = json.dumps(
             {'clks': generate_clk_from_csv(open(SAMPLE_DATA_PATH_1, 'rt'),
                                            keys, schema_object,
                                            header='ignore')})
-        self.clk_data_2 = json.dumps(
+        cls.clk_data_2 = json.dumps(
             {'clks': generate_clk_from_csv(open(SAMPLE_DATA_PATH_2, 'rt'),
                                            keys, schema_object,
                                            header='ignore')})
+        cls._created_projects = []
+
+    @classmethod
+    def teardown_class(cls):
+        cls._delete_created_projects()
+
+    @classmethod
+    def _delete_created_projects(cls):
+        for project in cls._created_projects:
+            try:
+                rest_client.project_delete(cls.url,
+                                           project['project_id'],
+                                           project['result_token']
+                                           )
+            except ServiceError:
+                # probably already deleted in the test
+                pass
 
     def _create_project(self, schema=None, result_type='permutations', name='',
                         notes='', parties=2):
         if schema is None:
             schema = json.load(open(SIMPLE_SCHEMA_PATH, 'rt'))
-        return rest_client.project_create(self.url, schema, result_type, name,
-                                          notes, parties)
+        try:
+            response = rest_client.project_create(self.url, schema, result_type, name,
+                                                  notes, parties)
+            self._created_projects.append(response)
+            return response
+        except ServiceError:
+            raise
 
     def test_status(self):
         assert 'status' in rest_client.server_get_status(self.url)
         assert 'project_count' in rest_client.server_get_status(self.url)
+
+    def test_project_description_bad_project(self):
+        with pytest.raises(ServiceError):
+            description = rest_client.project_get_description(self.url,
+                                                              'not-a-valid-project_id',
+                                                              'not_a_result_token')
 
     def test_project_description(self):
         p = self._create_project(schema={'id': 'test schema'})

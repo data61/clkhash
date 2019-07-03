@@ -16,7 +16,8 @@ from future.builtins import range
 
 import clkhash
 import clkhash.cli
-from clkhash import randomnames
+from clkhash import randomnames, rest_client
+from clkhash.rest_client import ServiceError
 
 from tests import *
 
@@ -372,6 +373,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.clk_file_2 = create_temp_file()
 
         # hash some PII for uploading
+        # TODO don't need to rehash data for every test
         runner = CliRunner()
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
@@ -393,11 +395,26 @@ class TestCliInteractionWithService(CLITestHelper):
 
         self.clk_file.close()
         self.clk_file_2.close()
+        self._created_projects = []
 
     def tearDown(self):
         super(TestCliInteractionWithService, self).tearDown()
-        os.remove(self.clk_file.name)
-        os.remove(self.clk_file_2.name)
+        try:
+            os.remove(self.clk_file.name)
+            os.remove(self.clk_file_2.name)
+        except:
+            pass
+        self.delete_created_projects()
+
+    def delete_created_projects(self):
+        for project in self._created_projects:
+            try:
+                rest_client.project_delete(self.url, project['project_id'], project['result_token'])
+            except KeyError:
+                pass
+            except ServiceError:
+                # probably already deleted
+                pass
 
     def _create_project(self, project_args=None):
         command = ['create-project', '--server', self.url, '--schema', SIMPLE_SCHEMA_PATH]
@@ -406,9 +423,9 @@ class TestCliInteractionWithService(CLITestHelper):
                 command.append('--{}'.format(key))
                 command.append(project_args[key])
 
-        return self.run_command_load_json_output(
-            command
-        )
+        project = self.run_command_load_json_output(command)
+        self._created_projects.append(project)
+        return project
 
     def _create_project_and_run(self, project_args=None, run_args=None):
         project = self._create_project(project_args)
@@ -491,6 +508,46 @@ class TestCliInteractionWithService(CLITestHelper):
 
         self.assertIn('project_id', project)
         self.assertIn('run_id', run)
+
+    def test_delete_run(self):
+        project, run = self._create_project_and_run()
+
+        runner = CliRunner()
+
+        command = [
+                'delete',
+                '--server', self.url,
+                '--project', project['project_id'],
+                '--run', run['run_id'],
+                '--apikey', project['result_token']
+            ]
+        cli_result = runner.invoke(clkhash.cli.cli, command)
+        assert cli_result.exit_code == 0, cli_result.output
+
+        # TODO get runs and check it is gone?
+
+        with pytest.raises(ServiceError):
+            rest_client.run_get_status(self.url,
+                                       project['project_id'],
+                                       project['result_token'],
+                                       run['run_id']
+                                       )
+
+    def test_delete_project(self):
+        project, run = self._create_project_and_run()
+
+        runner = CliRunner()
+        command = [
+            'delete-project',
+            '--server', self.url,
+            '--project', project['project_id'],
+            '--apikey', project['result_token']
+        ]
+        cli_result = runner.invoke(clkhash.cli.cli, command)
+        assert cli_result.exit_code == 0, cli_result.output
+
+        with pytest.raises(ServiceError):
+            rest_client.project_get_description(self.url, project['project_id'], project['result_token'])
 
     def test_create_with_optional_name(self):
         out = self._create_project({'name': 'testprojectname'})

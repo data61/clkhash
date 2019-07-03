@@ -14,7 +14,7 @@ from clkhash import (benchmark as bench, clk, randomnames, validate_data,
 from clkhash.rest_client import (project_upload_clks, run_get_result_text,
                                  run_get_status, project_create, run_create,
                                  server_get_status, ServiceError,
-                                 format_run_status, watch_run_status)
+                                 format_run_status, watch_run_status, project_delete, run_delete)
 from clkhash.schema import SchemaError
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
@@ -277,6 +277,50 @@ def results(project, apikey, run, watch, server, output):
         print(error_result, file=output)
     else:
         log("No result yet")
+
+
+@cli.command('delete', short_help="delete a run on the anonlink entity service")
+@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option('--project', help='Project identifier')
+@click.option('--run', help='Run ID to delete')
+@click.option('--apikey', type=str, help="Project Authorization Token")
+@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+def delete(server, project, run, apikey, verbose):
+    """Delete a run on an entity matching server.
+    """
+    if verbose:
+        log("Entity Matching Server: {}".format(server))
+
+    # Delete a run
+    try:
+        msg = run_delete(server, project, run, apikey)
+        if verbose:
+            log(msg)
+    except ServiceError as e:
+        log("Unexpected response with status {}".format(e.status_code))
+        log(e.text)
+    else:
+        log("Run deleted")
+
+
+@cli.command('delete-project', short_help="delete a project on the anonlink entity service")
+@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
+@click.option('--project', help='Project identifier')
+@click.option('--apikey', type=str, help="Project Authorization Token")
+@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
+def delete_project(server, project, apikey, verbose):
+    """Delete a project on an entity matching server.
+    """
+    if verbose:
+        log("Entity Matching Server: {}".format(server))
+
+    try:
+        project_delete(server, project, apikey)
+    except ServiceError as e:
+        log("Unexpected response with status {}".format(e.status_code))
+        log(e.text)
+    else:
+        log("Project deleted")
 
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
