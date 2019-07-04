@@ -2,8 +2,6 @@ trigger:
   branches: 
     include:
     - master
-    exclude:
-    - '*'
   tags:
     include:
     - '*'
