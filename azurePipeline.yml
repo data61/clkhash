@@ -1,0 +1,27 @@
+trigger:
+  branches: 
+    include:
+    - master
+    exclude:
+    - '*'
+  tags:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+
+jobs:
+- template: .azurePipeline/wholeBuild.yml  # Template reference
+  parameters:
+    pythonVersions: ['3.7', '3.6', '3.5', '2.7']
+#    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
+    operatingSystems: ['vs2017-win2016']
+    architectures: ['x64', 'x86']
+
+- job:
+  steps:
+# In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
+  - script: echo "##vso[build.addbuildtag]Automated"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
