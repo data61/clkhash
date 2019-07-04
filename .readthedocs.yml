@@ -23,5 +23,5 @@ python:
   install:
     - requirements: docs/doc-requirements.txt
     - requirements: requirements.txt
-    - method: setuptools
-      path: package
+    - method: pip
+      path: .
