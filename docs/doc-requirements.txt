@@ -8,3 +8,4 @@ numpy
 pandas
 recordlinkage
 requests
+jupyter
