@@ -1,6 +1,12 @@
 Development
 ===========
 
+
+.. toctree::
+   :maxdepth: 2
+
+   clkhash
+
 Testing
 -------
 
