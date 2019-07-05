@@ -90,28 +90,27 @@ class Distribution:
         The first column represents the value and the second column represents the count in the population.
         """
 
-        data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
-        if data_bytes is None:
+        data_bytes = pkgutil.get_data('clkhash', '{}'.format(resource_name))
+        if not data_bytes:
             raise ValueError("No data resource found with name {}".format(resource_name))
-        else:
-            data = data_bytes.decode('utf8')
-            reader = csv.reader(data.splitlines())
-            next(reader, None)  # skip the headers
-            for row in reader:
-                try:
-                    self.total += int(row[1])
-                except ValueError:
-                    raise ValueError("Distribution resources must only contain integers in the second column.")
-                self.indices.append(self.total)
-                self.values.append(row[0])
+        data = data_bytes.decode('utf8')
+        reader = csv.reader(data.splitlines())
+        next(reader, None)  # skip the headers
+        for row in reader:
+            try:
+                self.total += int(row[1])
+            except ValueError:
+                raise ValueError("Distribution resources must only contain integers in the second column.")
+            self.indices.append(self.total)
+            self.values.append(row[0])
 
     def generate(self):
         # type: () -> str
         """ Generates a random value, weighted by the known distribution
         """
 
-        target = random.randint(0, self.total)
-        return self.values[bisect.bisect(self.indices, target)]
+        target = random.randint(0, self.total - 1)
+        return self.values[bisect.bisect_left(self.indices, target)]
 
 
 class NameList:
@@ -176,10 +175,10 @@ class NameList:
         https://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/3101.0Jun%202016
         """
 
-        self.all_male_first_names = Distribution('male-first-names.csv')
-        self.all_female_first_names = Distribution('female-first-names.csv')
-        self.all_last_names = Distribution('last-names.csv')
-        self.all_ages = Distribution('ages.csv')
+        self.all_male_first_names = Distribution('data/male-first-names.csv')
+        self.all_female_first_names = Distribution('data/female-first-names.csv')
+        self.all_last_names = Distribution('data/last-names.csv')
+        self.all_ages = Distribution('data/ages.csv')
 
     def generate_subsets(self, sz, overlap=0.8, subsets=2):
         # type: (int, float, int) -> Tuple[List, ...]
