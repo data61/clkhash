@@ -109,8 +109,8 @@ class Distribution:
         """ Generates a random value, weighted by the known distribution
         """
 
-        target = random.randint(0, self.total)
-        return self.values[bisect.bisect(self.indices, target)]
+        target = random.randint(0, self.total - 1)
+        return self.values[bisect.bisect_left(self.indices, target)]
 
 
 class NameList:
