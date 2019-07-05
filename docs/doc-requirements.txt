@@ -1,11 +1,11 @@
 anonlink>=0.12
-sphinx>=1.7
-typing>=3.6
-nbsphinx>=0.3
 ipython==7.5.0
-sphinxcontrib-programoutput
+jupyter
+nbsphinx>=0.3
 numpy
 pandas
 recordlinkage
 requests
-jupyter
+sphinx>=1.7
+sphinxcontrib-programoutput
+typing>=3.6
