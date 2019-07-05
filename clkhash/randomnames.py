@@ -77,8 +77,8 @@ class Distribution:
     def __init__(self, resource_name):
         # type: (str) -> None
         self.total = 0
-        self.indices = []
-        self.values = []
+        self.indices = []  # type: List[int]
+        self.values = []   # type: List[str]
         self.load_csv_data(resource_name)
         self.length = len(self.values)
         if not self.length:
