@@ -23,6 +23,11 @@ class TestRandomNames(unittest.TestCase):
         self.assertListEqual(stringIO.getvalue().split(), ['Name,Count', 'a,1', 'b,2'])
 
     def test_random_date(self):
+        # No distribution
+        age_dist = None
+        with pytest.raises(ValueError):
+            rn.random_date(2018, age_dist)
+
         # String as age value
         age_dist = rn.Distribution('../tests/testdata/ages_dirty.csv')
         with pytest.raises(ValueError):
@@ -38,11 +43,6 @@ class TestRandomNames(unittest.TestCase):
             self.assertLess((rn.random_date(2018, age_dist)-end).days, 0)
 
     def test_distribution(self):
-        # No distribution
-        age_dist = None
-        with pytest.raises(ValueError):
-            rn.random_date(2018, age_dist)
-
         # File with no content
         with pytest.raises(ValueError):
             rn.Distribution('../tests/testdata/dist_empty.csv')
@@ -54,6 +54,11 @@ class TestRandomNames(unittest.TestCase):
         # File with non-integer count
         with pytest.raises(ValueError):
             rn.Distribution('../tests/testdata/dist_dirty.csv')
+
+        # Ensure output of valid file
+        dist = rn.Distribution('../tests/testdata/dist_clean.csv')
+        for i in range(1000):
+            self.assertIn(dist.generate(), ['a', 'b'])
 
     def test_generate_subsets(self):
         nl = rn.NameList(20)
