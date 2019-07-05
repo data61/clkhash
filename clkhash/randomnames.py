@@ -12,6 +12,7 @@ TODO: Add RESTful api to generate reasonable name data as requested
 """
 from __future__ import print_function
 
+import bisect
 import csv
 import json
 import math
@@ -46,13 +47,15 @@ def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
 
 
 def random_date(year, age_distribution):
-    # type: (int, Distribution) -> datetime
+    # type: (int, Optional[Distribution]) -> datetime
     """ Generate a random datetime between two datetime objects.
 
     :param start: datetime of start
     :param end: datetime of end
     :return: random datetime between start and end
     """
+    if not age_distribution:
+        raise ValueError("Age distribution must be created before creating a random date.")
     try:
         age = int(age_distribution.generate())
     except ValueError:
@@ -108,22 +111,7 @@ class Distribution:
         """
 
         target = random.randint(0, self.total)
-        return self.binary_search(0, len(self.values) - 1, target)
-
-    def binary_search(self, l, h, t):
-        # type: (int, int, int) -> str
-        """ Return the value of the index between 0 and
-        """
-
-        try:
-            x = (h + l) // 2
-            if t > self.indices[x]:
-                return self.binary_search(x + 1, h, t)
-            if x == 0 or t > self.indices[x - 1]:
-                return self.values[x]
-            return self.binary_search(l, x - 1, t)
-        except IndexError:
-            raise IndexError("Distribution binary search went out of bounds.")
+        return self.values[bisect.bisect(self.indices, target)]
 
 
 class NameList:
