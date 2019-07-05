@@ -1,5 +1,8 @@
 from datetime import datetime
-from io import BytesIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 import itertools
 import math
 import unittest
@@ -13,11 +16,11 @@ __author__ = 'shardy'
 
 class TestRandomNames(unittest.TestCase):
     def test_save_csv(self):
-        bytesIO = BytesIO()
+        stringIO = StringIO()
         headers = ['Name', 'Count']
         body = [('a', 1), ('b', 2)]
-        rn.save_csv(body, headers, bytesIO)
-        self.assertListEqual(bytesIO.getvalue().split(), ['Name,Count', 'a,1', 'b,2'])
+        rn.save_csv(body, headers, stringIO)
+        self.assertListEqual(stringIO.getvalue().split(), ['Name,Count', 'a,1', 'b,2'])
 
     def test_random_date(self):
         # String as age value
