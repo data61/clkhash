@@ -4,8 +4,12 @@ import requests
 import clkhash
 from clkhash.backports import TimeoutError
 import logging
+from retrying import retry
 
 logger = logging.getLogger(__name__)
+
+WAITING_TIME_WHEN_RATE_LIMITED_MS = 2000  # 1 seconds
+MAX_NUMBER_REQUEST_RETRIES = 10
 
 
 class ServiceError(Exception):
@@ -24,6 +28,11 @@ class RateLimitedClient(ServiceError):
     """
 
 
+def retry_if_reate_limited_error(exception):
+    """Return True if we should retry (in this case when it's a RateLimitedClient), False otherwise"""
+    return isinstance(exception, RateLimitedClient)
+
+
 def _handle_json_response(response, failure_message, expected_status_code=200):
     if response.status_code == 503:
         raise RateLimitedClient('Client is rate limited. Try requesting less frequently.', response)
@@ -35,6 +44,8 @@ def _handle_json_response(response, failure_message, expected_status_code=200):
         raise ServiceError(failure_message, response)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def server_get_status(server):
     response = requests.get(server + "/api/v1/status")
     return _handle_json_response(response, "Error with service status")
@@ -57,6 +68,8 @@ def project_create(server, schema, result_type, name, notes=None, parties=2):
     return _handle_json_response(response, "Error creating project", 201)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def project_delete(server, project, apikey):
     response = requests.delete(
         '{}/api/v1/projects/{}'.format(server, project),
@@ -66,6 +79,8 @@ def project_delete(server, project, apikey):
         raise ServiceError("Error deleting project", response)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def project_get_description(server, project, apikey):
     response = requests.get(
         '{}/api/v1/projects/{}'.format(server, project),
@@ -77,6 +92,8 @@ def project_get_description(server, project, apikey):
     return _handle_json_response(response, "Error getting project description", 200)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def project_upload_clks(server, project, apikey, clk_data):
     response = requests.post(
         '{}/api/v1/projects/{}/clks'.format(server, project),
@@ -89,6 +106,8 @@ def project_upload_clks(server, project, apikey, clk_data):
     return _handle_json_response(response, "Error uploading CLKS to project", 201)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def run_create(server, project_id, apikey, threshold, name, notes=None):
     if notes is None:
         notes = 'Run created by clkhash {}'.format(clkhash.__version__)
@@ -105,6 +124,8 @@ def run_create(server, project_id, apikey, threshold, name, notes=None):
     return _handle_json_response(response, "Unexpected response while creating run", 201)
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def run_get_status(server, project, run, apikey):
     response = requests.get(
         '{}/api/v1/projects/{}/runs/{}/status'.format(server, project, run),
@@ -176,6 +197,8 @@ def watch_run_status(server, project, run, apikey, timeout=None, update_period=1
     raise TimeoutError("Timeout exceeded before run {} terminated".format(run))
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def run_get_result_text(server, project, run, apikey):
     response = requests.get(
         '{}/api/v1/projects/{}/runs/{}/result'.format(server, project, run),
@@ -186,6 +209,8 @@ def run_get_result_text(server, project, run, apikey):
     return response.text
 
 
+@retry(wait_fixed=WAITING_TIME_WHEN_RATE_LIMITED_MS, stop_max_attempt_number=MAX_NUMBER_REQUEST_RETRIES,
+       retry_on_exception=retry_if_reate_limited_error)
 def run_delete(server, project, run, apikey):
     response = requests.delete(
         '{}/api/v1/projects/{}/runs/{}'.format(server, project, run),
