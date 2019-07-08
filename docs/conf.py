@@ -189,3 +189,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+# By default, nbconvert (which is used to execute the notebooks during the Sphinx build process) will give a cell 30 seconds to execute before it times out.
+nbsphinx_timeout = 120

@@ -1,12 +1,6 @@
 Devops
 ===========
 
-
-.. toctree::
-   :maxdepth: 2
-
-   clkhash
-
 Azure Pipeline
 --------------
 
@@ -32,15 +26,16 @@ the build pipeline will also add the Azure tag `Automated` which will trigger
 automatically the release pipeline.
 
 The build pipeline does:
+
   - install the requirements,
   - package ``clkhash``,
   - run `pytest`,
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
-  - publish the artifacts from the build using ``Python 3.7``
-  with a ``x86`` architecture (i.e. a whl, a tar.gz and an exe).
+  - publish the artifacts from the build using ``Python 3.7`` with a ``x86`` architecture (i.e. a whl, a tar.gz and an exe).
 
 The build pipeline requires one environment variable provided by Azure environment:
+
  - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
 
 
@@ -49,12 +44,10 @@ a successful build on master where the build is tagged `Automated`
 (i.e. if the commit is tagged, cf previous paragraph). 
 
 The release pipeline consists of two steps: 
-  - asking for a manual confirmation that the artifacts from the
-  triggering build should be released,
+  - asking for a manual confirmation that the artifacts from the triggering build should be released,
   - uses ``twine`` to publish the artifacts.
 
 The release pipeline requires two environment variables provided by Azure environment:
  - `PYPI_LOGIN`: login to push an artifact to ``clkhash`` ``Pypi`` repository,
- - `PYPI_PASSWORD`: password to push an artifact to ``clkhash`` ``Pypi`` repository
- for the user `PYPI_LOGIN`.
+ - `PYPI_PASSWORD`: password to push an artifact to ``clkhash`` ``Pypi`` repository for the user `PYPI_LOGIN`.
 
