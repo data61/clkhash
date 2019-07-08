@@ -1,25 +1,24 @@
 """
 Module to produce a dataset of names, genders and dates of birth and manipulate that list
 
-Currently very simple and not realistic. Additional functions for manipulating the list of names
+Names and ages are based on Australian and USA census data, but are not correlated.
+Additional functions for manipulating the list of names
 - producing reordered and subset lists with a specific overlap
 
 ClassList class - generate a list of length n of [id, name, dob, gender] lists
 
-TODO: Get age distribution right by using a mortality table
-TODO: Get first name distributions right by using distributions
 TODO: Generate realistic errors
-TODO: Add RESTfull api to generate reasonable name data as requested
+TODO: Add RESTful api to generate reasonable name data as requested
 """
 from __future__ import print_function
 
+import bisect
 import csv
 import json
 import math
-import os
 import pkgutil
 import random
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import (Iterable, List, Optional,
                     Sequence, TextIO, Tuple, Union)
 
@@ -27,20 +26,6 @@ from future.builtins import range
 
 from clkhash.field_formats import FieldSpec
 from clkhash import schema
-
-
-def load_csv_data(resource_name):
-    # type: (str) -> List[str]
-    """ Loads first column of specified CSV file from package data.
-    """
-    data_bytes = pkgutil.get_data('clkhash', 'data/{}'.format(resource_name))
-    if data_bytes is None:
-        raise ValueError("No data resource found with name {}".format(resource_name))
-    else:
-        data = data_bytes.decode('utf8')
-        reader = csv.reader(data.splitlines())
-        next(reader, None)  # skip the headers
-        return [row[0] for row in reader]
 
 
 def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
@@ -61,18 +46,71 @@ def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
     writer.writerows(data)
 
 
-def random_date(start, end):
-    # type: (datetime, datetime) -> datetime
+def random_date(year, age_distribution):
+    # type: (int, Optional[Distribution]) -> datetime
     """ Generate a random datetime between two datetime objects.
 
     :param start: datetime of start
     :param end: datetime of end
     :return: random datetime between start and end
     """
+    if not age_distribution:
+        raise ValueError("Age distribution must be created before creating a random date.")
+    try:
+        age = int(age_distribution.generate())
+    except ValueError:
+        raise ValueError("Values in age distribution tables must be integers.")
+
+    start = datetime(year=year - age, month=1, day=1)
+    end = datetime(year=year - age + 1, month=1, day=1)
+
     delta = end - start
     int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
     random_second = random.randrange(int_delta)
     return start + timedelta(seconds=random_second)
+
+
+class Distribution:
+    """Creates a random value generator with a weighted distribution
+    """
+
+    def __init__(self, resource_name):
+        # type: (str) -> None
+        self.total = 0
+        self.indices = []  # type: List[int]
+        self.values = []   # type: List[str]
+        self.load_csv_data(resource_name)
+        self.length = len(self.values)
+        if not self.length:
+            raise ValueError("Distribution table must have a record.")
+
+    def load_csv_data(self, resource_name):
+        # type: (str) -> None
+        """ Loads the first two columns of the specified CSV file from package data.
+        The first column represents the value and the second column represents the count in the population.
+        """
+
+        data_bytes = pkgutil.get_data('clkhash', '{}'.format(resource_name))
+        if not data_bytes:
+            raise ValueError("No data resource found with name {}".format(resource_name))
+        data = data_bytes.decode('utf8')
+        reader = csv.reader(data.splitlines())
+        next(reader, None)  # skip the headers
+        for row in reader:
+            try:
+                self.total += int(row[1])
+            except ValueError:
+                raise ValueError("Distribution resources must only contain integers in the second column.")
+            self.indices.append(self.total)
+            self.values.append(row[0])
+
+    def generate(self):
+        # type: () -> str
+        """ Generates a random value, weighted by the known distribution
+        """
+
+        target = random.randint(0, self.total - 1)
+        return self.values[bisect.bisect_left(self.indices, target)]
 
 
 class NameList:
@@ -87,16 +125,16 @@ class NameList:
 
     def __init__(self, n):
         # type: (int) -> None
-        self.load_names()
+        self.load_data()
 
-        self.earliest_birthday = datetime(year=1916, month=1, day=1)
-        self.latest_birthday = datetime(year=2016, month=1, day=1)
+        self.year = date.today().year - 1
 
         self.names = [person for person in self.generate_random_person(n)]
 
-        self.all_male_first_names = None  # type: Optional[Sequence[str]]
-        self.all_female_first_names = None  # type: Optional[Sequence[str]]
-        self.all_last_names = None  # type: Optional[Sequence[str]]
+        self.all_male_first_names = None  # type: Optional[Distribution]
+        self.all_female_first_names = None  # type: Optional[Distribution]
+        self.all_last_names = None  # type: Optional[Distribution]
+        self.all_ages = None  # type: Optional[Distribution]
 
     @property
     def schema_types(self):
@@ -109,17 +147,16 @@ class NameList:
         Generator that yields details on a person with plausible name, sex and age.
 
         :yields: Generated data for one person
-            tuple - (id: int, name: str('First Last'), birthdate: str('DD/MM/YYYY'), sex: str('M' | 'F') )
+            tuple - (id: str, name: str('First Last'), birthdate: str('DD/MM/YYYY'), sex: str('M' | 'F') )
         """
         assert self.all_male_first_names is not None
         assert self.all_female_first_names is not None
         assert self.all_last_names is not None
         for i in range(n):
             sex = 'M' if random.random() > 0.5 else 'F'
-            dob = random_date(self.earliest_birthday, self.latest_birthday).strftime("%Y/%m/%d")
-            first_name = random.choice(self.all_male_first_names) if sex == 'M' else random.choice(
-                self.all_female_first_names)
-            last_name = random.choice(self.all_last_names)
+            dob = random_date(self.year, self.all_ages).strftime("%Y/%m/%d")
+            first_name = self.all_male_first_names.generate() if sex == 'M' else self.all_female_first_names.generate()
+            last_name = self.all_last_names.generate()
 
             yield (
                 str(i),
@@ -128,17 +165,20 @@ class NameList:
                 sex
             )
 
-    def load_names(self):
+    def load_data(self):
         # type: () -> None
-        """ Loads a name database from package data
+        """ Loads databases from package data
 
         Uses data files sourced from
         http://www.quietaffiliate.com/free-first-name-and-last-name-databases-csv-and-sql/
+        https://www.census.gov/topics/population/genealogy/data/2010_surnames.html
+        https://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/3101.0Jun%202016
         """
 
-        self.all_male_first_names = load_csv_data('male-first-names.csv')
-        self.all_female_first_names = load_csv_data('female-first-names.csv')
-        self.all_last_names = load_csv_data('CSV_Database_of_Last_Names.csv')
+        self.all_male_first_names = Distribution('data/male-first-names.csv')
+        self.all_female_first_names = Distribution('data/female-first-names.csv')
+        self.all_last_names = Distribution('data/last-names.csv')
+        self.all_ages = Distribution('data/ages.csv')
 
     def generate_subsets(self, sz, overlap=0.8, subsets=2):
         # type: (int, float, int) -> Tuple[List, ...]

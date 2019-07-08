@@ -3,7 +3,7 @@
 Python implementation of cryptographic longterm key hashing. Supports Python versions 2.7+, 3.5+
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
-[A Novel Error-Tolerant Anonymous Linking Code](http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf)
+[A Novel Error-Tolerant Anonymous Linking Code](http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf)
 
 [![codecov](https://codecov.io/gh/data61/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/data61/clkhash)
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
