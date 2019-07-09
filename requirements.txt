@@ -7,13 +7,13 @@ future==0.17.1
 futures==3.2.0; python_version < '3.2'
 jsonschema==2.6  # rq.filter: >=2.6,<3.0
 mypy_extensions==0.4.1
+nbval==0.9.1
 pyblake2==1.1.2; python_version < '3.6'
+pyinstaller==3.4
 pytest==4.6.3
 pytest-cov==2.7.1
-nbval==0.9.1
 requests==2.22.0
 requests-mock==1.6.0
 six==1.12.0
 tqdm==4.32.2
 typing>=3.6.2; python_version < '3.5'
-pyinstaller==3.4

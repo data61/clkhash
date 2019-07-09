@@ -5,19 +5,19 @@ if sys.version_info[0] < 3:
   
 
 requirements = [
+        "bashplotlib>=0.6.5",
         "bitarray>=0.8",
         "click>=6.7",
         "cryptography>=2.3",
         "enum34==1.1.6; python_version < '3.4'",
         "future>=0.16",
         "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
+        "jsonschema==2.6",
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
-        "jsonschema==2.6",
         "requests>=2.20",
         "tqdm>=4.24",
-        "typing>=3.6; python_version < '3.5'",  # Backport from Py3.5
-        "bashplotlib>=0.6.5"
+        "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
 if sys.version_info[0] < 3:
     # Python 2.7 does not accept the parameter `encoding` to open a file
