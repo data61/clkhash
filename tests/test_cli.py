@@ -5,7 +5,6 @@ from __future__ import division, print_function
 
 import json
 import logging
-import os
 import random
 import time
 import unittest
@@ -14,10 +13,9 @@ import pytest
 from click.testing import CliRunner
 from future.builtins import range
 
-import clkhash
 import clkhash.cli
 from clkhash import randomnames, rest_client
-from clkhash.rest_client import ServiceError
+from clkhash.rest_client import ServiceError, RestClient
 
 from tests import *
 
@@ -76,7 +74,8 @@ class CLITestHelper(unittest.TestCase):
         with temporary_file() as output_filename:
             command.extend(['-o', output_filename])
             cli_result = runner.invoke(clkhash.cli.cli, command)
-            assert cli_result.exit_code == 0, cli_result.output
+            assert cli_result.exit_code == 0,\
+                "Output:\n{}\nException:\n{}".format(cli_result.output, cli_result.exception)
             with open(output_filename, 'rt') as output:
                 return output.read()
 
@@ -369,6 +368,8 @@ class TestCliInteractionWithService(CLITestHelper):
         super(TestCliInteractionWithService, self).setUp()
         self.url = os.environ['TEST_ENTITY_SERVICE']
 
+        self.rest_client = RestClient(self.url)
+
         self.clk_file = create_temp_file()
         self.clk_file_2 = create_temp_file()
 
@@ -409,7 +410,7 @@ class TestCliInteractionWithService(CLITestHelper):
     def delete_created_projects(self):
         for project in self._created_projects:
             try:
-                rest_client.project_delete(self.url, project['project_id'], project['result_token'])
+                self.rest_client.project_delete(project['project_id'], project['result_token'])
             except KeyError:
                 pass
             except ServiceError:
@@ -527,8 +528,7 @@ class TestCliInteractionWithService(CLITestHelper):
         # TODO get runs and check it is gone?
 
         with pytest.raises(ServiceError):
-            rest_client.run_get_status(self.url,
-                                       project['project_id'],
+            self.rest_client.run_get_status(project['project_id'],
                                        project['result_token'],
                                        run['run_id']
                                        )
@@ -547,7 +547,7 @@ class TestCliInteractionWithService(CLITestHelper):
         assert cli_result.exit_code == 0, cli_result.output
 
         with pytest.raises(ServiceError):
-            rest_client.project_get_description(self.url, project['project_id'], project['result_token'])
+            self.rest_client.project_get_description(project['project_id'], project['result_token'])
 
     def test_create_with_optional_name(self):
         out = self._create_project({'name': 'testprojectname'})
