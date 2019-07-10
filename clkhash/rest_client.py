@@ -91,10 +91,11 @@ class RestClient:
                stop_max_delay=self.client_waiting_configuration.stop_max_delay_ms,
                retry_on_exception=_is_rate_limited_error)
         def wrapper():
-            # The parameter 'data' should be a File (as coming from click.File
-            # So need to reposition the reading pointer to the beginning of the file if we are retrying to post.
-            # Otherwise, we send no data or missing data.
-            if 'data' in kwargs:
+            # The parameter 'data' should be a File (as coming from click.File) or a string (the direct data).
+            # If it is a file, we need to reposition the reading pointer to the beginning of the file
+            # if we are retrying to post. Otherwise, we send no data or missing data.
+            # If this is not file, we don't need to do anything.
+            if 'data' in kwargs and hasattr(kwargs['data'], 'seek'):
                 kwargs['data'].seek(0, 0)
             response = requests.request(request_method, url, **kwargs)
             if response.status_code == 503:
