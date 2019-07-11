@@ -56,6 +56,9 @@ def get_tokenizer(fhp  # type: Optional[field_formats.FieldHashingProperties]
         if ignore is not None:
             word = word.replace(ignore, '')
 
+        if len(word) == 0:
+            return tuple()
+
         if n > 1:
             word = ' {} '.format(word)
 
