@@ -17,8 +17,6 @@ from clkhash.schema import Schema
 from clkhash.validate_data import (validate_entries, validate_header,
                                    validate_row_lengths)
 
-if False:
-    from clkhash.cli import ProgressBar
 
 log = logging.getLogger('clkhash.clk')
 
@@ -54,7 +52,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                           schema,  # type: Schema
                           validate=True,  # type: bool
                           header=True,  # type: Union[bool, AnyStr]
-                          progress_bar=None  # type: Optional[ProgressBar]
+                          progress_bar=None  # type: Optional[object]
                           ):
     # type: (...) -> List[str]
     """ Generate Bloom filters from CSV file, then serialise them.
@@ -103,9 +101,11 @@ def generate_clk_from_csv(input_f,  # type: TextIO
     validate_row_lengths(schema.fields, pii_data)
 
     progress_callback = None
-    if progress_bar:
-        progress_bar.initialise(len(pii_data))
-        progress_callback = progress_bar.callback
+    # As we are separating tqdm from the clk module, we don't want to import ProgressBar
+    # We explicitly test for attributes and ignore mypys checks.
+    if hasattr(progress_bar, 'initialise') and hasattr(progress_bar, 'callback'):
+        progress_bar.initialise(len(pii_data))  # type: ignore
+        progress_callback = progress_bar.callback  # type: ignore
 
     results = generate_clks(pii_data,
                             schema,
@@ -113,8 +113,8 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                             validate=validate,
                             callback=progress_callback)
 
-    if progress_bar:
-        progress_bar.close()
+    if hasattr(progress_bar, 'close'):
+        progress_bar.close()  # type: ignore
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results

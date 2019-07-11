@@ -24,18 +24,33 @@ DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
 
 class ProgressBar:
+    """Wrapper for the tqdm module that allows deferred initialisation and creates a callback
+    """
+
     def __init__(self):
         self.stats = OnlineMeanVariance()
         self.pbar = None  # type: Optional[tqdm]
 
     def initialise(self, length):
         # type: (int) -> None
+        """Allows deferred initialisation of the tqdm object as the length may not be known when
+        the ProgressBar object is created.
+
+        :param length: Number of records that 100% represents
+        :return:
+        """
         self.pbar = tqdm(desc="generating CLKs", total=length, unit='clk', unit_scale=True,
                   postfix={'mean': self.stats.mean(), 'std': self.stats.std()})
 
     def callback(self, tics, clk_stats):
         # type: (int, Sequence[int]) -> None
-        if self.pbar is None:
+        """Callback method passed into the acting function to allow updating the progress bar.
+
+        :param tics: Number of records completed
+        :param clk_stats:
+        :return:
+        """
+        if self.pbar is None or self.pbar.disable:
             raise TypeError("Progress Bar callback can only be called after initialisation")
         self.stats.update(clk_stats)
         self.pbar.set_postfix(mean=self.stats.mean(), std=self.stats.std(), refresh=False)
@@ -43,6 +58,8 @@ class ProgressBar:
 
     def close(self):
         # type: () -> None
+        """Ensures the last output has been finished before continuing
+        """
         if self.pbar is None:
             return
         self.pbar.close()

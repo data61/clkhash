@@ -6,7 +6,6 @@ import pytest
 import os
 import sys
 
-from clkhash import benchmark
 from clkhash.cli import ProgressBar
 
 IS_APPVEYOR = 'APPVEYOR' in os.environ
@@ -15,10 +14,22 @@ IS_PY3 = sys.version_info[0] >= 3
 ON_CI = IS_APPVEYOR or IS_TRAVIS
 
 
-class TestBenchmark(unittest.TestCase):
+class TestProgressBar(unittest.TestCase):
 
-    @pytest.mark.skipif(IS_APPVEYOR and IS_PY3, reason="Windows benchmarking not working on Python3")
     def test_progressbar(self):
         progress_bar = ProgressBar()
-        benchmark.compute_hash_speed(1000, progress_bar=progress_bar)
+
+        # Allow closing before initialisation
+        progress_bar.close()
+
+        # Disallow callback before initialisation
+        with pytest.raises(TypeError):
+            progress_bar.callback(0, [0])
+
+        progress_bar.initialise(1)
+        self.assertEqual(progress_bar.pbar.disable, False)
+
+        progress_bar.callback(1, [1])
+
+        progress_bar.close()
         self.assertEqual(progress_bar.pbar.disable, True)

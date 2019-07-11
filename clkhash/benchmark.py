@@ -9,12 +9,9 @@ from typing import Optional
 from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
-if False:
-    from clkhash.cli import ProgressBar
-
 
 def compute_hash_speed(num, quiet=False, progress_bar=None):
-    # type: (int, bool, Optional[ProgressBar]) -> float
+    # type: (int, bool, Optional[object]) -> float
     """ Hash time.
     """
     namelist = NameList(num)
