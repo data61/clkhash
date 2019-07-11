@@ -160,7 +160,6 @@ class TestSchemaValidationCommand(unittest.TestCase):
         assert 'schema is not valid.' in result.output
         assert "'l' is a required property" in result.output
 
-
     def test_good_v2_schema(self):
         for schema_path in GOOD_SCHEMA_V2_PATH, RANDOMNAMES_SCHEMA_PATH:
             result = self.validate_schema(schema_path)

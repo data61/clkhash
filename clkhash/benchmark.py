@@ -4,13 +4,17 @@ import os
 import tempfile
 # noinspection PyProtectedMember
 from timeit import default_timer as timer
+from typing import Optional
 
 from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
+if False:
+    from clkhash.cli import ProgressBar
 
-def compute_hash_speed(num, quiet=False):
-    # type: (int, bool) -> float
+
+def compute_hash_speed(num, quiet=False, progress_bar=None):
+    # type: (int, bool, Optional[ProgressBar]) -> float
     """ Hash time.
     """
     namelist = NameList(num)
@@ -28,7 +32,7 @@ def compute_hash_speed(num, quiet=False):
 
     with open(tmpfile_name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=not quiet)
+        generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=progress_bar)
         end = timer()
 
     os.close(os_fd)

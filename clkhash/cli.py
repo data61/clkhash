@@ -5,6 +5,8 @@ import json
 import os
 import shutil
 from multiprocessing import freeze_support
+from tqdm import tqdm
+from typing import Optional, Sequence
 
 import click
 
@@ -16,8 +18,34 @@ from clkhash.rest_client import (project_upload_clks, run_get_result_text,
                                  server_get_status, ServiceError,
                                  format_run_status, watch_run_status, project_delete, run_delete)
 from clkhash.schema import SchemaError
+from clkhash.stats import OnlineMeanVariance
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
+
+
+class ProgressBar:
+    def __init__(self):
+        self.stats = OnlineMeanVariance()
+        self.pbar = None  # type: Optional[tqdm]
+
+    def initialise(self, length):
+        # type: (int) -> None
+        self.pbar = tqdm(desc="generating CLKs", total=length, unit='clk', unit_scale=True,
+                  postfix={'mean': self.stats.mean(), 'std': self.stats.std()})
+
+    def callback(self, tics, clk_stats):
+        # type: (int, Sequence[int]) -> None
+        if self.pbar is None:
+            raise TypeError("Progress Bar callback can only be called after initialisation")
+        self.stats.update(clk_stats)
+        self.pbar.set_postfix(mean=self.stats.mean(), std=self.stats.std(), refresh=False)
+        self.pbar.update(tics)
+
+    def close(self):
+        # type: () -> None
+        if self.pbar is None:
+            return
+        self.pbar.close()
 
 
 def log(m, color='red'):
@@ -81,11 +109,12 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
         header = False
 
     try:
+        progress_bar = None if quiet else ProgressBar()
         clk_data = clk.generate_clk_from_csv(
             pii_csv, keys, schema_object,
             validate=validate,
             header=header,
-            progress_bar=not quiet)
+            progress_bar=progress_bar)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
         log(msg)
@@ -325,7 +354,7 @@ def delete_project(server, project, apikey, verbose):
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
 def benchmark():
-    bench.compute_hash_speed(10000)
+    bench.compute_hash_speed(10000, progress_bar=ProgressBar())
 
 
 @cli.command('describe', short_help='show distribution of clk popcounts')

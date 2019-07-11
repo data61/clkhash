@@ -8,16 +8,17 @@ import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
 from future.builtins import range
-from tqdm import tqdm
 
 from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.serialization import serialize_bitarray
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
-from clkhash.stats import OnlineMeanVariance
 from clkhash.validate_data import (validate_entries, validate_header,
                                    validate_row_lengths)
+
+if False:
+    from clkhash.cli import ProgressBar
 
 log = logging.getLogger('clkhash.clk')
 
@@ -53,7 +54,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                           schema,  # type: Schema
                           validate=True,  # type: bool
                           header=True,  # type: Union[bool, AnyStr]
-                          progress_bar=True  # type: bool
+                          progress_bar=None  # type: Optional[ProgressBar]
                           ):
     # type: (...) -> List[str]
     """ Generate Bloom filters from CSV file, then serialise them.
@@ -73,8 +74,8 @@ def generate_clk_from_csv(input_f,  # type: TextIO
         :param header: Set to `False` if the CSV file does not have
             a header. Set to `'ignore'` if the CSV file does have a
             header but it should not be checked against the schema.
-        :param bool progress_bar: Set to `False` to disable the progress
-            bar.
+        :param progress_callback: A callable to update the progress to
+            the user.
         :return: A list of serialized Bloom filters and a list of
             corresponding popcounts.
     """
@@ -101,25 +102,19 @@ def generate_clk_from_csv(input_f,  # type: TextIO
 
     validate_row_lengths(schema.fields, pii_data)
 
+    progress_callback = None
     if progress_bar:
-        stats = OnlineMeanVariance()
-        with tqdm(desc="generating CLKs", total=len(pii_data), unit='clk', unit_scale=True,
-                  postfix={'mean': stats.mean(), 'std': stats.std()}) as pbar:
-            def callback(tics, clk_stats):
-                stats.update(clk_stats)
-                pbar.set_postfix(mean=stats.mean(), std=stats.std(), refresh=False)
-                pbar.update(tics)
+        progress_bar.initialise(len(pii_data))
+        progress_callback = progress_bar.callback
 
-            results = generate_clks(pii_data,
-                                    schema,
-                                    keys,
-                                    validate=validate,
-                                    callback=callback)
-    else:
-        results = generate_clks(pii_data,
-                                schema,
-                                keys,
-                                validate=validate)
+    results = generate_clks(pii_data,
+                            schema,
+                            keys,
+                            validate=validate,
+                            callback=progress_callback)
+
+    if progress_bar:
+        progress_bar.close()
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
