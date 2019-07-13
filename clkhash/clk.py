@@ -6,14 +6,15 @@ import concurrent.futures
 import logging
 import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
-                    Sequence, TextIO, Tuple, TypeVar, Union)
+                    Sequence, TextIO, Tuple, Type, TypeVar, Union)
 from future.builtins import range
 
 from clkhash.backports import unicode_reader
 from clkhash.bloomfilter import stream_bloom_filters
-from clkhash.serialization import serialize_bitarray
+from clkhash.interface import EncodingProgressInterface
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
+from clkhash.serialization import serialize_bitarray
 from clkhash.validate_data import (validate_entries, validate_header,
                                    validate_row_lengths)
 
@@ -52,7 +53,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                           schema,  # type: Schema
                           validate=True,  # type: bool
                           header=True,  # type: Union[bool, AnyStr]
-                          progress_bar=None  # type: Optional[object]
+                          progress_interface=None  # type: Optional[Type[EncodingProgressInterface]]
                           ):
     # type: (...) -> List[str]
     """ Generate Bloom filters from CSV file, then serialise them.
@@ -72,8 +73,10 @@ def generate_clk_from_csv(input_f,  # type: TextIO
         :param header: Set to `False` if the CSV file does not have
             a header. Set to `'ignore'` if the CSV file does have a
             header but it should not be checked against the schema.
-        :param progress_callback: A callable to update the progress to
-            the user.
+        :param initialisation_callback: Callback to initialise the
+            progress bar.
+        :param progress_callback: Callback to update the state of
+            the progress bar.
         :return: A list of serialized Bloom filters and a list of
             corresponding popcounts.
     """
@@ -100,21 +103,19 @@ def generate_clk_from_csv(input_f,  # type: TextIO
 
     validate_row_lengths(schema.fields, pii_data)
 
-    progress_callback = None
-    # As we are separating tqdm from the clk module, we don't want to import ProgressBar
-    # We explicitly test for attributes and ignore mypys checks.
-    if hasattr(progress_bar, 'initialise') and hasattr(progress_bar, 'callback'):
-        progress_bar.initialise(len(pii_data))  # type: ignore
-        progress_callback = progress_bar.callback  # type: ignore
+    def _generate_clks(callback):
+        # type: (Optional[Callable[[int, Sequence[int]], None]]) -> List[str]
+        return generate_clks(pii_data,
+                             schema,
+                             keys,
+                             validate=validate,
+                             progress_callback=callback)
 
-    results = generate_clks(pii_data,
-                            schema,
-                            keys,
-                            validate=validate,
-                            callback=progress_callback)
-
-    if hasattr(progress_bar, 'close'):
-        progress_bar.close()  # type: ignore
+    if progress_interface:
+        with progress_interface(len(pii_data)) as pi:
+            results = _generate_clks(pi.callback)
+    else:
+        results = _generate_clks(None)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
@@ -124,7 +125,7 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
                   schema,  # type: Schema
                   keys,  # type: Tuple[AnyStr, AnyStr]
                   validate=True,  # type: bool
-                  callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
+                  progress_callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
     # type: (...) -> List[str]
 
@@ -152,9 +153,9 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
             future = executor.submit(
                 hash_and_serialize_chunk,
                 chunk, key_lists, schema, )
-            if callback is not None:
+            if progress_callback is not None:
                 unpacked_callback = cast(Callable[[int, Sequence[int]], None],
-                                         callback)
+                                         progress_callback)
                 future.add_done_callback(
                     lambda f: unpacked_callback(len(f.result()[0]),
                                                 f.result()[1]))

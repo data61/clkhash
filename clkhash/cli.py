@@ -13,6 +13,7 @@ import click
 import clkhash
 from clkhash import (benchmark as bench, clk, randomnames, validate_data,
                      describe as descr)
+from clkhash.interface import EncodingProgressInterface
 from clkhash.rest_client import (project_upload_clks, run_get_result_text,
                                  run_get_status, project_create, run_create,
                                  server_get_status, ServiceError,
@@ -23,45 +24,31 @@ from clkhash.stats import OnlineMeanVariance
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
 
-class ProgressBar:
-    """Wrapper for the tqdm module that allows deferred initialisation and creates a callback
+class EncodingProgressBar(EncodingProgressInterface):
+    """Wrapper to make tqdm usable as an encoding progress interface.
     """
-
-    def __init__(self):
-        self.stats = OnlineMeanVariance()
-        self.pbar = None  # type: Optional[tqdm]
-
-    def initialise(self, length):
+    def __init__(self, length):
         # type: (int) -> None
-        """Allows deferred initialisation of the tqdm object as the length may not be known when
-        the ProgressBar object is created.
-
-        :param length: Number of records that 100% represents
-        :return:
-        """
+        self.stats = OnlineMeanVariance()
         self.pbar = tqdm(desc="generating CLKs", total=length, unit='clk', unit_scale=True,
                   postfix={'mean': self.stats.mean(), 'std': self.stats.std()})
 
+    def __enter__(self):
+        # type: () -> EncodingProgressInterface
+        return self
+
     def callback(self, tics, clk_stats):
         # type: (int, Sequence[int]) -> None
-        """Callback method passed into the acting function to allow updating the progress bar.
-
-        :param tics: Number of records completed
-        :param clk_stats:
-        :return:
+        """Updates the progressbar with the current progress.
         """
-        if self.pbar is None or self.pbar.disable:
-            raise TypeError("Progress Bar callback can only be called after initialisation")
         self.stats.update(clk_stats)
         self.pbar.set_postfix(mean=self.stats.mean(), std=self.stats.std(), refresh=False)
         self.pbar.update(tics)
 
-    def close(self):
-        # type: () -> None
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # type: (...) -> None
         """Ensures the last output has been finished before continuing
         """
-        if self.pbar is None:
-            return
         self.pbar.close()
 
 
@@ -126,12 +113,12 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
         header = False
 
     try:
-        progress_bar = None if quiet else ProgressBar()
+        progress_interface = None if quiet else EncodingProgressBar
         clk_data = clk.generate_clk_from_csv(
             pii_csv, keys, schema_object,
             validate=validate,
             header=header,
-            progress_bar=progress_bar)
+            progress_interface=progress_interface)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
         log(msg)
@@ -371,7 +358,7 @@ def delete_project(server, project, apikey, verbose):
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
 def benchmark():
-    bench.compute_hash_speed(10000, progress_bar=ProgressBar())
+    bench.compute_hash_speed(10000, progress_interface=EncodingProgressBar)
 
 
 @cli.command('describe', short_help='show distribution of clk popcounts')

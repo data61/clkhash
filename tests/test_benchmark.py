@@ -7,7 +7,7 @@ import os
 import sys
 
 from clkhash import benchmark
-from clkhash.cli import ProgressBar
+from clkhash.cli import EncodingProgressBar
 
 IS_APPVEYOR = 'APPVEYOR' in os.environ
 IS_TRAVIS = 'TRAVIS' in os.environ
@@ -30,6 +30,4 @@ class TestBenchmark(unittest.TestCase):
 
     @pytest.mark.skipif(IS_APPVEYOR and IS_PY3, reason="Windows benchmarking not working on Python3")
     def test_benchmark_with_progressbar(self):
-        progress_bar = ProgressBar()
-        benchmark.compute_hash_speed(1000, progress_bar=progress_bar)
-        self.assertEqual(progress_bar.pbar.disable, True)
+        benchmark.compute_hash_speed(1000, progress_interface=EncodingProgressBar)
