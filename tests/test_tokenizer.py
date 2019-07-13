@@ -74,3 +74,8 @@ class TestTokenizer(unittest.TestCase):
 
     def test_dummy(self):
         self.assertEqual(list(dummy('jobs')), [])
+
+    def test_empty_input(self):
+        self.assertEqual(list(p1_20("")), [])
+        self.assertEqual(list(p1_20_true("")), [])
+        self.assertEqual(list(p2_20("")), [])
