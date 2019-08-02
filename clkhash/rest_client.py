@@ -4,7 +4,7 @@ import requests
 import clkhash
 from clkhash.backports import TimeoutError
 import logging
-from retrying import retry, RetryError
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
@@ -236,9 +236,10 @@ class RestClient:
             old_status = status
             try:
                 status = self.run_get_status(project, run, apikey)
-            except RetryError:
+            except RateLimitedClient:
                 # Rare case with the default parameters but could occur: if the `retry` has continuously received 503
-                # responses up to its timeout, it will stop retrying and raise a RetryError.
+                # responses up to its timeout, it will stop retrying and raise the last received exception, i.e. a
+                # RateLimitedException.
                 time.sleep(1)
         raise TimeoutError("Timeout exceeded before run {} terminated".format(run))
 
