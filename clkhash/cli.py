@@ -17,14 +17,97 @@ from clkhash.schema import SchemaError
 
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
+# Labels for some options. If changed here, the name of the corresponding attributes MUST be changed in the methods
+# using them.
+VERBOSE_LABEL = 'verbose'
+REST_CLIENT_LABEL = 'rest_client'
+SERVER_LABEL = 'server'
+RETRY_MULTIPLIER_LABEL = 'retry_multiplier'
+RETRY_MAX_EXP_LABEL = 'retry_max_exp'
+RETRY_STOP_LABEL = 'retry_stop'
+
 
 def log(m, color='red'):
     click.echo(click.style(m, fg=color), err=True)
 
 
+def set_verbosity(ctx, param, value):
+    """
+    Made to be used the the click option callback.
+    Set the script verbosity in the click context object which is assumed to be a dictionary.
+    Note that if the verbosity is set to true, it cannot be brought back to false in the current context.
+    """
+    if ctx.obj is None or not ctx.obj.get(VERBOSE_LABEL):
+        ctx.obj = {VERBOSE_LABEL: value}
+    return ctx.obj.get(VERBOSE_LABEL)
+
+# This option will be used as an annotation of a command. If used, the command will have this option, which will
+# automatically set the verbosity of the script. Note that the verbosity is global (set in the context), so the commands
+#     clkutil -v status [...]
+# is equivalent to
+#     clkutil status -v [...]
+verbose_option = click.option('-v', '--verbose', VERBOSE_LABEL, default=False, is_flag=True,
+                              help="Script is more talkative", callback=set_verbosity)
+
+# Set of options required for all the commands sending a request to the entity service server.
+rest_client_option = [
+    click.option('--server', SERVER_LABEL, type=str, default=DEFAULT_SERVICE_URL,
+                 help="Server address including protocol"),
+    click.option('--retry-multiplier', RETRY_MULTIPLIER_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, minimum waiting time before retrying."),
+    click.option('--retry-exponential-max', RETRY_MAX_EXP_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, maximum time interval between retries."),
+    click.option('--retry-max-time', RETRY_STOP_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, retry only within this period.")
+]
+
+# From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
+def add_options(options):
+    """
+    Used as an annotation for click commands.
+    Allow to add a list of options to the command
+    :param options: List of options to add to the command
+    """
+    def _add_options(func):
+        for option in reversed(options):
+            func = option(func)
+        return func
+
+    return _add_options
+
+
+def is_verbose(ctx):
+    """
+    Use the click context to get the verbosity of the script.
+    Should have been set by the method set_verbosity.
+    :param ctx:
+    :return: None if not set, otherwise a boolean.
+    """
+    return ctx.obj.get(VERBOSE_LABEL)
+
+
+def create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop):
+    """
+    Method to create a client from click options.
+    The click context is required to check the verbosity of the command.
+    """
+    if is_verbose(ctx):
+        log("Connecting to Entity Matching Server: {}".format(server))
+    client_waiting_configuration = ClientWaitingConfiguration(retry_multiplier,
+                                                              retry_max_exp,
+                                                              retry_stop)
+    rest_client = RestClient(server, client_waiting_configuration)
+    ctx.obj[REST_CLIENT_LABEL] = rest_client
+    return rest_client
+
+
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-def cli():
+@verbose_option  # All the following commands are based on this one, which initialise the verbosity.
+def cli(verbose):
     """
     This command line application allows a user to hash their
     data into cryptographic longterm keys for use in
@@ -95,36 +178,18 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
 
 
 @cli.command('status', short_help='get status of entity service')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def status(server, output, verbose, client_retrying_wait_exponential_multiplier_ms,
-           client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def status(ctx, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Connect to an entity matching server and check the service status.
 
     Use "-" to output status to stdout.
     """
-    if verbose:
-        log("Connecting to Entity Matching Server: {}".format(server))
-
-    client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                              client_retrying_wait_exponential_max_ms,
-                                                              client_retrying_stop_max_delay_ms)
-    rest_client = RestClient(server, client_waiting_configuration)
+    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
     service_status = rest_client.server_get_status()
-    if verbose:
+    if is_verbose(ctx):
         log("Status: {}".format(service_status['status']))
     print(json.dumps(service_status), file=output)
 
@@ -156,33 +221,20 @@ After both users have uploaded their data one can watch for and retrieve the res
                                  'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this project")
 @click.option('--parties', default=2, type=int,
               help="Number of parties in the project")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def create_project(type, schema, server, name, parties, output, verbose, client_retrying_wait_exponential_multiplier_ms,
-                   client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def create_project(ctx, type, schema, name, parties, output, server, retry_multiplier, retry_max_exp,
+                   retry_stop, verbose):
     """Create a new project on an entity matching server.
 
     See entity matching service documentation for details on mapping type and schema
     Returns authentication details for the created project.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
 
     if schema is not None:
         schema_json = json.load(schema)
@@ -198,10 +250,7 @@ def create_project(type, schema, server, name, parties, output, verbose, client_
 
     # Creating new project
     try:
-        client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                                  client_retrying_wait_exponential_max_ms,
-                                                                  client_retrying_stop_max_delay_ms)
-        rest_client = RestClient(server, client_waiting_configuration)
+        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
         project_creation_reply = rest_client.project_create(
             schema_json, type, name, parties=parties)
     except ServiceError as e:
@@ -215,45 +264,27 @@ def create_project(type, schema, server, name, parties, output, verbose, client_
 
 
 @cli.command('create', short_help="create a run on the entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this run", default='')
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
 @click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-t', '--threshold', type=float)
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def create(server, name, project, apikey, output, threshold, verbose, client_retrying_wait_exponential_multiplier_ms,
-           client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def create(ctx, name, project, apikey, output, threshold, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Create a new run on an entity matching server.
 
     See entity matching service documentation for details on threshold.
 
     Returns details for the created run.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
     if threshold is None:
         raise ValueError("Please provide a threshold")
 
     # Create a new run
     try:
-        client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                                  client_retrying_wait_exponential_max_ms,
-                                                                  client_retrying_stop_max_delay_ms)
-        rest_client = RestClient(server, client_waiting_configuration)
+        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
         response = rest_client.run_create(project, apikey, threshold, name)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
@@ -266,23 +297,11 @@ def create(server, name, project, apikey, output, threshold, verbose, client_ret
 @click.argument('clk_json', type=click.File('r'))
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def upload(clk_json, project, apikey, server, output, verbose, client_retrying_wait_exponential_multiplier_ms,
-           client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def upload(ctx, clk_json, project, apikey, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Upload CLK data to entity matching server.
 
     Given a json file containing hashed clk data as CLK_JSON, upload to
@@ -290,19 +309,14 @@ def upload(clk_json, project, apikey, server, output, verbose, client_retrying_w
 
     Use "-" to read from stdin.
     """
-    if verbose:
+    if is_verbose(ctx):
         log("Uploading CLK data from {}".format(clk_json.name))
-        log("To Entity Matching Server: {}".format(server))
         log("Project ID: {}".format(project))
         log("Uploading CLK data to the server")
-
-    client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                              client_retrying_wait_exponential_max_ms,
-                                                              client_retrying_stop_max_delay_ms)
-    rest_client = RestClient(server, client_waiting_configuration)
+    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
     response = rest_client.project_upload_clks(project, apikey, clk_json)
 
-    if verbose:
+    if is_verbose(ctx):
         log(response)
 
     json.dump(response, output)
@@ -313,22 +327,11 @@ def upload(clk_json, project, apikey, server, output, verbose, client_retrying_w
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def results(project, apikey, run, watch, server, output, client_retrying_wait_exponential_multiplier_ms,
-            client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def results(ctx, project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
     Check to see if results are available for a particular mapping
     and if so download.
@@ -338,11 +341,7 @@ def results(project, apikey, run, watch, server, output, client_retrying_wait_ex
     may return a mask, a linkage table, or a permutation. Consult
     the entity service documentation for details.
     """
-
-    client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                              client_retrying_wait_exponential_max_ms,
-                                                              client_retrying_stop_max_delay_ms)
-    rest_client = RestClient(server, client_waiting_configuration)
+    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
     status = rest_client.run_get_status(project, run, apikey)
     log(format_run_status(status))
     if watch:
@@ -363,39 +362,20 @@ def results(project, apikey, run, watch, server, output, client_retrying_wait_ex
 
 
 @cli.command('delete', short_help="delete a run on the anonlink entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
 @click.option('--run', help='Run ID to delete')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def delete(server, project, run, apikey, verbose, client_retrying_wait_exponential_multiplier_ms,
-           client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def delete(ctx, project, run, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a run on an entity matching server.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
-    client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                              client_retrying_wait_exponential_max_ms,
-                                                              client_retrying_stop_max_delay_ms)
-    rest_client = RestClient(server, client_waiting_configuration)
-
     # Delete a run
     try:
+        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
         msg = rest_client.run_delete(project, run, apikey)
-        if verbose:
+        if is_verbose(ctx):
             log(msg)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
@@ -405,35 +385,16 @@ def delete(server, project, run, apikey, verbose, client_retrying_wait_exponenti
 
 
 @cli.command('delete-project', short_help="delete a project on the anonlink entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-@click.option('--client_retrying_wait_exponential_multiplier_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_wait_exponential_max_ms',
-              default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-@click.option('--client_retrying_stop_max_delay_ms',
-              default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-              type=int, help="Configuration about retrying a request if the client receives a 503 response."
-                             " See https://pypi.org/project/retrying/ for more documentation.")
-def delete_project(server, project, apikey, verbose, client_retrying_wait_exponential_multiplier_ms,
-                   client_retrying_wait_exponential_max_ms, client_retrying_stop_max_delay_ms):
+@click.pass_context
+@add_options(rest_client_option)
+@verbose_option
+def delete_project(ctx, project, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a project on an entity matching server.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
-    client_waiting_configuration = ClientWaitingConfiguration(client_retrying_wait_exponential_multiplier_ms,
-                                                              client_retrying_wait_exponential_max_ms,
-                                                              client_retrying_stop_max_delay_ms)
-    rest_client = RestClient(server, client_waiting_configuration)
-
     try:
+        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
         rest_client.project_delete(project, apikey)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
