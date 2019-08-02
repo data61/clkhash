@@ -15,6 +15,8 @@ from clkhash.rest_client import (ClientWaitingConfiguration, ServiceError,
                                  format_run_status, RestClient)
 from clkhash.schema import SchemaError
 
+from typing import List, Callable
+
 DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
 
 # Labels for some options. If changed here, the name of the corresponding attributes MUST be changed in the methods
@@ -68,7 +70,7 @@ rest_client_option = [
 ]
 
 # From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
-def add_options(options):
+def add_options(options: List[Callable]):
     """
     Used as an annotation for click commands.
     Allow to add a list of options to the command
