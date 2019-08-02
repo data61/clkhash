@@ -70,9 +70,12 @@ def format_run_status(status):
 
 class RestClient:
 
-    def __init__(self, server, client_waiting_configuration=ClientWaitingConfiguration()):
+    def __init__(self, server, client_waiting_configuration=None):
         self.server = server
-        self.client_waiting_configuration = client_waiting_configuration
+        if client_waiting_configuration is None:
+            self.client_waiting_configuration = ClientWaitingConfiguration()
+        else:
+            self.client_waiting_configuration = client_waiting_configuration
 
     def __request_wrapper(self, request_method, url, **kwargs):
         """
@@ -82,9 +85,6 @@ class RestClient:
         2^x * WAIT_EXPONENTIAL_MULTIPLIER_MS milliseconds between each retry, up to WAIT_EXPONENTIAL_MAX_MS milliseconds,
         then it stays at WAIT_EXPONENTIAL_MAX_MS milliseconds afterwards."
         """
-
-        # if client_waiting_configuration is None:
-        #    client_waiting_configuration = ClientWaitingConfiguration()
 
         @retry(wait_exponential_multiplier=self.client_waiting_configuration.wait_exponential_multiplier_ms,
                wait_exponential_max=self.client_waiting_configuration.wait_exponential_max_ms,
