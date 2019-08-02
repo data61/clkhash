@@ -52,16 +52,19 @@ verbose_option = click.option('-v', '--verbose', VERBOSE_LABEL, default=False, i
 # Set of options required for all the commands sending a request to the entity service server.
 rest_client_option = [
     click.option('--server', SERVER_LABEL, type=str, default=DEFAULT_SERVICE_URL,
-                 help="Server address including protocol"),
+                 help="Server address including protocol. Default {}.".format(DEFAULT_SERVICE_URL)),
     click.option('--retry-multiplier', RETRY_MULTIPLIER_LABEL,
                  default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
-                 type=int, help="<milliseconds> If receives a 503 from server, minimum waiting time before retrying."),
+                 type=int, help="<milliseconds> If receives a 503 from server, minimum waiting time before retrying. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS)),
     click.option('--retry-exponential-max', RETRY_MAX_EXP_LABEL,
                  default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
-                 type=int, help="<milliseconds> If receives a 503 from server, maximum time interval between retries."),
+                 type=int, help="<milliseconds> If receives a 503 from server, maximum time interval between retries. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS)),
     click.option('--retry-max-time', RETRY_STOP_LABEL,
                  default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
-                 type=int, help="<milliseconds> If receives a 503 from server, retry only within this period.")
+                 type=int, help="<milliseconds> If receives a 503 from server, retry only within this period. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS))
 ]
 
 # From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
