@@ -70,7 +70,8 @@ rest_client_option = [
 ]
 
 # From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
-def add_options(options: List[Callable]):
+def add_options(options):
+    # type: (List[Callable]) -> Callable
     """
     Used as an annotation for click commands.
     Allow to add a list of options to the command
