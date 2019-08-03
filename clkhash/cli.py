@@ -17,7 +17,7 @@ from clkhash.schema import SchemaError
 
 from typing import List, Callable
 
-DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
+DEFAULT_SERVICE_URL = 'https://testing.es.data61.xyz'
 
 # Labels for some options. If changed here, the name of the corresponding attributes MUST be changed in the methods
 # using them.
@@ -35,13 +35,16 @@ def log(m, color='red'):
 
 def set_verbosity(ctx, param, value):
     """
-    Made to be used the the click option callback.
+    verbose_option callback
+
     Set the script verbosity in the click context object which is assumed to be a dictionary.
     Note that if the verbosity is set to true, it cannot be brought back to false in the current context.
     """
     if ctx.obj is None or not ctx.obj.get(VERBOSE_LABEL):
         ctx.obj = {VERBOSE_LABEL: value}
-    return ctx.obj.get(VERBOSE_LABEL)
+    verbosity = ctx.obj.get(VERBOSE_LABEL)
+    return verbosity
+
 
 # This option will be used as an annotation of a command. If used, the command will have this option, which will
 # automatically set the verbosity of the script. Note that the verbosity is global (set in the context), so the commands
@@ -69,12 +72,14 @@ rest_client_option = [
                                 "Default {}.".format(ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS))
 ]
 
-# From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
+
 def add_options(options):
     # type: (List[Callable]) -> Callable
     """
     Used as an annotation for click commands.
     Allow to add a list of options to the command
+    From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
+
     :param options: List of options to add to the command
     """
     def _add_options(func):
@@ -95,24 +100,19 @@ def is_verbose(ctx):
     return ctx.obj.get(VERBOSE_LABEL)
 
 
-def create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop):
+def create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
-    Method to create a client from click options.
-    The click context is required to check the verbosity of the command.
+    Create a RestClient with retry config set from command line options.
     """
-    if is_verbose(ctx):
+    if verbose:
         log("Connecting to Entity Matching Server: {}".format(server))
-    client_waiting_configuration = ClientWaitingConfiguration(retry_multiplier,
-                                                              retry_max_exp,
-                                                              retry_stop)
-    rest_client = RestClient(server, client_waiting_configuration)
-    ctx.obj[REST_CLIENT_LABEL] = rest_client
-    return rest_client
+    retry_config = ClientWaitingConfiguration(retry_multiplier, retry_max_exp, retry_stop)
+    return RestClient(server, retry_config)
 
 
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-@verbose_option  # All the following commands are based on this one, which initialise the verbosity.
+@verbose_option
 def cli(verbose):
     """
     This command line application allows a user to hash their
@@ -137,11 +137,11 @@ def cli(verbose):
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('clk_json', type=click.File('w'))
-@click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
-def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, validate):
+@verbose_option
+def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, verbose):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
@@ -172,7 +172,7 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
             pii_csv, keys, schema_object,
             validate=validate,
             header=header,
-            progress_bar=not quiet)
+            progress_bar=verbose)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
         log(msg)
@@ -193,9 +193,9 @@ def status(ctx, output, server, retry_multiplier, retry_max_exp, retry_stop, ver
 
     Use "-" to output status to stdout.
     """
-    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
     service_status = rest_client.server_get_status()
-    if is_verbose(ctx):
+    if verbose:
         log("Status: {}".format(service_status['status']))
     print(json.dumps(service_status), file=output)
 
@@ -256,7 +256,7 @@ def create_project(ctx, type, schema, name, parties, output, server, retry_multi
 
     # Creating new project
     try:
-        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
         project_creation_reply = rest_client.project_create(
             schema_json, type, name, parties=parties)
     except ServiceError as e:
@@ -290,7 +290,7 @@ def create(ctx, name, project, apikey, output, threshold, server, retry_multipli
 
     # Create a new run
     try:
-        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
         response = rest_client.run_create(project, apikey, threshold, name)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
@@ -315,14 +315,14 @@ def upload(ctx, clk_json, project, apikey, output, server, retry_multiplier, ret
 
     Use "-" to read from stdin.
     """
-    if is_verbose(ctx):
+    if verbose:
         log("Uploading CLK data from {}".format(clk_json.name))
         log("Project ID: {}".format(project))
         log("Uploading CLK data to the server")
-    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
     response = rest_client.project_upload_clks(project, apikey, clk_json)
 
-    if is_verbose(ctx):
+    if verbose:
         log(response)
 
     json.dump(response, output)
@@ -347,7 +347,7 @@ def results(ctx, project, apikey, run, watch, output, server, retry_multiplier, 
     may return a mask, a linkage table, or a permutation. Consult
     the entity service documentation for details.
     """
-    rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
     status = rest_client.run_get_status(project, run, apikey)
     log(format_run_status(status))
     if watch:
@@ -379,9 +379,9 @@ def delete(ctx, project, run, apikey, server, retry_multiplier, retry_max_exp, r
     """
     # Delete a run
     try:
-        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
         msg = rest_client.run_delete(project, run, apikey)
-        if is_verbose(ctx):
+        if verbose:
             log(msg)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
@@ -400,7 +400,7 @@ def delete_project(ctx, project, apikey, server, retry_multiplier, retry_max_exp
     """Delete a project on an entity matching server.
     """
     try:
-        rest_client = create_rest_cli(ctx, server, retry_multiplier, retry_max_exp, retry_stop)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
         rest_client.project_delete(project, apikey)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
