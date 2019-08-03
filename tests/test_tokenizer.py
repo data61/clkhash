@@ -1,9 +1,9 @@
 import unittest
+from hypothesis import given
+from hypothesis.strategies import text
 
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.tokenizer import get_tokenizer
-
-__author__ = 'shardy'
 
 # some tokenizers
 
@@ -20,6 +20,7 @@ p1_20_true = get_tokenizer(
 )
 
 dummy = get_tokenizer(None)
+
 
 class TestTokenizer(unittest.TestCase):
 
@@ -55,6 +56,12 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(list(p2_20("steve")),
                          [' s', 'st', 'te', 'ev', 've', 'e '])
 
+    @given(text(min_size=1))
+    def test_bigram_spaces(self, myinput):
+        tokens = list(p2_20(myinput))
+        assert tokens[0] == ' ' + myinput[0]
+        assert tokens[-1] == myinput[-1] + ' '
+
     def test_bigram_2(self):
         self.assertEqual(list(p2_20("steve", ignore='e')),
                          [' s', 'st', 'tv', 'v '])
@@ -71,6 +78,16 @@ class TestTokenizer(unittest.TestCase):
                 msg='Expected raise ValueError on invalid n.'):
             tok = get_tokenizer(fhp)
             tok('prawn')
+
+    @given(text(min_size=1))
+    def test_string_bigram_token_size(self, myinput):
+        tokens = list(p2_20(myinput))
+        assert len(myinput) == len(tokens) - 1
+
+    @given(text(min_size=1))
+    def test_string_unigram_token_size(self, myinput):
+        tokens = list(p1_20(myinput))
+        assert len(myinput) == len(tokens)
 
     def test_dummy(self):
         self.assertEqual(list(dummy('jobs')), [])

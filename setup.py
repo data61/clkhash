@@ -40,7 +40,7 @@ setup(
     license='Apache',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov', 'nbval'],
+    tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov', 'nbval', 'hypothesis'],
     packages=find_packages(exclude=['tests']),
     package_data={'clkhash': ['data/*.csv', 'data/*.json', 'schemas/*.json']},
     project_urls={
