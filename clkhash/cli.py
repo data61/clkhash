@@ -185,10 +185,9 @@ def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, ver
 
 @cli.command('status', short_help='get status of entity service')
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def status(ctx, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def status(output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Connect to an entity matching server and check the service status.
 
     Use "-" to output status to stdout.
@@ -231,10 +230,9 @@ After both users have uploaded their data one can watch for and retrieve the res
 @click.option('--parties', default=2, type=int,
               help="Number of parties in the project")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def create_project(ctx, type, schema, name, parties, output, server, retry_multiplier, retry_max_exp,
+def create_project(type, schema, name, parties, output, server, retry_multiplier, retry_max_exp,
                    retry_stop, verbose):
     """Create a new project on an entity matching server.
 
@@ -275,10 +273,9 @@ def create_project(ctx, type, schema, name, parties, output, server, retry_multi
 @click.option('--apikey', type=str, help="Project Authorization Token")
 @click.option('-o', '--output', type=click.File('w'), default='-')
 @click.option('-t', '--threshold', type=float)
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def create(ctx, name, project, apikey, output, threshold, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def create(name, project, apikey, output, threshold, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Create a new run on an entity matching server.
 
     See entity matching service documentation for details on threshold.
@@ -304,10 +301,9 @@ def create(ctx, name, project, apikey, output, threshold, server, retry_multipli
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def upload(ctx, clk_json, project, apikey, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def upload(clk_json, project, apikey, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Upload CLK data to entity matching server.
 
     Given a json file containing hashed clk data as CLK_JSON, upload to
@@ -334,10 +330,9 @@ def upload(ctx, clk_json, project, apikey, output, server, retry_multiplier, ret
 @click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def results(ctx, project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def results(project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
     Check to see if results are available for a particular mapping
     and if so download.
@@ -371,10 +366,9 @@ def results(ctx, project, apikey, run, watch, output, server, retry_multiplier, 
 @click.option('--project', help='Project identifier')
 @click.option('--run', help='Run ID to delete')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def delete(ctx, project, run, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def delete(project, run, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a run on an entity matching server.
     """
     # Delete a run
@@ -393,10 +387,9 @@ def delete(ctx, project, run, apikey, server, retry_multiplier, retry_max_exp, r
 @cli.command('delete-project', short_help="delete a project on the anonlink entity service")
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.pass_context
 @add_options(rest_client_option)
 @verbose_option
-def delete_project(ctx, project, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+def delete_project(project, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a project on an entity matching server.
     """
     try:
