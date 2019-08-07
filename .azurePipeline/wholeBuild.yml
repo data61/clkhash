@@ -2,6 +2,7 @@ parameters:
   pythonVersions: []
   operatingSystems: []
   architectures: []
+  pythonVersionMypy: '3.7'
 
 jobs:
 - job: 'test_and_publish'
@@ -55,7 +56,7 @@ jobs:
       python -m pip install -U mypy
       mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
     displayName: 'Typecheck'
-    condition: le(3.6, variables['pythonVersion'])
+    condition: eq(parameters['pythonVersionMypy'], variables['pythonVersion'])
   
   - script: |
       python -m pip install -U -r docs/doc-requirements.txt
