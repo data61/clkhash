@@ -10,8 +10,7 @@ jobs:
       ${{ each py in parameters.pythonVersions }}:
         ${{ each os in parameters.operatingSystems }}:
           ${{ each architecture in parameters.architectures }}:
-            displayName: ${{ format('Python {1} on {0} {2}', py, architecture, os) }}
-            ${{ format('{0}_Python_{1}_{2}', os, py, architecture) }}:
+            ${{ format('Python {1} on {0} {2}', py, architecture, os) }}:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
@@ -82,7 +81,7 @@ jobs:
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
   - task: PublishPipelineArtifact@0
-    displayName: 'Publish artifacts'
+    displayName: 'Publish artifacts in Azure'
     condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
     inputs:
       artifactName: Artifacts
