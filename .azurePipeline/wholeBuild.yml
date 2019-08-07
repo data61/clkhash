@@ -55,13 +55,13 @@ jobs:
       python -m pip install -U mypy
       mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
     displayName: 'Typecheck'
-    condition: ne(variables['operatingSystem'], 'vs2017-win2016')
+    condition: le(3.6, variables['pythonVersion'])
   
   - script: |
       python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test notebooks'
-    condition: le(3.6, variables['pythonVersion'])
+    condition: ne(variables['operatingSystem'], 'vs2017-win2016')
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
