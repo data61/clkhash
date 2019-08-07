@@ -15,7 +15,7 @@ p2_20 = get_tokenizer(
     FieldHashingProperties(ngram=2, k=20)
 )
 
-p1_20_true = get_tokenizer(
+p1_20_positional = get_tokenizer(
     FieldHashingProperties(ngram=1, k=20, positional=True)
 )
 
@@ -37,19 +37,19 @@ class TestTokenizer(unittest.TestCase):
                          ['1', '2', '1', '2'])
 
     def test_unigram_1_positional(self):
-        self.assertEqual(list(p1_20_true("1/2/93", ignore='/')),
+        self.assertEqual(list(p1_20_positional("1/2/93", ignore='/')),
                          ['1 1', '2 2', '3 9', '4 3'])
 
     def test_positional_unigram_1(self):
-        self.assertEqual(list(p1_20_true("123")),
+        self.assertEqual(list(p1_20_positional("123")),
                          ['1 1', '2 2', '3 3'])
 
     def test_positional_unigram_2(self):
-        self.assertEqual(list(p1_20_true("1*2*")),
+        self.assertEqual(list(p1_20_positional("1*2*")),
                          ['1 1', '2 *', '3 2', '4 *'])
 
     def test_positional_unigram_duplicate(self):
-        self.assertEqual(list(p1_20_true("111")),
+        self.assertEqual(list(p1_20_positional("111")),
                          ['1 1', '2 1', '3 1'])
 
     def test_bigram_1(self):
@@ -57,12 +57,16 @@ class TestTokenizer(unittest.TestCase):
                          [' s', 'st', 'te', 'ev', 've', 'e '])
 
     @given(text(min_size=1))
+    def test_bigram_encoding_deterministic(self, myinput):
+        assert p2_20(myinput) == p2_20(myinput)
+
+    @given(text(min_size=1))
     def test_bigram_spaces(self, myinput):
         tokens = list(p2_20(myinput))
         assert tokens[0] == ' ' + myinput[0]
         assert tokens[-1] == myinput[-1] + ' '
 
-    def test_bigram_2(self):
+    def test_bigram_ignore(self):
         self.assertEqual(list(p2_20("steve", ignore='e')),
                          [' s', 'st', 'tv', 'v '])
 
@@ -89,10 +93,15 @@ class TestTokenizer(unittest.TestCase):
         tokens = list(p1_20(myinput))
         assert len(myinput) == len(tokens)
 
+    @given(text(min_size=1))
+    def test_string_positional_unigram_token_size(self, myinput):
+        tokens = list(p1_20_positional(myinput))
+        assert len(myinput) == len(tokens)
+
     def test_dummy(self):
         self.assertEqual(list(dummy('jobs')), [])
 
     def test_empty_input(self):
         self.assertEqual(list(p1_20("")), [])
-        self.assertEqual(list(p1_20_true("")), [])
+        self.assertEqual(list(p1_20_positional("")), [])
         self.assertEqual(list(p2_20("")), [])
