@@ -11,6 +11,7 @@ jobs:
         ${{ each os in parameters.operatingSystems }}:
           ${{ each architecture in parameters.architectures }}:
             ${{ format('{0}_Python_{1}_{2}', os, py, architecture) }}:
+              displayName: ${{ format('Python {1} on {0} {2}', py, architecture, os) }}
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
@@ -18,7 +19,7 @@ jobs:
   pool:
     vmImage: $(operatingSystem)
 
-  displayName: 'Test and publish for '
+  displayName: 'Unittest - '
 
   steps:
 # I would not have found on my own such a step. Thanks https://dvlup.com/2019/01/03/using-powershell-to-installing-msi-in-a-devops-build/
