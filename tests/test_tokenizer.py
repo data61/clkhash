@@ -58,7 +58,7 @@ class TestTokenizer(unittest.TestCase):
 
     @given(text(min_size=1))
     def test_bigram_encoding_deterministic(self, myinput):
-        assert p2_20(myinput) == p2_20(myinput)
+        assert set(p2_20(myinput)) == set(p2_20(myinput))
 
     @given(text(min_size=1))
     def test_bigram_spaces(self, myinput):
