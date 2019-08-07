@@ -10,7 +10,7 @@ jobs:
       ${{ each py in parameters.pythonVersions }}:
         ${{ each os in parameters.operatingSystems }}:
           ${{ each architecture in parameters.architectures }}:
-            ${{ format('Python {1} on {0} {2}', py, architecture, os) }}:
+            ${{ format('Python {0} on {1} ({2})', py, os, architecture) }}:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
