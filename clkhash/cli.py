@@ -11,22 +11,109 @@ import click
 import clkhash
 from clkhash import (benchmark as bench, clk, randomnames, validate_data,
                      describe as descr)
-from clkhash.rest_client import (project_upload_clks, run_get_result_text,
-                                 run_get_status, project_create, run_create,
-                                 server_get_status, ServiceError,
-                                 format_run_status, watch_run_status, project_delete, run_delete)
+from clkhash.rest_client import (ClientWaitingConfiguration, ServiceError,
+                                 format_run_status, RestClient)
 from clkhash.schema import SchemaError
 
-DEFAULT_SERVICE_URL = 'https://es.data61.xyz'
+from typing import List, Callable
+
+DEFAULT_SERVICE_URL = 'https://testing.es.data61.xyz'
+
+# Labels for some options. If changed here, the name of the corresponding attributes MUST be changed in the methods
+# using them.
+VERBOSE_LABEL = 'verbose'
+REST_CLIENT_LABEL = 'rest_client'
+SERVER_LABEL = 'server'
+RETRY_MULTIPLIER_LABEL = 'retry_multiplier'
+RETRY_MAX_EXP_LABEL = 'retry_max_exp'
+RETRY_STOP_LABEL = 'retry_stop'
 
 
 def log(m, color='red'):
     click.echo(click.style(m, fg=color), err=True)
 
 
+def set_verbosity(ctx, param, value):
+    """
+    verbose_option callback
+
+    Set the script verbosity in the click context object which is assumed to be a dictionary.
+    Note that if the verbosity is set to true, it cannot be brought back to false in the current context.
+    """
+    if ctx.obj is None or not ctx.obj.get(VERBOSE_LABEL):
+        ctx.obj = {VERBOSE_LABEL: value}
+    verbosity = ctx.obj.get(VERBOSE_LABEL)
+    return verbosity
+
+
+# This option will be used as an annotation of a command. If used, the command will have this option, which will
+# automatically set the verbosity of the script. Note that the verbosity is global (set in the context), so the commands
+#     clkutil -v status [...]
+# is equivalent to
+#     clkutil status -v [...]
+verbose_option = click.option('-v', '--verbose', VERBOSE_LABEL, default=False, is_flag=True,
+                              help="Script is more talkative", callback=set_verbosity)
+
+# Set of options required for all the commands sending a request to the entity service server.
+rest_client_option = [
+    click.option('--server', SERVER_LABEL, type=str, default=DEFAULT_SERVICE_URL,
+                 help="Server address including protocol. Default {}.".format(DEFAULT_SERVICE_URL)),
+    click.option('--retry-multiplier', RETRY_MULTIPLIER_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, minimum waiting time before retrying. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MULTIPLIER_MS)),
+    click.option('--retry-exponential-max', RETRY_MAX_EXP_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, maximum time interval between retries. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_WAIT_EXPONENTIAL_MAX_MS)),
+    click.option('--retry-max-time', RETRY_STOP_LABEL,
+                 default=ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS,
+                 type=int, help="<milliseconds> If receives a 503 from server, retry only within this period. "
+                                "Default {}.".format(ClientWaitingConfiguration.DEFAULT_STOP_MAX_DELAY_MS))
+]
+
+
+def add_options(options):
+    # type: (List[Callable]) -> Callable
+    """
+    Used as an annotation for click commands.
+    Allow to add a list of options to the command
+    From https://stackoverflow.com/questions/40182157/python-click-shared-options-and-flags-between-commands
+
+    :param options: List of options to add to the command
+    """
+    def _add_options(func):
+        for option in reversed(options):
+            func = option(func)
+        return func
+
+    return _add_options
+
+
+def is_verbose(ctx):
+    """
+    Use the click context to get the verbosity of the script.
+    Should have been set by the method set_verbosity.
+    :param ctx:
+    :return: None if not set, otherwise a boolean.
+    """
+    return ctx.obj.get(VERBOSE_LABEL)
+
+
+def create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose):
+    """
+    Create a RestClient with retry config set from command line options.
+    """
+    if verbose:
+        log("Connecting to Entity Matching Server: {}".format(server))
+    retry_config = ClientWaitingConfiguration(retry_multiplier, retry_max_exp, retry_stop)
+    return RestClient(server, retry_config)
+
+
 @click.group("clkutil")
 @click.version_option(clkhash.__version__)
-def cli():
+@verbose_option
+def cli(verbose):
     """
     This command line application allows a user to hash their
     data into cryptographic longterm keys for use in
@@ -50,11 +137,11 @@ def cli():
 @click.argument('keys', nargs=2, type=click.Tuple([str, str]))
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('clk_json', type=click.File('w'))
-@click.option('-q', '--quiet', default=False, is_flag=True, help="Quiet any progress messaging")
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
-def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, validate):
+@verbose_option
+def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, verbose):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
@@ -85,7 +172,7 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
             pii_csv, keys, schema_object,
             validate=validate,
             header=header,
-            progress_bar=not quiet)
+            progress_bar=verbose)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
         log(msg)
@@ -97,18 +184,16 @@ def hash(pii_csv, keys, schema, clk_json, quiet, no_header, check_header, valida
 
 
 @cli.command('status', short_help='get status of entity service')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def status(server, output, verbose):
+@add_options(rest_client_option)
+@verbose_option
+def status(output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Connect to an entity matching server and check the service status.
 
     Use "-" to output status to stdout.
     """
-    if verbose:
-        log("Connecting to Entity Matching Server: {}".format(server))
-
-    service_status = server_get_status(server)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+    service_status = rest_client.server_get_status()
     if verbose:
         log("Status: {}".format(service_status['status']))
     print(json.dumps(service_status), file=output)
@@ -141,20 +226,19 @@ After both users have uploaded their data one can watch for and retrieve the res
                                  'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this project")
 @click.option('--parties', default=2, type=int,
               help="Number of parties in the project")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', is_flag=True, help="Script is more talkative")
-def create_project(type, schema, server, name, parties, output, verbose):
+@add_options(rest_client_option)
+@verbose_option
+def create_project(type, schema, name, parties, output, server, retry_multiplier, retry_max_exp,
+                   retry_stop, verbose):
     """Create a new project on an entity matching server.
 
     See entity matching service documentation for details on mapping type and schema
     Returns authentication details for the created project.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
 
     if schema is not None:
         schema_json = json.load(schema)
@@ -170,8 +254,9 @@ def create_project(type, schema, server, name, parties, output, verbose):
 
     # Creating new project
     try:
-        project_creation_reply = project_create(
-            server, schema_json, type, name, parties=parties)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+        project_creation_reply = rest_client.project_create(
+            schema_json, type, name, parties=parties)
     except ServiceError as e:
         log("Unexpected response - {}".format(e.status_code))
         log(e.text)
@@ -183,29 +268,27 @@ def create_project(type, schema, server, name, parties, output, verbose):
 
 
 @cli.command('create', short_help="create a run on the entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--name', type=str, help="Name to give this run", default='')
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.option('-o','--output', type=click.File('w'), default='-')
-@click.option('-t','--threshold', type=float)
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def create(server, name, project, apikey, output, threshold, verbose):
+@click.option('-o', '--output', type=click.File('w'), default='-')
+@click.option('-t', '--threshold', type=float)
+@add_options(rest_client_option)
+@verbose_option
+def create(name, project, apikey, output, threshold, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Create a new run on an entity matching server.
 
     See entity matching service documentation for details on threshold.
 
     Returns details for the created run.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
     if threshold is None:
         raise ValueError("Please provide a threshold")
 
     # Create a new run
     try:
-        response = run_create(server, project, apikey, threshold, name)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+        response = rest_client.run_create(project, apikey, threshold, name)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
         log(e.text)
@@ -217,10 +300,10 @@ def create(server, name, project, apikey, output, threshold, verbose):
 @click.argument('clk_json', type=click.File('r'))
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def upload(clk_json, project, apikey, server, output, verbose):
+@add_options(rest_client_option)
+@verbose_option
+def upload(clk_json, project, apikey, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Upload CLK data to entity matching server.
 
     Given a json file containing hashed clk data as CLK_JSON, upload to
@@ -230,11 +313,10 @@ def upload(clk_json, project, apikey, server, output, verbose):
     """
     if verbose:
         log("Uploading CLK data from {}".format(clk_json.name))
-        log("To Entity Matching Server: {}".format(server))
         log("Project ID: {}".format(project))
         log("Uploading CLK data to the server")
-
-    response = project_upload_clks(server, project, apikey, clk_json)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+    response = rest_client.project_upload_clks(project, apikey, clk_json)
 
     if verbose:
         log(response)
@@ -247,9 +329,10 @@ def upload(clk_json, project, apikey, server, output, verbose):
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('--run', help='Run ID to get results for')
 @click.option('-w', '--watch', help='Follow/wait until results are available', is_flag=True)
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('-o', '--output', type=click.File('w'), default='-')
-def results(project, apikey, run, watch, server, output):
+@add_options(rest_client_option)
+@verbose_option
+def results(project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
     Check to see if results are available for a particular mapping
     and if so download.
@@ -259,41 +342,39 @@ def results(project, apikey, run, watch, server, output):
     may return a mask, a linkage table, or a permutation. Consult
     the entity service documentation for details.
     """
-
-    status = run_get_status(server, project, run, apikey)
+    rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+    status = rest_client.run_get_status(project, run, apikey)
     log(format_run_status(status))
     if watch:
-        for status in watch_run_status(server, project, run, apikey, 24*60*60):
+        for status in rest_client.watch_run_status(project, run, apikey, 24*60*60):
             log(format_run_status(status))
 
     if status['state'] == 'completed':
         log("Downloading result")
-        response = run_get_result_text(server, project, run, apikey)
+        response = rest_client.run_get_result_text(project, run, apikey)
         log("Received result")
         print(response, file=output)
     elif status['state'] == 'error':
         log("There was an error")
-        error_result = run_get_result_text(server, project, run, apikey)
+        error_result = rest_client.run_get_result_text(project, run, apikey)
         print(error_result, file=output)
     else:
         log("No result yet")
 
 
 @cli.command('delete', short_help="delete a run on the anonlink entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
 @click.option('--run', help='Run ID to delete')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def delete(server, project, run, apikey, verbose):
+@add_options(rest_client_option)
+@verbose_option
+def delete(project, run, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a run on an entity matching server.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
     # Delete a run
     try:
-        msg = run_delete(server, project, run, apikey)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+        msg = rest_client.run_delete(project, run, apikey)
         if verbose:
             log(msg)
     except ServiceError as e:
@@ -304,18 +385,16 @@ def delete(server, project, run, apikey, verbose):
 
 
 @cli.command('delete-project', short_help="delete a project on the anonlink entity service")
-@click.option('--server', type=str, default=DEFAULT_SERVICE_URL, help="Server address including protocol")
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', type=str, help="Project Authorization Token")
-@click.option('-v', '--verbose', default=False, is_flag=True, help="Script is more talkative")
-def delete_project(server, project, apikey, verbose):
+@add_options(rest_client_option)
+@verbose_option
+def delete_project(project, apikey, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """Delete a project on an entity matching server.
     """
-    if verbose:
-        log("Entity Matching Server: {}".format(server))
-
     try:
-        project_delete(server, project, apikey)
+        rest_client = create_rest_client(server, retry_multiplier, retry_max_exp, retry_stop, verbose)
+        rest_client.project_delete(project, apikey)
     except ServiceError as e:
         log("Unexpected response with status {}".format(e.status_code))
         log(e.text)
