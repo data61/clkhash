@@ -1,3 +1,10 @@
+## 0.14.0 (in development)
+
+- Fix bug where empty inputs don't generate tokens.
+- CLI commands to delete runs nad projects.
+- Migrate to Azure DevOps for CI testing.
+- Synthetic data generation using distributions.
+
 ## 0.13.0
 
 - Fix example and test linkage schemas using v2.
