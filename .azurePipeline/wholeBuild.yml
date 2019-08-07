@@ -40,23 +40,25 @@ jobs:
       python -m pip install -U pip
       python -m pip install -U wheel setuptools codecov
       python -m pip install -U -r requirements.txt
-      python -m pip install -U mypy
-      python -m pip install -U -r docs/doc-requirements.txt
     displayName: 'Install requirements'
     
   - script: python setup.py sdist bdist_wheel
     displayName: 'Package'
-    
-  - script: mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
-    displayName: 'Typecheck'
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
     env:
       INCLUDE_CLI: 1
       TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+
+  - script: |
+      python -m pip install -U mypy
+      mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+    displayName: 'Typecheck'
   
-  - script: pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
+  - script: |
+      python -m pip install -U -r docs/doc-requirements.txt
+      pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test notebooks'
 
   - task: PublishTestResults@2
