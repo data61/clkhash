@@ -5,7 +5,6 @@ from __future__ import division, print_function
 
 import json
 import logging
-import os
 import random
 import time
 import unittest
@@ -14,10 +13,9 @@ import pytest
 from click.testing import CliRunner
 from future.builtins import range
 
-import clkhash
 import clkhash.cli
 from clkhash import randomnames, rest_client
-from clkhash.rest_client import ServiceError
+from clkhash.rest_client import ServiceError, RestClient
 
 from tests import *
 
@@ -76,7 +74,8 @@ class CLITestHelper(unittest.TestCase):
         with temporary_file() as output_filename:
             command.extend(['-o', output_filename])
             cli_result = runner.invoke(clkhash.cli.cli, command)
-            assert cli_result.exit_code == 0, cli_result.output
+            assert cli_result.exit_code == 0,\
+                "Output:\n{}\nException:\n{}".format(cli_result.output, cli_result.exception)
             with open(output_filename, 'rt') as output:
                 return output.read()
 
@@ -101,8 +100,13 @@ class BasicCLITests(unittest.TestCase):
     def test_list_commands(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, [])
-        expected_commands = ['benchmark', 'create', 'create-project', 'generate',
-                             'hash', 'upload',  'results', 'validate-schema']
+        expected_options = ['--version', '--verbose', '--help']
+        expected_commands = ['benchmark', 'create', 'create-project', 'delete', 'delete-project', 'describe',
+                             'generate', 'generate-default-schema', 'hash', 'results', 'status', 'upload',
+                             'validate-schema']
+        for expected_option in expected_options:
+            assert expected_option in result.output
+
         for expected_command in expected_commands:
             assert expected_command in result.output
 
@@ -115,22 +119,8 @@ class BasicCLITests(unittest.TestCase):
     def test_help(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, '--help')
-
-        assert 'hash' in result.output
-        # assert 'bench' in result.output
-        assert 'generate' in result.output
-        assert 'Confidential Computing' in result.output
-
-    def test_hash_auto_help(self):
-        runner = CliRunner()
-        result = runner.invoke(clkhash.cli.cli, ['hash'])
-        assert 'Missing argument' in result.output
-
-    def test_hash_help(self):
-        runner = CliRunner()
-        result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
-        assert 'keys' in result.output
-        assert 'schema' in result.output
+        result_without_command = runner.invoke(clkhash.cli.cli, [])
+        assert result.output == result_without_command.output
 
     def test_bench(self):
         runner = CliRunner()
@@ -160,14 +150,13 @@ class TestSchemaValidationCommand(unittest.TestCase):
         assert 'schema is not valid.' in result.output
         assert "'l' is a required property" in result.output
 
-
     def test_good_v2_schema(self):
         for schema_path in GOOD_SCHEMA_V2_PATH, RANDOMNAMES_SCHEMA_PATH:
             result = self.validate_schema(schema_path)
             assert result.exit_code == 0
             assert 'schema is valid' in result.output
 
-    def test_bad_v1_schema(self):
+    def test_bad_v2_schema(self):
         result = self.validate_schema(BAD_SCHEMA_V2_PATH)
         assert result.exit_code == -1
         assert 'schema is not valid.' in result.output
@@ -179,6 +168,17 @@ class TestHashCommand(unittest.TestCase):
 
     def setUp(self):
         self.runner = CliRunner()
+
+    def test_hash_auto_help(self):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, ['hash'])
+        assert 'Missing argument' in result.output
+
+    def test_hash_help(self):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
+        assert 'keys' in result.output
+        assert 'schema' in result.output
 
     def test_hash_requires_keys(self):
         runner = self.runner
@@ -365,9 +365,15 @@ class TestHasherSchema(CLITestHelper):
                      "Set envvar TEST_ENTITY_SERVICE to run. Disabled for jenkins")
 class TestCliInteractionWithService(CLITestHelper):
 
+    server_options = ['--server', '--retry-multiplier', '--retry-exponential-max', '--retry-max-time']
+
+    retry_options_values = ['--retry-multiplier', 50, '--retry-exponential-max', 1000, '--retry-max-time', 30000]
+
     def setUp(self):
         super(TestCliInteractionWithService, self).setUp()
         self.url = os.environ['TEST_ENTITY_SERVICE']
+
+        self.rest_client = RestClient(self.url)
 
         self.clk_file = create_temp_file()
         self.clk_file_2 = create_temp_file()
@@ -409,7 +415,7 @@ class TestCliInteractionWithService(CLITestHelper):
     def delete_created_projects(self):
         for project in self._created_projects:
             try:
-                rest_client.project_delete(self.url, project['project_id'], project['result_token'])
+                self.rest_client.project_delete(project['project_id'], project['result_token'])
             except KeyError:
                 pass
             except ServiceError:
@@ -448,18 +454,33 @@ class TestCliInteractionWithService(CLITestHelper):
         run = self.run_command_load_json_output(command)
         return project, run
 
+    def _test_helps(self, command, list_expected_commands, include_server_options=False):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, [command, '--help'])
+
+        if include_server_options:
+            list_to_test = self.server_options + list_expected_commands
+        else:
+            list_to_test = list_expected_commands
+        for option in list_to_test:
+            self.assertIn(option, result.output)
+
+    def test_status_help(self):
+        self._test_helps('status', ['--output', '--verbose', '--help'], include_server_options=True)
+
     def test_status(self):
         self.run_command_load_json_output(['status', '--server', self.url])
+
+    def test_status_retry_options(self):
+        self.run_command_load_json_output(['status', '--server', self.url] + self.retry_options_values)
 
     def test_status_invalid_server_raises(self):
         with pytest.raises(AssertionError) as exec_info:
             self.run_command_capture_output(['status', '--server', 'https://example.com'])
 
-            assert 'invalid choice' in exec_info.value.args[0]
+            self.assertIn('invalid choice', exec_info.value.args[0])
 
-    def test_create_project(self):
-        out = self._create_project()
-
+    def _test_create_project(self, out):
         self.assertIn('project_id', out)
         self.assertIn('result_token', out)
         self.assertIn('update_tokens', out)
@@ -467,6 +488,19 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertGreaterEqual(len(out['project_id']), 16)
         self.assertGreaterEqual(len(out['result_token']), 16)
         self.assertGreaterEqual(len(out['update_tokens']), 2)
+
+    def test_create_project(self):
+        out = self._create_project()
+        self._test_create_project(out)
+
+    def test_create_project_retry_options(self):
+        out = self._create_project({'retry-multiplier': 50, 'retry-exponential-max': 1000, 'retry-max-time': 30000})
+        self._test_create_project(out)
+
+    def test_create_project_help(self):
+        self._test_helps('create-project',
+                         ['--type', '--schema', '--name', '--parties', '--output', '--verbose', '--help'],
+                         include_server_options=True)
 
     def test_create_project_2_party(self):
         out = self._create_project(project_args={'parties': '2'})
@@ -509,10 +543,8 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertIn('project_id', project)
         self.assertIn('run_id', run)
 
-    def test_delete_run(self):
+    def _test_delete_run(self, extra_arguments):
         project, run = self._create_project_and_run()
-
-        runner = CliRunner()
 
         command = [
                 'delete',
@@ -520,20 +552,31 @@ class TestCliInteractionWithService(CLITestHelper):
                 '--project', project['project_id'],
                 '--run', run['run_id'],
                 '--apikey', project['result_token']
-            ]
+            ] + extra_arguments
+        runner = CliRunner()
+
         cli_result = runner.invoke(clkhash.cli.cli, command)
         assert cli_result.exit_code == 0, cli_result.output
 
         # TODO get runs and check it is gone?
 
         with pytest.raises(ServiceError):
-            rest_client.run_get_status(self.url,
-                                       project['project_id'],
-                                       project['result_token'],
-                                       run['run_id']
-                                       )
+            self.rest_client.run_get_status(project['project_id'],
+                                            project['result_token'],
+                                            run['run_id']
+                                            )
 
-    def test_delete_project(self):
+    def test_delete_run(self):
+        self._test_delete_run([])
+
+    def test_delete_run_retry_options(self):
+        self._test_delete_run(self.retry_options_values)
+
+    def test_delete_run_help(self):
+        self._test_helps('delete', ['--project', '--run', '--apikey', '--verbose', '--help'],
+                         include_server_options=True)
+
+    def _test_delete_project(self, extra_arguments):
         project, run = self._create_project_and_run()
 
         runner = CliRunner()
@@ -542,12 +585,26 @@ class TestCliInteractionWithService(CLITestHelper):
             '--server', self.url,
             '--project', project['project_id'],
             '--apikey', project['result_token']
-        ]
+        ] + extra_arguments
         cli_result = runner.invoke(clkhash.cli.cli, command)
         assert cli_result.exit_code == 0, cli_result.output
 
         with pytest.raises(ServiceError):
-            rest_client.project_get_description(self.url, project['project_id'], project['result_token'])
+            self.rest_client.project_get_description(project['project_id'], project['result_token'])
+
+    def test_delete_project(self):
+        self._test_delete_project([])
+
+    def test_delete_project_retry_options(self):
+        self._test_delete_project(self.retry_options_values)
+
+    def test_delete_project_help(self):
+        self._test_helps('delete-project', ['--project', '--apikey', '--verbose', '--help'],
+                         include_server_options=True)
+
+    def test_create_help(self):
+        self._test_helps('create', ['--name', '--project', '--apikey', '--output', '--threshold', '--verbose', '--help'],
+                         include_server_options=True)
 
     def test_create_with_optional_name(self):
         out = self._create_project({'name': 'testprojectname'})
@@ -572,7 +629,11 @@ class TestCliInteractionWithService(CLITestHelper):
                 ]
             )
 
-    def test_single_upload(self):
+    def test_upload_help(self):
+        self._test_helps('upload', ['--project', '--apikey', '--output', '--verbose', '--help'],
+                         include_server_options=True)
+
+    def _test_single_upload(self, extra_arguments):
         project = self._create_project()
 
         # Upload
@@ -583,8 +644,14 @@ class TestCliInteractionWithService(CLITestHelper):
                 '--project', project['project_id'],
                 '--apikey', project['update_tokens'][0],
                 self.clk_file.name
-            ]
+            ] + extra_arguments
         )
+
+    def test_single_upload(self):
+        self._test_single_upload([])
+
+    def test_single_upload_retry_options(self):
+        self._test_single_upload(self.retry_options_values)
 
     def test_2_party_upload_and_results(self):
         project, run = self._create_project_and_run()
