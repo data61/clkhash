@@ -29,7 +29,9 @@ The build pipeline does:
 
   - install the requirements,
   - package ``clkhash``,
-  - run `pytest`,
+  - run `pytest` (including all the CLI tests and the test requiring a deployed entity service at `https://testing.es.data61.xyz`),
+  - run `mypy` for type checking only a chosen version of Python (currently 3.7)
+  - run `pytest` to test the notebooks available in the documentation (only on platforms other than Windows)
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
   - publish the artifacts from the build using ``Python 3.7`` with a ``x86`` architecture (i.e. a whl, a tar.gz and an exe).
