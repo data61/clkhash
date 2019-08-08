@@ -7,6 +7,7 @@ from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.field_formats import FieldHashingProperties, StringSpec
 from clkhash.key_derivation import DEFAULT_KEY_SIZE, generate_key_lists, hkdf
 from clkhash.schema import Schema
+from clkhash import tokenizer
 
 
 class TestKeyDerivation(unittest.TestCase):
@@ -50,7 +51,7 @@ class TestKeyDerivation(unittest.TestCase):
         # Identifier: 'ANY freetext'
 
         fhp = FieldHashingProperties(
-            ngram=2,
+            tokenizer=tokenizer.get_tokenizer({'type': 'ngram', 'n':2}),
             hash_type='doubleHash',
             k=10
         )
