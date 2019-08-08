@@ -93,7 +93,7 @@ class FieldHashingProperties(object):
                  prevent_singularity=None,        # type: Optional[bool]
                  num_bits=None,                   # type: Optional[int]
                  k=None,                          # type: Optional[int]
-                 tokenizer=None,                  # type: Callable[[Text, Optional[Text]], Iterable[Text]]
+                 tokenizer=None,                  # type: Optional[Callable[[Text, Optional[Text]], Iterable[Text]]]
                  missing_value=None               # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None

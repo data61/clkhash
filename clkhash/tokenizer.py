@@ -5,17 +5,15 @@ Functions to tokenize words (PII)
 """
 from __future__ import unicode_literals
 
-from typing import Callable, Iterable, Optional, Text
+from typing import Callable, Iterable, Optional, Text, Dict, Any
 
 from future.builtins import range
 
 from functools import partial
 
 
-
-def get_tokenizer(tok_desc  # type: Dict[str, Any]
-                  ):
-    # type: (...) -> Callable[[Text, Optional[Text]], Iterable[Text]]
+def get_tokenizer(tok_desc):
+    # type: (Dict[str, Any]) -> Callable[[Text, Optional[Text]], Iterable[Text]]
     """ Get tokeniser function from the tokenizer definition in the schema.
 
         This function takes a dictionary, containing the schema definition. It returns a
@@ -32,7 +30,7 @@ def get_tokenizer(tok_desc  # type: Dict[str, Any]
 
         return partial(ngram_tokenizer, n=n, positional=positional)
     elif typ == 'exact':
-        pass
+        raise ValueError("I will eventually implement this. Scout's honor.")
     else:
         raise ValueError("unsupported tokenization strategy: '{}'".format(typ))
 
