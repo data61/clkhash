@@ -16,6 +16,7 @@ requirements = [
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
         "requests>=2.20",
+        "retrying>=1.3",
         "tqdm>=4.24",
         "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
@@ -40,7 +41,7 @@ setup(
     license='Apache',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov', 'nbval'],
+    tests_require=['pytest', 'pytest-cov', 'requests-mock', 'codecov', 'nbval', 'hypothesis'],
     packages=find_packages(exclude=['tests']),
     package_data={'clkhash': ['data/*.csv', 'data/*.json', 'schemas/*.json']},
     project_urls={
