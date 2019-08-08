@@ -5,7 +5,7 @@ Functions to tokenize words (PII)
 """
 from __future__ import unicode_literals
 
-from typing import Callable, Iterable, Optional, Text, Dict, Any
+from typing import Callable, Iterable, Optional, Text, Dict, Any, Union
 
 from future.builtins import range
 
@@ -23,7 +23,7 @@ def get_tokenizer(tok_desc):
     typ = tok_desc.get('type', None)
 
     if typ == 'ngram':
-        n = tok_desc.get('n')
+        n = tok_desc.get('n', -1)
         if n < 0:
             raise ValueError('`n` in `n`-gram must be non-negative.')
         positional = tok_desc.get('positional')
