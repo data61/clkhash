@@ -1,0 +1,215 @@
+{
+  "$id": "https://data61.github.io/schemas/clkhash/linkage-schema-v3.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "linkage-schema",
+  "type": "object",
+  "required": ["version", "clkConfig", "features"],
+  "properties": {
+    "version": {"type": "number"},
+    "clkConfig": {"$ref": "#/definitions/clkConfig"},
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+          "oneOf": [
+            { "$ref": "#/definitions/featureConfig"},
+            { "$ref": "#/definitions/ignoreFeature"}
+          ]
+      }
+    }
+  },
+  "definitions": {
+    "clkConfig": {
+      "type": "object",
+      "required": ["l", "kdf"],
+      "properties": {
+        "l": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1024,
+          "description": "the length of a clk in number of bits"
+        },
+        "kdf": {
+          "type": "object",
+          "oneOf": [
+            {"$ref": "#/definitions/hkdf"}
+          ]
+        },
+        "xorFolds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "number of XOR folds. Note that the parameter 'l' describes the length of the clk AFTER the XOR folding!"
+        }
+      }
+    },
+    "hkdf": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "const": "HKDF"},
+        "hash": {"enum": ["SHA256", "SHA512"], "default": "SHA256"},
+        "salt": {"type": "string", "description": "base64 encoded bytes"},
+        "info": {"type": "string", "description": "base64 encoded bytes"},
+        "keySize": {"type": "integer", "minimum": 1}
+      }
+    },
+    "ignoreFeature": {
+      "type": "object",
+      "required": ["identifier", "ignored"],
+      "properties": {
+        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "ignored":  {
+          "const": true
+        },
+        "description": {"type": "string"}
+      }
+    },
+    "featureConfig": {
+      "type": "object",
+      "required": ["identifier", "format", "hashing"],
+      "properties": {
+        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "description": {"type": "string"},
+        "format": {
+          "required": ["type"],
+          "oneOf": [
+            {"$ref": "#/definitions/textFormat"},
+            {"$ref": "#/definitions/textPatternFormat"},
+            {"$ref": "#/definitions/numberFormat"},
+            {"$ref": "#/definitions/dateFormat"},
+            {"$ref": "#/definitions/enumFormat"}
+          ]},
+        "hashing": {"$ref": "#/definitions/hashingConfig"}
+      }
+    },
+    "textFormat": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["string"]},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "case": {"enum": ["upper", "lower", "mixed"]},
+        "minLength": {"type": "integer", "minimum": 0},
+        "maxLength": {"type": "integer", "minimum": 1},
+        "description": {"type": "string"}
+      }
+    },
+    "textPatternFormat": {
+      "type": "object",
+      "required": ["type", "pattern"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["string"]},
+        "encoding": {"enum": ["ascii", "utf-8", "utf-16", "utf-32"], "default": "utf-8"},
+        "pattern": {"type": "string", "description": "asRegEx"},
+        "description": {"type": "string"}
+      }
+    },
+    "numberFormat": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["integer"]},
+        "minimum": {"type": "integer"},
+        "maximum": {"type": "integer"},
+        "description": {"type": "string"}
+      }
+    },
+    "dateFormat": {
+      "type": "object",
+      "required": ["type", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["date"]},
+        "format": {"type": "string", "description": "describes the format of the date in 'strptime' format"},
+        "description": {"type": "string"}
+      }
+    },
+    "enumFormat": {
+      "type": "object",
+      "required": ["type", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["enum"]},
+        "values": {"type": "array", "items": {"type": "string"}},
+        "description": {"type": "string"}
+      }
+    },
+    "hashingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ngram", "strategy"],
+      "properties": {
+        "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
+            {"$ref": "#/definitions/doubleHash"},
+            {"$ref": "#/definitions/blakeHash"}
+          ],
+          "description": "this construction is for future proofing. We might want to parameterize the hash functions one day..."
+        },
+        "strategy": {"type": "object", "oneOf":
+        [
+          {
+            "required": ["numBits"],
+            "numBits": {
+              "type": "number",
+              "minimum": 1,
+              "default": 200,
+              "description": "dynamic k = numBits / number of n-grams"
+            }
+          },
+          {
+            "required": ["k"],
+            "k": {
+              "type": "number",
+              "minimum": 1,
+              "default": 20,
+              "description": "max number of bits per n-gram"
+            }
+          }
+        ]},
+        "tokenizer": {"type":  "object", "oneOf":
+        [
+          {"$ref": "#/definitions/ngramTokenizer"}
+        ]
+        },
+        "missingValue": {"$ref": "#/definitions/missingValue"}
+      }
+    },
+    "ngramTokenizer": {
+      "type": "object",
+      "required": ["type", "n"],
+      "properties": {
+        "type": {"const": "ngram"},
+        "n": {"type": "integer", "minimum": 1, "default": 2, "description": "The 'n' in n-gram"},
+        "positional": {"type": "boolean", "default": false}
+      }
+    },
+    "doubleHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["doubleHash"]},
+        "prevent_singularity": {"type":"boolean", "default": false, "description": "see https://github.com/data61/clkhash/issues/33"}
+      }
+    },
+    "blakeHash": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["blakeHash"]}
+      }
+    },
+    "missingValue": {
+      "type": "object",
+      "required": ["sentinel"],
+      "properties": {
+        "sentinel": {"type": "string"},
+        "replaceWith": {"type": "string"}
+      }
+    }
+  }
+}
+
