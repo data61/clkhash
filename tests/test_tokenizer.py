@@ -3,23 +3,17 @@ from hypothesis import given
 from hypothesis.strategies import text
 
 from clkhash.field_formats import FieldHashingProperties
-from clkhash.tokenizer import get_tokenizer
+from clkhash import tokenizer
 
 # some tokenizers
 
-p1_20 = get_tokenizer(
-    FieldHashingProperties(ngram=1, k=20)
-)
+p1_20 = tokenizer.get_tokenizer({'type': 'ngram', 'n': 1})
 
-p2_20 = get_tokenizer(
-    FieldHashingProperties(ngram=2, k=20)
-)
+p2_20 = tokenizer.get_tokenizer({'type': 'ngram', 'n': 2})
 
-p1_20_positional = get_tokenizer(
-    FieldHashingProperties(ngram=1, k=20, positional=True)
-)
+p1_20_positional = tokenizer.get_tokenizer({'type': 'ngram', 'n': 1, 'positional': True})
 
-dummy = get_tokenizer(None)
+dummy = tokenizer.dummy
 
 
 class TestTokenizer(unittest.TestCase):
@@ -75,12 +69,10 @@ class TestTokenizer(unittest.TestCase):
                          [' a', 'ab', 'ba', 'ab', 'b '])
 
     def test_invalid_n(self):
-        fhp = FieldHashingProperties(ngram=2, k=20, positional=True)
-        fhp.ngram = -6
         with self.assertRaises(
                 ValueError,
                 msg='Expected raise ValueError on invalid n.'):
-            tok = get_tokenizer(fhp)
+            tok = tokenizer.get_tokenizer({'type': 'ngram', 'n': -6})
             tok('prawn')
 
     @given(text(min_size=1))

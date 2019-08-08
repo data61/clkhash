@@ -5,11 +5,12 @@ from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingProperties,
 from clkhash.validate_data import (EntryError, FormatError,
                                    validate_entries, validate_header,
                                    validate_row_lengths)
+from clkhash.tokenizer import get_tokenizer
 
 
 class FieldsMaker(unittest.TestCase):
     def setUp(self):
-        ascii_hashing = FieldHashingProperties(encoding='ascii', ngram=2, k=20)
+        ascii_hashing = FieldHashingProperties(encoding='ascii', tokenizer=get_tokenizer({'type': 'ngram', 'n': 2}), k=20)
         self.fields = [
             StringSpec(
                 identifier='given name',
