@@ -343,7 +343,7 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
         :param keys: A tuple of two lists of secret keys used in the HMAC.
         :return: Generator yielding bloom filters as 3-tuples
     """
-    tokenizers = [tokenizer.get_tokenizer(field.hashing_properties)
+    tokenizers = [field.hashing_properties.tokenizer if field.hashing_properties is not None else tokenizer.dummy
                   for field in schema.fields]
     return (crypto_bloom_filter(s, tokenizers, schema, keys)
             for s in dataset)
