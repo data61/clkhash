@@ -37,8 +37,8 @@ def get_tokenizer(tok_desc  # type: Dict[str, Any]
         raise ValueError("unsupported tokenization strategy: '{}'".format(typ))
 
 
-def ngram_tokenizer(n, positional, word, ignore=None):
-    # type: (int, bool, Text, Optional[Text]) -> Iterable[Text]
+def ngram_tokenizer(word, n, positional, ignore=None,):
+    # type: (Text, int, bool, Optional[Text]) -> Iterable[Text]
     """ Produce `n`-grams of `word`.
 
         :param n: the n in n-gram, non-negative integer
