@@ -9,64 +9,73 @@ from typing import Callable, Iterable, Optional, Text
 
 from future.builtins import range
 
-from clkhash import field_formats
+from functools import partial
 
 
-def get_tokenizer(fhp  # type: Optional[field_formats.FieldHashingProperties]
+
+def get_tokenizer(tok_desc  # type: Dict[str, Any]
                   ):
     # type: (...) -> Callable[[Text, Optional[Text]], Iterable[Text]]
-    """ Get tokeniser function from the hash settings.
+    """ Get tokeniser function from the tokenizer definition in the schema.
 
-        This function takes a FieldHashingProperties object. It returns a
+        This function takes a dictionary, containing the schema definition. It returns a
         function that takes a string and tokenises based on those properties.
     """
 
-    def dummy(word, ignore=None):
-        # type: (Text, Optional[Text]) -> Iterable[Text]
-        """
-        Null tokenizer returns empty Iterable.
-        FieldSpec Ignore has hashing_properties = None
-        and get_tokenizer has to return something for this case,
-        even though it's never called. An alternative would be to
-        use an Optional[Callable]].
-        :param word: not used
-        :param ignore: not used
-        :return: empty Iterable
-        """
-        return ('' for i in range(0))
+    typ = tok_desc.get('type', None)
 
-    if not fhp:
-        return dummy
+    if typ == 'ngram':
+        n = tok_desc.get('n')
+        if n < 0:
+            raise ValueError('`n` in `n`-gram must be non-negative.')
+        positional = tok_desc.get('positional')
 
-    n = fhp.ngram
-    if n < 0:
-        raise ValueError('`n` in `n`-gram must be non-negative.')
+        return partial(ngram_tokenizer, n=n, positional=positional)
+    elif typ == 'exact':
+        pass
+    else:
+        raise ValueError("unsupported tokenization strategy: '{}'".format(typ))
 
-    positional = fhp.positional
 
-    def tok(word, ignore=None):
-        # type: (Text, Optional[Text]) -> Iterable[Text]
-        """ Produce `n`-grams of `word`.
+def ngram_tokenizer(n, positional, word, ignore=None):
+    # type: (int, bool, Text, Optional[Text]) -> Iterable[Text]
+    """ Produce `n`-grams of `word`.
 
-            :param word: The string to tokenize.
-            :param ignore: The substring whose occurrences we remove from
-                `word` before tokenization.
-            :return: Tuple of n-gram strings.
-        """
-        if ignore is not None:
-            word = word.replace(ignore, '')
+        :param n: the n in n-gram, non-negative integer
+        :param positional: enables positional n-gram tokenization
+        :param word: The string to tokenize.
+        :param ignore: The substring whose occurrences we remove from
+            `word` before tokenization.
+        :return: Tuple of n-gram strings.
+    """
+    if ignore is not None:
+        word = word.replace(ignore, '')
 
-        if len(word) == 0:
-            return tuple()
+    if len(word) == 0:
+        return tuple()
 
-        if n > 1:
-            word = ' {} '.format(word)
+    if n > 1:
+        word = ' {} '.format(word)
 
-        if positional:
-            # These are 1-indexed.
-            return ('{} {}'.format(i + 1, word[i:i + n])
-                    for i in range(len(word) - n + 1))
-        else:
-            return (word[i:i + n] for i in range(len(word) - n + 1))
+    if positional:
+        # These are 1-indexed.
+        return ('{} {}'.format(i + 1, word[i:i + n])
+                for i in range(len(word) - n + 1))
+    else:
+        return (word[i:i + n] for i in range(len(word) - n + 1))
 
-    return tok
+
+def dummy(word, ignore=None):
+    # type: (Text, Optional[Text]) -> Iterable[Text]
+    """
+    Null tokenizer returns empty Iterable.
+    FieldSpec Ignore has hashing_properties = None
+    and get_tokenizer has to return something for this case,
+    even though it's never called. An alternative would be to
+    use an Optional[Callable]].
+    :param word: not used
+    :param ignore: not used
+    :return: empty Iterable
+    """
+    return ('' for i in range(0))
+

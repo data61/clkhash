@@ -10,10 +10,12 @@ from __future__ import unicode_literals
 import abc
 import re
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Text, cast
+from typing import Any, Dict, Iterable, Optional, Text, cast, Callable
 
 from future.builtins import range, super
 from six import add_metaclass
+
+from clkhash import tokenizer
 
 from clkhash.backports import raise_from, re_compile_full, strftime
 
@@ -86,22 +88,20 @@ class FieldHashingProperties(object):
     _DEFAULT_POSITIONAL = False
 
     def __init__(self,
-                 ngram,  # type: int
                  encoding=_DEFAULT_ENCODING,      # type: str
-                 positional=_DEFAULT_POSITIONAL,  # type: bool
                  hash_type='blakeHash',           # type: str
                  prevent_singularity=None,        # type: Optional[bool]
                  num_bits=None,                   # type: Optional[int]
                  k=None,                          # type: Optional[int]
+                 tokenizer=None,                  # type: Callable[[Text, Optional[Text]], Iterable[Text]]
                  missing_value=None               # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
             attributes to values specified in keyword arguments.
         """
-        if ngram not in range(3):
-            msg = 'ngram is {} but is expected to be 0, 1, or 2.'
-            raise ValueError(msg.format(ngram))
+        if tokenizer is None:
+            raise ValueError('no tokenization method specified')
 
         try:
             ''.encode(encoding)
@@ -116,9 +116,8 @@ class FieldHashingProperties(object):
         if not num_bits and not k:
             raise ValueError('One of num_bits or k must be specified.')
 
-        self.ngram = ngram
+        self.tokenizer = tokenizer
         self.encoding = encoding
-        self.positional = positional
         self.hash_type = hash_type
         self.prevent_singularity = prevent_singularity
         self.num_bits = num_bits
@@ -173,11 +172,14 @@ def fhp_from_json_dict(
 
     num_bits = hashing_strategy.get('numBits')
     k = hashing_strategy.get('k')
+    if 'tokenization' not in json_dict:   # schema version 2 fallback
+        json_dict['tokenization'] = {"type": "ngram", "n": json_dict['ngram'], "positional": json_dict.get(
+            'positional', FieldHashingProperties._DEFAULT_POSITIONAL)}
+    if json_dict['tokenization'].get('type', '') == 'ngram':  # setting default
+        json_dict['tokenization'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
 
     return FieldHashingProperties(
-        ngram=json_dict['ngram'],
-        positional=json_dict.get(
-            'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
+        tokenizer=tokenizer.get_tokenizer(json_dict['tokenization']),
         hash_type=h['type'],
         prevent_singularity=h.get('prevent_singularity'),
         num_bits=num_bits,
