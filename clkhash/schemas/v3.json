@@ -141,7 +141,7 @@
     "hashingConfig": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ngram", "strategy"],
+      "required": ["tokenizer", "strategy"],
       "properties": {
         "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
             {"$ref": "#/definitions/doubleHash"},
