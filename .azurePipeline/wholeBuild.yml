@@ -57,7 +57,7 @@ jobs:
       python -m pip install -U mypy
       mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
     displayName: 'Typecheck'
-    condition: eq(variables['pythonVersionMypy'], variables['pythonVersion'])
+    condition: and(eq(variables['pythonVersionMypy'], variables['pythonVersion']), eq(variables['architecture'], 'x86'))
   
   - script: |
       python -m pip install -U -r docs/doc-requirements.txt
