@@ -10,9 +10,9 @@ from clkhash.bloomfilter import (blake_encode_ngrams,
                                  hashing_function_from_properties)
 from clkhash.field_formats import FieldHashingProperties
 
-from clkhash import tokenizer
+from clkhash import comparators
 
-bigram_tokenizer = tokenizer.get_tokenizer({'type': 'ngram', 'n': 2})
+bigram_tokenizer = comparators.get_comparator({'type': 'ngram', 'n': 2})
 
 
 class TestEncoding(unittest.TestCase):
@@ -101,7 +101,7 @@ class TestEncoding(unittest.TestCase):
         e2 = common_tokens + ['e2a', 'e2b']  # 67 tokens
         tok_sim = 2.0 * len(common_tokens) / (len(e1) + len(e2))
 
-        fhp = FieldHashingProperties(tokenizer=bigram_tokenizer, num_bits=100,
+        fhp = FieldHashingProperties(comparator=bigram_tokenizer, num_bits=100,
                                      hash_type='doubleHash')
         f = lambda tokens: double_hash_encode_ngrams(
             tokens,
@@ -126,7 +126,7 @@ class TestEncoding(unittest.TestCase):
 class TestNgramEncodings(unittest.TestCase):
     def test_from_properties_invalid_hash(self):
         fhp = FieldHashingProperties(
-            tokenizer=bigram_tokenizer, k=30,
+            comparator=bigram_tokenizer, k=30,
             hash_type='jakubHash'  # <- this is invalid.
         )
         with self.assertRaises(

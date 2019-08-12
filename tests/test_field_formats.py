@@ -3,16 +3,16 @@
 import math
 import unittest
 
-from clkhash import field_formats, tokenizer
+from clkhash import field_formats, comparators
 
 
 class TestFieldFormats(unittest.TestCase):
-    bigram_tokenizer = tokenizer.get_tokenizer({'type': 'ngram', 'n': 2})
+    bigram_tokenizer = comparators.NgramComparison(2)
 
-    def check_ngram_tokenizer(self, tokenizer, n, positional):
-        self.assertEquals('ngram_tokenizer', tokenizer.func.__name__)
-        self.assertEquals(n, tokenizer.keywords['n'])
-        self.assertEquals(positional, tokenizer.keywords['positional'])
+    def check_ngram_comparator(self, comparator, n, positional):
+        self.assertIsInstance(comparator, comparators.NgramComparison)
+        self.assertEquals(comparator.n, n)
+        self.assertEquals(comparator.positional, positional)
 
     def test_string_regex(self):
         regex_spec = dict(
@@ -54,8 +54,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'foo')
 
         # Finally, check the hashing specs.
-        self.assertIsNotNone(spec.hashing_properties.tokenizer)
-        self.check_ngram_tokenizer(spec.hashing_properties.tokenizer, 1, False)
+        self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
@@ -73,7 +72,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual('cat', spec.hashing_properties.replace_missing_value('null'))
         # check invalid format specs
         hashing_properties = field_formats.FieldHashingProperties(
-            tokenizer=self.bigram_tokenizer, k=20)
+            comparator=self.bigram_tokenizer, k=20)
         with self.assertRaises(ValueError):
             spec = field_formats.StringSpec(
                 identifier='regex',
@@ -137,8 +136,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'bar')
 
         # Check the hashing specs.
-        self.assertIsNotNone(spec.hashing_properties.tokenizer)
-        self.check_ngram_tokenizer(spec.hashing_properties.tokenizer, 1, False)
+        self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
@@ -149,7 +147,7 @@ class TestFieldFormats(unittest.TestCase):
 
     def test_string_nonregex_init(self):
         hashing_properties = field_formats.FieldHashingProperties(
-            tokenizer=self.bigram_tokenizer, k=20)
+            comparator=self.bigram_tokenizer, k=20)
         spec = field_formats.StringSpec(
             identifier='first name',
             hashing_properties=hashing_properties,
@@ -316,7 +314,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'buzz')
 
         # Check the hashing specs.
-        self.check_ngram_tokenizer(spec.hashing_properties.tokenizer, 1, True)
+        self.check_ngram_comparator(spec.hashing_properties.comparator, 1, True)
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check with missing values
@@ -399,7 +397,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'phoenix dactylifera')
 
         # Check the hashing specs.
-        self.check_ngram_tokenizer(spec.hashing_properties.tokenizer, 0, False)
+        self.check_ngram_comparator(spec.hashing_properties.comparator, 0, False)
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check for graceful fail if format spec is invalid
@@ -453,7 +451,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'fizz')
 
         # Check the hashing specs.
-        self.check_ngram_tokenizer(spec.hashing_properties.tokenizer, 2, False)
+        self.check_ngram_comparator(spec.hashing_properties.comparator, 2, False)
         self.assertEqual(spec.hashing_properties.k, 20)
 
         # check missing values
