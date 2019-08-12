@@ -61,3 +61,8 @@ def test_empty_input(ngram_comparator):
 def test_dummy():
     comp = NonComparison()
     assert list(NonComparison().tokenize('jobs')) == []
+
+
+def test_invalid_comparison():
+    with pytest.raises(ValueError):
+        comparators.get_comparator({"type": "apples_and_oranges"})
