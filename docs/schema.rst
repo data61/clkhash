@@ -20,10 +20,10 @@ encoding operation, along with any configuration for the low level hashing itsel
 
 The format of the linkage schema is defined in a separate
 `JSON Schema <https://json-schema.org/specification.html>`_ specification document -
-`schemas/v2.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v2.json>`_.
+`schemas/v3.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v3.json>`_.
 
 Earlier versions of the linkage schema will continue to work, internally they
-are converted to the latest version (currently ``v2``).
+are converted to the latest version (currently ``v3``).
 
 
 Basic Structure
@@ -42,7 +42,7 @@ Example Schema
 ::
 
     {
-      "version": 2,
+      "version": 3,
       "clkConfig": {
         "l": 1024,
         "kdf": {
@@ -67,8 +67,13 @@ Example Schema
             "minLength": 3
           },
           "hashing": {
-            "ngram": 2,
-            "numBits": 100,
+            "comparison": {
+              "type": "ngram",
+              "n": 2
+            },
+            "strategy": {
+                "numBits": 100
+            },
             "hash": {"type": "doubleHash"}
           }
         },
@@ -80,9 +85,14 @@ Example Schema
             "format": "%Y/%m/%d"
           },
           "hashing": {
-            "ngram": 1,
-            "positional": true,
-            "numBits": 200,
+            "comparison": {
+              "type": "ngram",
+              "n": 1,
+              "positional": true
+            },
+            "strategy": {
+              "numBits": 200
+            },
             "hash": {"type": "doubleHash"}
           }
         },
@@ -93,8 +103,13 @@ Example Schema
             "values": ["M", "F"]
           },
           "hashing": {
-            "ngram": 1,
-            "numBits": 400,
+            "comparison": {
+              "type": "ngram",
+              "n": 1
+            },
+            "strategy": {
+              "numBits": 400
+            },
             "hash": {"type": "doubleHash"}
           }
         }
@@ -206,7 +221,8 @@ hashingConfig
 ============  ======================   ======== ===========
 name          type                     optional description
 ============  ======================   ======== ===========
-ngram         integer                  no       specifies the n in n-gram (the tokenization of the input values).
+comparison    one of:                  no       specifies the comparison technique for this feature.
+              :ref:`schema/ngramComparison`
 strategy      :ref:`schema/strategy`   no       the strategy for assigning bits to the encoding.
 positional    boolean                  yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
 missingValue  :ref:`schema/missingV`   yes      allows to define how missing values are handled
@@ -268,6 +284,22 @@ name         type                    optional description
 ===========  =====================   ======== ===========
 sentinel     string                  no       the sentinel value indicates missing data, e.g. 'Null', 'N/A', '', ...
 replaceWith  string                  yes      specifies the value clkhash should use instead of the sentinel value.
+===========  =====================   ======== ===========
+
+
+.. _schema/ngramComparison:
+
+n-gram comparison
+^^^^^^^^^^^^^^
+
+Approximate string matching with n-gram tokenization.
+
+===========  =====================   ======== ===========
+name         type                    optional description
+===========  =====================   ======== ===========
+type         string                  no       has to be 'ngram'
+n            integer                 no       The 'n' in n-gram
+positional   boolean                 yes      positional n-grams also contains the position of the n-gram within the string
 ===========  =====================   ======== ===========
 
 
