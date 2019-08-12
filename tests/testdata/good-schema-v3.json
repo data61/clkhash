@@ -1,0 +1,205 @@
+
+{
+  "version": 3,
+  "clkConfig": {
+    "l": 1024,
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "id",
+      "ignored": true
+    },
+    {
+      "identifier": "firstName",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "hash": {"type": "doubleHash"},
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "numBits": 200
+        }
+      }
+    },
+    {
+      "identifier": "middleNames",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 50,
+        "case": "upper",
+        "description": "comma separated list of middle names"
+      },
+      "hashing": {
+        "hash": {"type": "blakeHash"},
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "k": 20
+        }
+      }
+    },
+    {
+      "identifier": "lastName",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "mobilePhone",
+      "format": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 999999999999999,
+        "description": "as international number, but without '+' or '00' in front of country code. According to E.164 of ITU-T, a international number is limited to 15 digits."
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "homeLandLine",
+      "format": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 999999999999999
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "emailAddress",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "lower"
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "gender",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F", "O"],
+        "description": "'O' for other. If unknown leave empty."
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1
+        },
+        "strategy": {"numBits":  100}
+      }
+    },
+    {
+      "identifier": "DobYyyy",
+      "description": "The year of date of birth.",
+      "format": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 9999
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  300}
+      }
+    },
+    {
+      "identifier": "dobMmDd",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "minLength": 4,
+        "maxLength": 4,
+        "description": "Month and day of birth (eg: 1125)"
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "addressKey",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "pattern": "[1-9][0-9]{3}[0-9A-Z][0-9]{3}[L,0][0-9]{3}(FL|00|  )(     |[0-9]{5})$",
+        "description": "don't ask..."
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
+      }
+    },
+    {
+      "identifier": "postCode",
+      "format": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 9999
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  100}
+      }
+    }
+  ]
+}
