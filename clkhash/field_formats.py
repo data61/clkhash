@@ -74,6 +74,7 @@ class FieldHashingProperties(object):
 
     This includes the encoding and tokenisation parameters.
 
+        :ivar AbstractComparison comparator: provides a tokenizer for desired comparison strategy
         :ivar str encoding: The encoding to use when converting the
             string to bytes. Refer to
             `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`
@@ -82,19 +83,18 @@ class FieldHashingProperties(object):
         :ivar bool prevent_singularity: the 'doubleHash' function has a singularity problem
         :ivar int num_bits: dynamic k = num_bits / number of n-grams
         :ivar int k: max number of bits per n-gram
-        :ivar AbstractComparison comparator: provides a tokenizer for desired comparison strategy
         :ivar MissingValueSpec missing_value: specifies how to handle missing values
     """
     _DEFAULT_ENCODING = 'utf-8'
     _DEFAULT_POSITIONAL = False
 
     def __init__(self,
+                 comparator,  # type: AbstractComparison
                  encoding=_DEFAULT_ENCODING,  # type: str
                  hash_type='blakeHash',  # type: str
                  prevent_singularity=None,  # type: Optional[bool]
                  num_bits=None,  # type: Optional[int]
                  k=None,  # type: Optional[int]
-                 comparator=None,  # type: AbstractComparison
                  missing_value=None  # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
@@ -102,7 +102,7 @@ class FieldHashingProperties(object):
             attributes to values specified in keyword arguments.
         """
         if comparator is None:
-            raise ValueError('no tokenizer specified')
+            raise ValueError('no comparator specified')
 
         try:
             ''.encode(encoding)
@@ -175,7 +175,7 @@ def fhp_from_json_dict(
     k = hashing_strategy.get('k')
     if 'comparison' not in json_dict:   # schema version 2 fallback
         comparator = NgramComparison(json_dict['ngram'], json_dict.get(
-            'positional', FieldHashingProperties._DEFAULT_POSITIONAL))
+            'positional', FieldHashingProperties._DEFAULT_POSITIONAL))   # type: AbstractComparison
     else:
         if json_dict['comparison'].get('type', '') == 'ngram':  # setting default
             json_dict['comparison'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
