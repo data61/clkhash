@@ -64,12 +64,12 @@ jobs:
   # The list of tutorials without anonlink are provided in the file `docs/list_tutorials_without_anonlink.txt`.
   # The anonlink requirement is in its own dependency file `docs/doc-requirements-anonlink.txt` while all
   # the other required dependencies are in `docs/doc-requirements-others.txt`.
-  - ${{ if ne(variables['operatingSystem'], 'vs2017-win2016') }}
+  - ${{ if ne(variables['operatingSystem'], 'vs2017-win2016') }}:
     - script: |
         python -m pip install -U -r docs/doc-requirements-anonlink.txt docs/doc-requirements-others.txt
         pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
       displayName: 'Test notebooks'
-  - ${{ if eq(variables['operatingSystem'], 'vs2017-win2016') }}
+  - ${{ if eq(variables['operatingSystem'], 'vs2017-win2016') }}:
     - script: |
         python -m pip install -U -r docs/doc-requirements-others.txt
         list_file=''
