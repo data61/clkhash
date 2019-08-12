@@ -5,7 +5,7 @@ Functions to tokenize words (PII)
 """
 from __future__ import unicode_literals
 
-from typing import Iterable, Text, Dict, Any
+from typing import Iterable, Text, Dict, Any, Optional
 
 from future.builtins import range
 
@@ -33,6 +33,7 @@ class AbstractComparison(object):
 class NgramComparison(AbstractComparison):
 
     def __init__(self, n, positional=False):
+        # type: (int, Optional[bool]) -> None
         """ Enables 'n'-gram comparison for approximate string matching. An n-gram is a contiguous sequence of n items
         from a given text.
 
