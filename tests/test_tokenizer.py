@@ -1,99 +1,63 @@
-import unittest
+import itertools
+
+import pytest
 from hypothesis import given
-from hypothesis.strategies import text
+from hypothesis.strategies import text, integers
+from pytest import fixture
 
-from clkhash.field_formats import FieldHashingProperties
-from clkhash import tokenizer
-
-# some tokenizers
-
-p1_20 = tokenizer.get_tokenizer({'type': 'ngram', 'n': 1})
-
-p2_20 = tokenizer.get_tokenizer({'type': 'ngram', 'n': 2})
-
-p1_20_positional = tokenizer.get_tokenizer({'type': 'ngram', 'n': 1, 'positional': True})
-
-dummy = tokenizer.dummy
+from clkhash import comparators
+from clkhash.comparators import NgramComparison, NonComparison
 
 
-class TestTokenizer(unittest.TestCase):
+#######
+# Testing n-gram
+#######
 
-    def test_unigram_1(self):
-        self.assertEqual(list(p1_20("1/2/93", ignore='/')),
-                         ['1', '2', '9', '3'])
 
-    def test_unigram_2(self):
-        self.assertEqual(list(p1_20("1*2*93", ignore='*')),
-                         ['1', '2', '9', '3'])
+@fixture(params=itertools.product((1, 2, 3), (True, False)))
+def ngram_comparator(request):
+    return comparators.NgramComparison(request.param[0], request.param[1])
 
-    def test_unigram_duplicate(self):
-        self.assertEqual(list(p1_20("1212")),
-                         ['1', '2', '1', '2'])
 
-    def test_unigram_1_positional(self):
-        self.assertEqual(list(p1_20_positional("1/2/93", ignore='/')),
-                         ['1 1', '2 2', '3 9', '4 3'])
+@given(myinput=text(min_size=1))
+def test_bigram_encoding_deterministic(myinput, ngram_comparator):
+    assert set(ngram_comparator.tokenize(myinput)) == set(ngram_comparator.tokenize(myinput))
 
-    def test_positional_unigram_1(self):
-        self.assertEqual(list(p1_20_positional("123")),
-                         ['1 1', '2 2', '3 3'])
 
-    def test_positional_unigram_2(self):
-        self.assertEqual(list(p1_20_positional("1*2*")),
-                         ['1 1', '2 *', '3 2', '4 *'])
+@given(text(min_size=1))
+def test_ngram_spaces(ngram_comparator, myinput):
+    tokens = list(ngram_comparator.tokenize(myinput))
+    assert tokens[0].endswith(' ' * (ngram_comparator.n - 1) + myinput[0])
+    assert tokens[-1].endswith(myinput[-1] + ' ' * (ngram_comparator.n - 1))
 
-    def test_positional_unigram_duplicate(self):
-        self.assertEqual(list(p1_20_positional("111")),
-                         ['1 1', '2 1', '3 1'])
 
-    def test_bigram_1(self):
-        self.assertEqual(list(p2_20("steve")),
-                         [' s', 'st', 'te', 'ev', 've', 'e '])
+@given(text(min_size=1))
+def test_string_bigram_token_size(ngram_comparator, myinput):
+    tokens = list(ngram_comparator.tokenize(myinput))
+    assert len(myinput) == len(tokens) - (ngram_comparator.n - 1)
 
-    @given(text(min_size=1))
-    def test_bigram_encoding_deterministic(self, myinput):
-        assert set(p2_20(myinput)) == set(p2_20(myinput))
 
-    @given(text(min_size=1))
-    def test_bigram_spaces(self, myinput):
-        tokens = list(p2_20(myinput))
-        assert tokens[0] == ' ' + myinput[0]
-        assert tokens[-1] == myinput[-1] + ' '
+def test_invalid_n():
+    with pytest.raises(ValueError):
+        comparators.get_comparator({'type': 'ngram', 'n': -6})
 
-    def test_bigram_ignore(self):
-        self.assertEqual(list(p2_20("steve", ignore='e')),
-                         [' s', 'st', 'tv', 'v '])
 
-    def test_bigram_duplicate(self):
-        self.assertEqual(list(p2_20("abab")),
-                         [' a', 'ab', 'ba', 'ab', 'b '])
+@given(word=text(), n=integers(min_value=1, max_value=3))
+def test_positional(word, n):
+    tokenizer = NgramComparison(n, True).tokenize
+    tokens = list(tokenizer(word))
+    indices = set(int(token.split(' ')[0]) for token in tokens)  # a token begins with the index followed by space
+    assert indices == set(range(1, len(tokens) + 1))
 
-    def test_invalid_n(self):
-        with self.assertRaises(
-                ValueError,
-                msg='Expected raise ValueError on invalid n.'):
-            tok = tokenizer.get_tokenizer({'type': 'ngram', 'n': -6})
-            tok('prawn')
 
-    @given(text(min_size=1))
-    def test_string_bigram_token_size(self, myinput):
-        tokens = list(p2_20(myinput))
-        assert len(myinput) == len(tokens) - 1
+def test_empty_input(ngram_comparator):
+    assert list(ngram_comparator.tokenize("")) == []
 
-    @given(text(min_size=1))
-    def test_string_unigram_token_size(self, myinput):
-        tokens = list(p1_20(myinput))
-        assert len(myinput) == len(tokens)
 
-    @given(text(min_size=1))
-    def test_string_positional_unigram_token_size(self, myinput):
-        tokens = list(p1_20_positional(myinput))
-        assert len(myinput) == len(tokens)
+#####
+# testing the Non-Comparison
+#####
 
-    def test_dummy(self):
-        self.assertEqual(list(dummy('jobs')), [])
-
-    def test_empty_input(self):
-        self.assertEqual(list(p1_20("")), [])
-        self.assertEqual(list(p1_20_positional("")), [])
-        self.assertEqual(list(p2_20("")), [])
+def test_dummy():
+    comp = NonComparison()
+    assert list(NonComparison().tokenize('jobs')) == []
