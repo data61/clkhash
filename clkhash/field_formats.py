@@ -173,13 +173,13 @@ def fhp_from_json_dict(
 
     num_bits = hashing_strategy.get('numBits')
     k = hashing_strategy.get('k')
-    if 'tokenization' not in json_dict:   # schema version 2 fallback
+    if 'comparison' not in json_dict:   # schema version 2 fallback
         comparator = NgramComparison(json_dict['ngram'], json_dict.get(
             'positional', FieldHashingProperties._DEFAULT_POSITIONAL))
     else:
-        if json_dict['tokenization'].get('type', '') == 'ngram':  # setting default
-            json_dict['tokenization'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
-        comparator = comparators.get_comparator(json_dict['tokenization'])
+        if json_dict['comparison'].get('type', '') == 'ngram':  # setting default
+            json_dict['comparison'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
+        comparator = comparators.get_comparator(json_dict['comparison'])
 
     return FieldHashingProperties(
         comparator=comparator,
