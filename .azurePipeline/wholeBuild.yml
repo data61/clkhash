@@ -59,11 +59,26 @@ jobs:
     displayName: 'Typecheck'
     condition: and(eq(variables['pythonVersionMypy'], variables['pythonVersion']), eq(variables['architecture'], 'x86'))
   
-  - script: |
-      python -m pip install -U -r docs/doc-requirements.txt
-      pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
-    displayName: 'Test notebooks'
-    condition: ne(variables['operatingSystem'], 'vs2017-win2016')
+  # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
+  # all the tutorials should be run.
+  # The list of tutorials without anonlink are provided in the file `docs/list_tutorials_without_anonlink.txt`.
+  # The anonlink requirement is in its own dependency file `docs/doc-requirements-anonlink.txt` while all
+  # the other required dependencies are in `docs/doc-requirements-others.txt`.
+  - ${{ if ne(variables['operatingSystem'], 'vs2017-win2016') }}
+    - script: |
+        python -m pip install -U -r docs/doc-requirements-anonlink.txt docs/doc-requirements-others.txt
+        pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
+      displayName: 'Test notebooks'
+  - ${{ if eq(variables['operatingSystem'], 'vs2017-win2016') }}
+    - script: |
+        python -m pip install -U -r docs/doc-requirements-others.txt
+        list_file=''
+        for file in $(cat docs/list_tutorials_without_anonlink.txt)
+        do
+          list_file="$list_file docs/$file"
+        done
+        pytest --nbval -x --sanitize-with docs/tutorial_sanitize.cfg $list_file
+      displayName: 'Test notebooks without anonlink'
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
