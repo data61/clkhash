@@ -141,7 +141,7 @@
     "hashingConfig": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["tokenizer", "strategy"],
+      "required": ["comparison", "strategy"],
       "properties": {
         "hash": {"type": "object", "default": {"type": "blakeHash"}, "oneOf": [
             {"$ref": "#/definitions/doubleHash"},
@@ -170,15 +170,15 @@
             }
           }
         ]},
-        "tokenizer": {"type":  "object", "oneOf":
+        "comparison": {"type":  "object", "oneOf":
         [
-          {"$ref": "#/definitions/ngramTokenizer"}
+          {"$ref": "#/definitions/ngramComparison"}
         ]
         },
         "missingValue": {"$ref": "#/definitions/missingValue"}
       }
     },
-    "ngramTokenizer": {
+    "ngramComparison": {
       "type": "object",
       "required": ["type", "n"],
       "properties": {
