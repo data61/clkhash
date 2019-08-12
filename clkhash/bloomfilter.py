@@ -12,10 +12,10 @@ from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
 from future.builtins import range, zip
 
-from clkhash import tokenizer
 from clkhash.backports import int_from_bytes
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.schema import Schema
+from clkhash.comparators import AbstractComparison, NonComparison
 
 try:
     from hashlib import blake2b
@@ -287,7 +287,7 @@ def fold_xor(bloomfilter,  # type: bitarray
 
 
 def crypto_bloom_filter(record,      # type: Sequence[Text]
-                        tokenizers,  # type: List[function]
+                        comparators,  # type: List[AbstractComparison]
                         schema,      # type: Schema
                         keys         # type: Sequence[Sequence[bytes]]
                         ):
@@ -313,11 +313,11 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
     bloomfilter = bitarray(hash_l)
     bloomfilter.setall(False)
 
-    for (entry, tokenize, field, key) \
-            in zip(record, tokenizers, schema.fields, keys):
+    for (entry, comparator, field, key) \
+            in zip(record, comparators, schema.fields, keys):
         fhp = field.hashing_properties
         if fhp:
-            ngrams = list(tokenize(field.format_value(entry)))
+            ngrams = list(comparator.tokenize(field.format_value(entry)))
             hash_function = hashing_function_from_properties(fhp)
             if ngrams:
                 bloomfilter |= hash_function(ngrams, key,
@@ -343,7 +343,7 @@ def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
         :param keys: A tuple of two lists of secret keys used in the HMAC.
         :return: Generator yielding bloom filters as 3-tuples
     """
-    tokenizers = [field.hashing_properties.tokenizer if field.hashing_properties is not None else tokenizer.dummy
+    comparators = [field.hashing_properties.comparator if field.hashing_properties is not None else NonComparison()
                   for field in schema.fields]
-    return (crypto_bloom_filter(s, tokenizers, schema, keys)
+    return (crypto_bloom_filter(s, comparators, schema, keys)
             for s in dataset)
