@@ -22,7 +22,7 @@ class TestFieldFormats(unittest.TestCase):
                 encoding='ascii',
                 pattern=r'[5-9',  # This is syntactically incorrect.
                 description='foo'),
-            hashing=dict(tokenization=dict(type='ngram', n=1), strategy=dict(k=20)))
+            hashing=dict(comparison=dict(type='ngram', n=1), strategy=dict(k=20)))
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
@@ -94,7 +94,7 @@ class TestFieldFormats(unittest.TestCase):
                 encoding='utf-8',
                 description='bar'),
             hashing=dict(
-                tokenization=dict(n=1, type='ngram'),
+                comparison=dict(n=1, type='ngram'),
                 positional=True,
                 strategy=dict(k=20)))
 
@@ -251,7 +251,7 @@ class TestFieldFormats(unittest.TestCase):
                 'description': 'buzz'
             },
             'hashing': {
-                'tokenization': {'type': 'ngram', 'n': 1, 'positional': True},
+                'comparison': {'type': 'ngram', 'n': 1, 'positional': True},
                 'strategy': {'k': 20}
             }
         }
@@ -427,7 +427,7 @@ class TestFieldFormats(unittest.TestCase):
             'format': {
                 'type': 'enum',
                 'values': ['dogs', 'cats', u'fërrets'],
-                'description': 'fizz'}, 'hashing': {'tokenization': {'type': 'ngram', 'n': 2}, 'strategy': {'k': 20}}}
+                'description': 'fizz'}, 'hashing': {'comparison': {'type': 'ngram', 'n': 2}, 'strategy': {'k': 20}}}
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
