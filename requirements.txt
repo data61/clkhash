@@ -5,7 +5,7 @@ cryptography==2.7
 enum34==1.1.6; python_version < '3.4'
 future==0.17.1
 futures==3.2.0; python_version < '3.2'
-jsonschema==2.6  # rq.filter: >=2.6,<3.0
+jsonschema==3.0.2
 hypothesis==4.32.2
 mypy_extensions==0.4.1
 nbval==0.9.1
