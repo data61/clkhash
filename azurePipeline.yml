@@ -20,6 +20,7 @@ jobs:
     pythonVersionMypy: '3.7' # This will be the only version of Python for which we will run mypy. Be sure it is also part of the list pythonVersions
 
 - job:
+  displayName: "Check Git Tags"
   steps:
 # In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
   - script: echo "##vso[build.addbuildtag]Automated"
