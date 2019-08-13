@@ -21,7 +21,8 @@ formats:
 python:
   version: 3.7
   install:
-    - requirements: docs/doc-requirements.txt
+    - requirements: docs/doc-requirements-anonlink.txt
+    - requirements: docs/doc-requirements-others.txt
     - requirements: requirements.txt
     - method: pip
       path: .
