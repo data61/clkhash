@@ -172,7 +172,8 @@
         ]},
         "comparison": {"type":  "object", "oneOf":
         [
-          {"$ref": "#/definitions/ngramComparison"}
+          {"$ref": "#/definitions/ngramComparison"},
+          {"$ref": "#/definitions/exactComparison"}
         ]
         },
         "missingValue": {"$ref": "#/definitions/missingValue"}
@@ -185,6 +186,13 @@
         "type": {"const": "ngram"},
         "n": {"type": "integer", "minimum": 1, "default": 2, "description": "The 'n' in n-gram"},
         "positional": {"type": "boolean", "default": false}
+      }
+    },
+    "exactComparison": {
+      "type": "object",
+      "required":  ["type"],
+      "properties": {
+        "type": {"const":  "exact"}
       }
     },
     "doubleHash": {
