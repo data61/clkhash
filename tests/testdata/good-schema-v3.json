@@ -128,8 +128,7 @@
       },
       "hashing": {
         "comparison": {
-          "type": "ngram",
-          "n": 1
+          "type": "exact"
         },
         "strategy": {"numBits":  100}
       }
