@@ -664,8 +664,7 @@ class TestCliInteractionWithService(CLITestHelper):
                     '--server', self.url,
                     '--project', project['project_id'],
                     '--run', run['run_id'],
-                    '--apikey', project['result_token'],
-                    '--watch'
+                    '--apikey', project['result_token']
                 ]
             )
 
@@ -717,8 +716,7 @@ class TestCliInteractionWithService(CLITestHelper):
                 '--server', self.url,
                 '--project', project['project_id'],
                 '--run', run['run_id'],
-                '--apikey', alice_upload['receipt_token'],
-                '--watch'
+                '--apikey', alice_upload['receipt_token']
             ]
         )
 
@@ -752,8 +750,7 @@ class TestCliInteractionWithService(CLITestHelper):
                     '--server', self.url,
                     '--project', project['project_id'],
                     '--run', run['run_id'],
-                    '--apikey', project['result_token'],
-                    '--watch'
+                    '--apikey', project['result_token']
                 ]
             )
 
