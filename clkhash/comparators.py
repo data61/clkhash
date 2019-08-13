@@ -78,6 +78,15 @@ class NgramComparison(AbstractComparison):
         return 'NgramComparison(n={}, positional={})'.format(self.n, self.positional)
 
 
+class ExactComparison(AbstractComparison):
+    """ Enables exact comparisons
+
+    TODO: explain"""
+
+    def tokenize(self, word):  # type: (Text) -> Iterable[Text]
+        return word,
+
+
 class NonComparison(AbstractComparison):
     """
     Non comparison.
@@ -111,6 +120,6 @@ def get_comparator(comp_desc):
     if typ == 'ngram':
         return NgramComparison(comp_desc.get('n', -1), comp_desc.get('positional'))
     elif typ == 'exact':
-        raise NotImplementedError("I will eventually implement this. Scout's honor.")
+        return ExactComparison()
     else:
         raise ValueError("unsupported comparison strategy: '{}'".format(typ))
