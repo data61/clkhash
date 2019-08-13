@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""
-Functions to tokenize words (PII)
-"""
 from __future__ import unicode_literals
 
+import abc
 from typing import Iterable, Text, Dict, Any, Optional
 
 from future.builtins import range
-
-import abc
 from six import add_metaclass
 
 
@@ -19,8 +15,9 @@ class AbstractComparison(object):
     @abc.abstractmethod
     def tokenize(self, word):
         # type: (Text) -> Iterable[Text]
-        """
-        The tokenization function. Takes a string and returns an iterable of tokens (as strings). This should be
+        """ The tokenization function.
+
+        Takes a string and returns an iterable of tokens (as strings). This should be
         implemented in a way that the intersection of two sets of tokens produced by this function approximates
         the desired comparison criteria.
 
@@ -45,6 +42,10 @@ class NgramComparison(AbstractComparison):
         6 out of 8 2-grams in common. One wrong character will affect 'n' 'n'-grams. Thus, the larger you choose 'n',
         the more the error propagates.
 
+        A positional n-gram also encodes the position of the n-gram within the word. The positional 2-grams of
+        'clkhash' are '1  c', '2 cl', '3 lk', '4 kh', '5 ha', '6 as', '7 sh', '8 h '. Positional n-grams can be useful
+        for comparing words where the position of the characters are important, e.g., postcodes or phone numbers.
+
         :param n: the n in n-gram, non-negative integer
         :param positional: enables positional n-gram tokenization
         """
@@ -57,13 +58,9 @@ class NgramComparison(AbstractComparison):
         # type: (Text) -> Iterable[Text]
         """ Produce `n`-grams of `word`.
 
-             :param n: the n in n-gram, non-negative integer
-             :param positional: enables positional n-gram tokenization
-             :param word: The string to tokenize.
-             :param ignore: The substring whose occurrences we remove from
-                 `word` before tokenization.
-             :return: Tuple of n-gram strings.
-         """
+        :param word: The string to tokenize.
+        :return: Iterable of n-gram strings.
+        """
         if len(word) == 0:
             return tuple()
 
@@ -83,17 +80,18 @@ class NgramComparison(AbstractComparison):
 
 class NonComparison(AbstractComparison):
     """
-    Non comparison
+    Non comparison.
     """
 
     def tokenize(self, word):
         # type: (Text) -> Iterable[Text]
-        """
-        Null tokenizer returns empty Iterable.
+        """ Null tokenizer returns empty Iterable.
+
         FieldSpec Ignore has hashing_properties = None
         and get_tokenizer has to return something for this case,
         even though it's never called. An alternative would be to
         use an Optional[Callable]].
+
         :param word: not used
         :return: empty Iterable
         """
@@ -103,9 +101,9 @@ class NonComparison(AbstractComparison):
 def get_comparator(comp_desc):
     # type: (Dict[str, Any]) -> AbstractComparison
     """ Creates the comparator as defined in the schema. A comparator provides a tokenization method suitable for
-        that type of comparison.
+    that type of comparison.
 
-        This function takes a dictionary, containing the schema definition. It returns a subclass of AbstractComparison.
+    This function takes a dictionary, containing the schema definition. It returns a subclass of AbstractComparison.
     """
 
     typ = comp_desc.get('type', None)
