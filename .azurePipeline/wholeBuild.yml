@@ -47,11 +47,11 @@ jobs:
   - script: python setup.py sdist bdist_wheel
     displayName: 'Package'
 
-#  - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
-#    displayName: 'Test with pytest'
-#    env:
-#      INCLUDE_CLI: 1
-#      TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+  - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
+    displayName: 'Test with pytest'
+    env:
+      INCLUDE_CLI: 1
+      TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
 
   - script: |
       python -m pip install -U mypy
