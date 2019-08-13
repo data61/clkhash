@@ -30,7 +30,7 @@ The build pipeline does:
   - install the requirements,
   - package ``clkhash``,
   - run `pytest` (including all the CLI tests and the test requiring a deployed entity service at `https://testing.es.data61.xyz`),
-  - run `mypy` for type checking only a chosen version of Python (currently 3.7)
+  - run `mypy` for type checking
   - run `pytest` to test the notebooks available in the documentation (on Windows, will not install `anonlink` and will run all the tutorials in the file `docs/list__tutorials_without_anonlink.txt`, on other platform, will install `anonlink` and run all the tutorials.)
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
