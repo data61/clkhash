@@ -1,4 +1,3 @@
-anonlink>=0.12
 ipython==7.5.0
 jupyter
 nbsphinx>=0.3

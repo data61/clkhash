@@ -47,8 +47,33 @@ jobs:
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
+    timeoutInMinutes: 10 # it should pass in 2.5 minutes, so 10 should be more than enough even if the server is busy.
     env:
       INCLUDE_CLI: 1
+      TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+  
+  # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
+  # all the tutorials should be run.
+  # The list of tutorials without anonlink are provided in the file `docs/list_tutorials_without_anonlink.txt`.
+  # The anonlink requirement is in its own dependency file `docs/doc-requirements-anonlink.txt` while all
+  # the other required dependencies are in `docs/doc-requirements-others.txt`.
+  # Note also that with the current requirements, 
+  - script: |
+      python -m pip install -U -r docs/doc-requirements-anonlink.txt -r docs/doc-requirements-others.txt
+      pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
+    displayName: 'Test all notebooks'
+    condition: and(ne(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], '2.7'))
+  # This step currently fails. Cf issue #287 https://github.com/data61/clkhash/issues/287
+  #- bash: |
+  #    python -m pip install -U -r docs/doc-requirements-others.txt
+  #    list_file=''
+  #    for file in $(cat docs/list_tutorials_without_anonlink.txt)
+  #    do
+  #      list_file="$list_file docs/$file"
+  #    done
+  #    pytest --nbval -x --sanitize-with docs/tutorial_sanitize.cfg $list_file
+  #  displayName: 'Test notebooks without anonlink'
+  #  condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], '2.7'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'

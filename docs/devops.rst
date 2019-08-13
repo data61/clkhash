@@ -13,7 +13,7 @@ Two pipelines are available:
 
 The build pipeline is described by the script `azurePipeline.yml`
 which is using resources from the folder `.azurePipeline`.
-Mainly, a number of builds and tests are started for different
+Mainly, `mypy` is run for type checking and a number of builds and tests are started for different
 version of python and system architecture. 
 Only the packages created with ``Python 3.7`` and the ``x86``
 architecture are then published (in Azure).
@@ -29,7 +29,8 @@ The build pipeline does:
 
   - install the requirements,
   - package ``clkhash``,
-  - run `pytest`,
+  - run `pytest` (including all the CLI tests and the test requiring a deployed entity service at `https://testing.es.data61.xyz`),
+  - run `pytest` to test the notebooks available in the documentation (on Windows, will not install `anonlink` and will run all the tutorials in the file `docs/list__tutorials_without_anonlink.txt`, on other platform, will install `anonlink` and run all the tutorials.)
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
   - publish the artifacts from the build using ``Python 3.7`` with a ``x86`` architecture (i.e. a whl, a tar.gz and an exe).
