@@ -2,7 +2,6 @@ parameters:
   pythonVersions: []
   operatingSystems: []
   architectures: []
-  pythonVersionMypy: '3.7'
 
 jobs:
 - job: 'test_and_publish'
@@ -15,7 +14,6 @@ jobs:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
-              pythonVersionMypy: ${{ parameters.pythonVersionMypy }}
 
   pool:
     vmImage: $(operatingSystem)
@@ -52,12 +50,6 @@ jobs:
     env:
       INCLUDE_CLI: 1
       TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
-
-  - script: |
-      python -m pip install -U mypy
-      mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
-    displayName: 'Typecheck'
-    condition: and(eq(variables['pythonVersionMypy'], variables['pythonVersion']), eq(variables['architecture'], 'x86'))
   
   # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
   # all the tutorials should be run.
