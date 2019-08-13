@@ -8,9 +8,11 @@ from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.serialization import deserialize_bitarray
 from clkhash.stats import OnlineMeanVariance
+from clkhash.comparators import get_comparator
 
 TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
 
+bigram_tokenizer = get_comparator({'type': 'ngram', 'n': 2})
 
 def _test_data_file_path(file_name):
     return os.path.join(TEST_DATA_DIRECTORY, file_name)
@@ -72,9 +74,8 @@ class TestV2(unittest.TestCase):
 
         schema_k = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
-            ngram=2,
+            comparator=bigram_tokenizer,
             k=20,
-            positional=False,
             hash_type='doubleHash'
         ))
 
@@ -83,9 +84,8 @@ class TestV2(unittest.TestCase):
 
         schema_num_bits = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
-            ngram=2,
+            comparator=bigram_tokenizer,
             num_bits=int(round(mean_k)),
-            positional=False,
             hash_type='doubleHash'
         ))
         mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, keys)
@@ -143,8 +143,7 @@ class TestHashingWithDifferentK(unittest.TestCase):
                     identifier='some info',
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
+                        comparator=bigram_tokenizer,
                         k=20
                     ),
                     description=None,
@@ -200,8 +199,7 @@ class TestHashingWithDifferentHashFunctions(unittest.TestCase):
                     identifier='some info',
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
+                        comparator=bigram_tokenizer,
                         k=25,
                         hash_type='blakeHash'
                     ),
@@ -214,8 +212,7 @@ class TestHashingWithDifferentHashFunctions(unittest.TestCase):
                     identifier='some other very important info',
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
-                        ngram=2,
-                        positional=False,
+                        comparator=bigram_tokenizer,
                         k=25,
                         hash_type='doubleHash'
                     ),

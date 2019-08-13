@@ -12,8 +12,8 @@
     }
   },
   "features": [
-        {
-      "identifier": "index",
+    {
+      "identifier": "id",
       "ignored": true
     },
     {
@@ -25,9 +25,14 @@
         "case": "upper"
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
-        "hash": {"type": "blakeHash"}
+        "hash": {"type": "doubleHash"},
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "numBits": 200
+        }
       }
     },
     {
@@ -40,12 +45,13 @@
         "description": "comma separated list of middle names"
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
         "hash": {"type": "blakeHash"},
-        "missingValue": {
-          "sentinel": "NA",
-          "replaceWith": ""
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "k": 20
         }
       }
     },
@@ -58,9 +64,11 @@
         "case": "upper"
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
-        "hash": {"type": "blakeHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -72,9 +80,12 @@
         "description": "as international number, but without '+' or '00' in front of country code. According to E.164 of ITU-T, a international number is limited to 15 digits."
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"k":  15},
-        "hash": {"type": "doubleHash", "prevent_singularity":  true}
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -85,9 +96,12 @@
         "maximum": 999999999999999
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  110},
-        "hash": {"type": "doubleHash", "prevent_singularity":  true}
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -98,9 +112,11 @@
         "case": "lower"
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"k":  15},
-        "hash": {"type": "blakeHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -111,9 +127,11 @@
         "description": "'O' for other. If unknown leave empty."
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  110},
-        "hash": {"type": "doubleHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 1
+        },
+        "strategy": {"numBits":  100}
       }
     },
     {
@@ -125,9 +143,12 @@
         "maximum": 9999
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  100},
-        "hash": {"type": "blakeHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  300}
       }
     },
     {
@@ -140,22 +161,11 @@
         "description": "Month and day of birth (eg: 1125)"
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
-        "hash": {"type": "doubleHash", "prevent_singularity":  true}
-      }
-    },
-    {
-      "identifier": "dob",
-      "format": {
-        "type": "date",
-        "format": "%Y-%m-%d",
-        "description": "The full date of birth (eg: 1965-12-24)"
-      },
-      "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"k":  20},
-        "hash": {"type": "doubleHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -167,9 +177,12 @@
         "description": "don't ask..."
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  80},
-        "hash": {"type": "blakeHash"}
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  200}
       }
     },
     {
@@ -180,12 +193,12 @@
         "maximum": 9999
       },
       "hashing": {
-        "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  100},
-        "hash": {"type": "doubleHash", "prevent_singularity":  true},
-        "missingValue": {
-          "sentinel": ""
-        }
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {"numBits":  100}
       }
     }
   ]
