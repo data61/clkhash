@@ -19,7 +19,8 @@ from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaE
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
 MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
-                            2: 'v2.json'}  # type: Dict[Hashable, Text]
+                            2: 'v2.json',
+                            3: 'v3.json'}  # type: Dict[Hashable, Text]
 
 
 class SchemaError(Exception):
@@ -92,7 +93,7 @@ class Schema:
         self.kdf_key_size = kdf_key_size
 
     def __repr__(self):
-        return "<Schema (v2): {} fields>".format(len(self.fields))
+        return "<Schema (v3): {} fields>".format(len(self.fields))
 
 
 def convert_v1_to_v2(
@@ -172,7 +173,7 @@ def from_json_dict(dct, validate=True):
         dct = convert_v1_to_v2(dct)
         if validate:
             validate_schema_dict(dct)
-    elif version != 2:
+    elif version not in MASTER_SCHEMA_FILE_NAMES.keys():
         msg = ('Schema version {} is not supported. '
                'Consider updating clkhash.').format(version)
         raise SchemaError(msg)

@@ -32,7 +32,7 @@ class TestSchemaValidation(unittest.TestCase):
         with open(_test_data_file_path('good-schema-v1.json')) as f:
             s = schema.from_json_file(f)
         schema_repr = repr(s)
-        assert "v2" in schema_repr  # v1 schema is converted to v2
+        assert "v3" in schema_repr  # v1 schema is converted to v2 and then to v3 :)
         assert "12 fields" in schema_repr
 
     def test_invalid_schema(self):
@@ -94,7 +94,14 @@ class TestSchemaValidation(unittest.TestCase):
         with open(_test_data_file_path('good-schema-v2.json')) as f:
             s = schema.from_json_file(f)
         schema_repr = repr(s)
-        assert "v2" in schema_repr
+        assert "v3" in schema_repr
+        assert "12 fields" in schema_repr
+
+    def test_good_schema3_repr(self):
+        with open(_test_data_file_path('good-schema-v3.json')) as f:
+            s = schema.from_json_file(f)
+        schema_repr = repr(s)
+        assert "v3" in schema_repr
         assert "12 fields" in schema_repr
 
     def test_validation_of_illdefined_not_ignored_feature(self):

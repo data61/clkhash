@@ -10,12 +10,15 @@ from __future__ import unicode_literals
 import abc
 import re
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Text, cast
+from typing import Any, Dict, Iterable, Optional, Text, cast, Callable
 
 from future.builtins import range, super
 from six import add_metaclass
 
+from clkhash import comparators
+
 from clkhash.backports import raise_from, re_compile_full, strftime
+from clkhash.comparators import AbstractComparison, NgramComparison
 
 
 class InvalidEntryError(ValueError):
@@ -71,37 +74,35 @@ class FieldHashingProperties(object):
 
     This includes the encoding and tokenisation parameters.
 
+        :ivar AbstractComparison comparator: provides a tokenizer for desired comparison strategy
         :ivar str encoding: The encoding to use when converting the
             string to bytes. Refer to
             `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`
             for possible values.
-        :ivar int ngram: The n in n-gram. Possible values are 0, 1, and
-            2.
-        :ivar bool positional: Controls whether the n-grams are
-            positional.
+        :ivar str hash_type: hash function to use for hashing
+        :ivar bool prevent_singularity: the 'doubleHash' function has a singularity problem
         :ivar int num_bits: dynamic k = num_bits / number of n-grams
         :ivar int k: max number of bits per n-gram
+        :ivar MissingValueSpec missing_value: specifies how to handle missing values
     """
     _DEFAULT_ENCODING = 'utf-8'
     _DEFAULT_POSITIONAL = False
 
     def __init__(self,
-                 ngram,  # type: int
-                 encoding=_DEFAULT_ENCODING,      # type: str
-                 positional=_DEFAULT_POSITIONAL,  # type: bool
-                 hash_type='blakeHash',           # type: str
-                 prevent_singularity=None,        # type: Optional[bool]
-                 num_bits=None,                   # type: Optional[int]
-                 k=None,                          # type: Optional[int]
-                 missing_value=None               # type: Optional[MissingValueSpec]
+                 comparator,  # type: AbstractComparison
+                 encoding=_DEFAULT_ENCODING,  # type: str
+                 hash_type='blakeHash',  # type: str
+                 prevent_singularity=None,  # type: Optional[bool]
+                 num_bits=None,  # type: Optional[int]
+                 k=None,  # type: Optional[int]
+                 missing_value=None  # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
         """ Make a :class:`FieldHashingProperties` object, setting it
             attributes to values specified in keyword arguments.
         """
-        if ngram not in range(3):
-            msg = 'ngram is {} but is expected to be 0, 1, or 2.'
-            raise ValueError(msg.format(ngram))
+        if comparator is None:
+            raise ValueError('no comparator specified')
 
         try:
             ''.encode(encoding)
@@ -116,9 +117,8 @@ class FieldHashingProperties(object):
         if not num_bits and not k:
             raise ValueError('One of num_bits or k must be specified.')
 
-        self.ngram = ngram
+        self.comparator = comparator
         self.encoding = encoding
-        self.positional = positional
         self.hash_type = hash_type
         self.prevent_singularity = prevent_singularity
         self.num_bits = num_bits
@@ -173,11 +173,16 @@ def fhp_from_json_dict(
 
     num_bits = hashing_strategy.get('numBits')
     k = hashing_strategy.get('k')
+    if 'comparison' not in json_dict:   # schema version 2 fallback
+        comparator = NgramComparison(json_dict['ngram'], json_dict.get(
+            'positional', FieldHashingProperties._DEFAULT_POSITIONAL))   # type: AbstractComparison
+    else:
+        if json_dict['comparison'].get('type', '') == 'ngram':  # setting default
+            json_dict['comparison'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
+        comparator = comparators.get_comparator(json_dict['comparison'])
 
     return FieldHashingProperties(
-        ngram=json_dict['ngram'],
-        positional=json_dict.get(
-            'positional', FieldHashingProperties._DEFAULT_POSITIONAL),
+        comparator=comparator,
         hash_type=h['type'],
         prevent_singularity=h.get('prevent_singularity'),
         num_bits=num_bits,
