@@ -12,7 +12,7 @@ requirements = [
         "enum34==1.1.6; python_version < '3.4'",
         "future>=0.16",
         "futures>=3.1; python_version < '3.2'",  # Backport from Py3.2
-        "jsonschema==3.0.2",
+        "jsonschema>=3.0.2",
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
         "requests>=2.20",
