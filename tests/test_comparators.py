@@ -80,6 +80,11 @@ def test_exact_uniqueness(word1, word2):
     assert set(list(ExactComparison().tokenize(word1))) != set(list(ExactComparison().tokenize(word2)))
 
 
+@given(word=text())
+def test_exact_num_tokens(word):
+    assert len(list(ExactComparison().tokenize(word))) == 1
+
+
 #####
 # testing invalid comparison
 #####
