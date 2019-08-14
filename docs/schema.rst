@@ -293,7 +293,7 @@ replaceWith  string                  yes      specifies the value clkhash should
 n-gram comparison
 ^^^^^^^^^^^^^^^^^
 
-Approximate string matching with n-gram tokenization.
+Approximate string matching with n-gram tokenization. See also the `API docs <clkhash.html#clkhash.comparators.NgramComparison>`_
 
 ===========  =====================   ======== ===========
 name         type                    optional description
@@ -309,7 +309,7 @@ positional   boolean                 yes      positional n-grams also contains t
 exact comparison
 ^^^^^^^^^^^^^^^^
 
-Exact string matching.
+Exact string matching. See also the `API docs <clkhash.html#clkhash.comparators.ExactComparison>`_
 
 ===========  =====================   ======== ===========
 name         type                    optional description
