@@ -56,7 +56,7 @@ field_formats
 
 
 comparators
----------
+-----------
 
 .. automodule:: clkhash.comparators
     :members:

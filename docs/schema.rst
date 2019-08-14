@@ -218,16 +218,16 @@ format      one of:                no       describes the expected format of the
 hashingConfig
 ^^^^^^^^^^^^^
 
-============  ======================   ======== ===========
-name          type                     optional description
-============  ======================   ======== ===========
-comparison    one of:                  no       specifies the comparison technique for this feature.
+============  ============================== ======== ===========
+name          type                           optional description
+============  ============================== ======== ===========
+comparison    one of:                        no       specifies the comparison technique for this feature.
               :ref:`schema/ngramComparison`,
               :ref:`schema/exactComparison`
-strategy      :ref:`schema/strategy`   no       the strategy for assigning bits to the encoding.
-positional    boolean                  yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
-missingValue  :ref:`schema/missingV`   yes      allows to define how missing values are handled
-============  ======================   ======== ===========
+strategy      :ref:`schema/strategy`         no       the strategy for assigning bits to the encoding.
+positional    boolean                        yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
+missingValue  :ref:`schema/missingV`         yes      allows to define how missing values are handled
+============  ============================== ======== ===========
 
 
 .. _schema/strategy:
@@ -291,7 +291,7 @@ replaceWith  string                  yes      specifies the value clkhash should
 .. _schema/ngramComparison:
 
 n-gram comparison
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 Approximate string matching with n-gram tokenization.
 
@@ -307,7 +307,7 @@ positional   boolean                 yes      positional n-grams also contains t
 .. _schema/exactComparison:
 
 exact comparison
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 Exact string matching.
 

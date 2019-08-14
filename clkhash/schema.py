@@ -218,11 +218,13 @@ def from_json_dict(dct, validate=True):
 def from_json_file(schema_file, validate=True):
     # type: (TextIO, bool) -> Schema
     """ Load a Schema object from a json file.
+
         :param schema_file: A JSON file containing the schema.
         :param validate: (default True) Raise an exception if the
             schema does not conform to the master schema.
         :raises SchemaError: When the schema is invalid.
         :return: the Schema
+
     """
     try:
         schema_dict = json.load(schema_file)

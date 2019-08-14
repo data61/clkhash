@@ -184,21 +184,20 @@ class NameList:
         # type: (int, float, int) -> Tuple[List, ...]
         """ Return random subsets with nonempty intersection.
 
-            The random subsets are of specified size. If an element is
-            common to two subsets, then it is common to all subsets.
-            This overlap is controlled by a parameter.
+        The random subsets are of specified size. If an element is
+        common to two subsets, then it is common to all subsets.
+        This overlap is controlled by a parameter.
 
-            :param sz: size of subsets to generate
-            :param overlap: size of the intersection, as fraction of the
-                subset length
-            :param subsets: number of subsets to generate
+        :param sz: size of subsets to generate
+        :param overlap: size of the intersection, as fraction of the
+            subset length
+        :param subsets: number of subsets to generate
 
-            :raises ValueError: if there aren't sufficiently many names
-                in the list to satisfy the request; more precisely,
-                raises if (1 - subsets) * floor(overlap * sz)
-                              + subsets * sz > len(self.names).
+        :raises ValueError: if there aren't sufficiently many names
+            in the list to satisfy the request; more precisely,
+            raises if (1 - subsets) * floor(overlap * sz) + subsets * sz > len(self.names).
 
-            :return: tuple of subsets
+        :return: tuple of subsets
         """
         overlap_sz = int(math.floor(overlap * sz))
         unique_sz = sz - overlap_sz  # Unique names per subset

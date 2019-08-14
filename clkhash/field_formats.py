@@ -42,12 +42,13 @@ class MissingValueSpec(object):
         values.
 
         :ivar str sentinel: sentinel is the string that identifies a
-        missing value e.g.: 'N/A', ''.
-        The sentinel will not be validated against the
-        feature format definition
+            missing value e.g.: 'N/A', ''.
+            The sentinel will not be validated against the
+            feature format definition
         :ivar str replaceWith: defines the string which replaces the
-        sentinel whenever present, can be 'None', then sentinel will
-         not be replaced.
+            sentinel whenever present, can be 'None', then sentinel will
+            not be replaced.
+
     """
 
     def __init__(self,
@@ -74,16 +75,16 @@ class FieldHashingProperties(object):
 
     This includes the encoding and tokenisation parameters.
 
-        :ivar AbstractComparison comparator: provides a tokenizer for desired comparison strategy
-        :ivar str encoding: The encoding to use when converting the
-            string to bytes. Refer to
-            `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`
-            for possible values.
-        :ivar str hash_type: hash function to use for hashing
-        :ivar bool prevent_singularity: the 'doubleHash' function has a singularity problem
-        :ivar int num_bits: dynamic k = num_bits / number of n-grams
-        :ivar int k: max number of bits per n-gram
-        :ivar MissingValueSpec missing_value: specifies how to handle missing values
+    :ivar AbstractComparison comparator: provides a tokenizer for desired comparison strategy
+    :ivar str encoding: The encoding to use when converting the
+        string to bytes. Refer to
+        `Python's documentation <https://docs.python.org/3/library/codecs.html#standard-encodings>`
+        for possible values.
+    :ivar str hash_type: hash function to use for hashing
+    :ivar bool prevent_singularity: the 'doubleHash' function has a singularity problem
+    :ivar int num_bits: dynamic k = num_bits / number of n-grams
+    :ivar int k: max number of bits per n-gram
+    :ivar MissingValueSpec missing_value: specifies how to handle missing values
     """
     _DEFAULT_ENCODING = 'utf-8'
     _DEFAULT_POSITIONAL = False
@@ -272,8 +273,8 @@ class FieldSpec(object):
         # type: (Text) -> bool
         """ tests if 'str_in' is the sentinel value for this field
 
-            :param str str_in: String to test if it stands for missing value
-            :return: True if a missing value is defined for this field and
+        :param str str_in: String to test if it stands for missing value
+        :return: True if a missing value is defined for this field and
             str_in matches this value
 
         """
@@ -286,22 +287,23 @@ class FieldSpec(object):
         """ formats the value 'str_in' for hashing according to this field's
         spec.
 
-            There are several reasons why this might be necessary:
+        There are several reasons why this might be necessary:
 
-            1. This field contains missing values which have to be replaced
-            by some other string
-            2. There are several different ways to describe a specific value
-            for this field, e.g.: all of '+65', ' 65',
-               '65' are valid representations of the integer 65.
-            3. Entries of this field might contain elements with no entropy,
-            e.g. dates might be formatted as
-               yyyy-mm-dd, thus all dates will have '-' at the same place.
-               These artifacts have no value for entity
-               resolution and should be removed.
+        1. This field contains missing values which have to be replaced
+        by some other string
+        2. There are several different ways to describe a specific value
+        for this field, e.g.: all of '+65', ' 65',
+        '65' are valid representations of the integer 65.
+        3. Entries of this field might contain elements with no entropy,
+        e.g. dates might be formatted as
+        yyyy-mm-dd, thus all dates will have '-' at the same place.
+        These artifacts have no value for entity
+        resolution and should be removed.
 
-            :param str str_in: the string to format
-            :return: a string representation of 'str_in' which is ready to
-            be hashed
+        :param str str_in: the string to format
+        :return: a string representation of 'str_in' which is ready to be
+            hashed
+
         """
         if self.hashing_properties and self.is_missing_value(str_in):
             return self.hashing_properties.replace_missing_value(str_in)
