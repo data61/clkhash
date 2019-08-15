@@ -225,7 +225,9 @@ comparison    one of:                        no       specifies the comparison t
               :ref:`schema/ngramComparison`,
               :ref:`schema/exactComparison`
 strategy      :ref:`schema/strategy`         no       the strategy for assigning bits to the encoding.
-positional    boolean                        yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
+hash          one of:                        yes      specifies the hash function for inserting bits into the Bloom filter, defaults to bake hash
+              :ref:`schema/doubleHash`
+              :ref:`schema/blakeHash`
 missingValue  :ref:`schema/missingV`         yes      allows to define how missing values are handled
 ============  ============================== ======== ===========
 
@@ -253,7 +255,12 @@ Describes and configures the hash that is used to encode the n-grams.
 
 Choose one of:
 
-* *double hash*, as described in [Schnell2011]_.
+.. _schema/doubleHash:
+
+DoubleHash
+^^^^^^^^^^
+
+as described in [Schnell2011]_.
 
 =================== ======= ======== ===========
 name                type    optional description
@@ -262,7 +269,13 @@ type                string  no       must be set to "doubleHash"
 prevent_singularity boolean yes      see discussion in https://github.com/data61/clkhash/issues/33
 =================== ======= ======== ===========
 
-* *blake hash* (default)
+
+.. _schema/blakeHash:
+
+BlakeHash
+^^^^^^^^^
+
+the (default) option
 
 =================== ======= ======== ===========
 name                type    optional description
@@ -316,6 +329,7 @@ name         type                    optional description
 ===========  =====================   ======== ===========
 type         string                  no       has to be 'exact'
 ===========  =====================   ======== ===========
+
 
 .. _schema/tfo:
 

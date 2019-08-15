@@ -69,7 +69,7 @@
       "type": "object",
       "required": ["identifier", "format", "hashing"],
       "properties": {
-        "identifier": {"type": "string", "description":"semantic meaning of identifier"},
+        "identifier": {"type": "string", "description": "semantic meaning of identifier"},
         "description": {"type": "string"},
         "format": {
           "required": ["type"],
