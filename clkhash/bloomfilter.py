@@ -12,7 +12,7 @@ from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
 from future.builtins import range, zip
 
-from clkhash.backports import int_from_bytes
+import clkhash.backports as bp
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.schema import Schema
 from clkhash.comparators import AbstractComparison, NonComparison
@@ -121,14 +121,14 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
         sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
         md5hm_bytes = hmac.new(key_md5, m_bytes, md5).digest()
 
-        sha1hm = int_from_bytes(sha1hm_bytes, 'big') % l
-        md5hm = int_from_bytes(md5hm_bytes, 'big') % l
+        sha1hm = bp.int_from_bytes(sha1hm_bytes, 'big') % l
+        md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
 
         i = 0
         while md5hm == 0:
             md5hm_bytes = hmac.new(
                 key_md5, m_bytes + chr(i).encode(), md5).digest()
-            md5hm = int_from_bytes(md5hm_bytes, 'big') % l
+            md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
             i += 1
 
         for i in range(k):
@@ -294,19 +294,20 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
     # type: (...) -> Tuple[bitarray, Text, int]
     """ Computes the composite Bloom filter encoding of a record.
 
-        Using the method from
-        http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+    Using the method from
+    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
 
-        :param record: plaintext record tuple. E.g. (index, name, dob, gender)
-        :param tokenizers: A list of tokenizers. A tokenizer is a function that
-            returns tokens from a string.
-        :param schema: Schema
-        :param keys: Keys for the hash functions as a tuple of lists of bytes.
+    :param record: plaintext record tuple. E.g. (index, name, dob, gender)
+    :param comparators: A list of comparators. They provide a 'tokenize' function to turn string into
+        appropriate tokens.
+    :param schema: Schema
+    :param keys: Keys for the hash functions as a tuple of lists of bytes.
 
-        :return: 3-tuple:
-                - bloom filter for record as a bitarray
-                - first element of record (usually an index)
-                - number of bits set in the bloomfilter
+    :return: 3-tuple:
+
+        - bloom filter for record as a bitarray
+        - first element of record (usually an index)
+        - number of bits set in the bloomfilter
     """
     hash_l = schema.l * 2 ** schema.xor_folds
 
