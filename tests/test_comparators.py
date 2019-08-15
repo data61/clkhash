@@ -1,12 +1,12 @@
 import itertools
 
 import pytest
-from hypothesis import given
+from hypothesis import given, assume
 from hypothesis.strategies import text, integers
 from pytest import fixture
 
 from clkhash import comparators
-from clkhash.comparators import NgramComparison, NonComparison
+from clkhash.comparators import NgramComparison, NonComparison, ExactComparison
 
 
 #######
@@ -58,9 +58,36 @@ def test_empty_input(ngram_comparator):
 # testing the Non-Comparison
 #####
 
+
 def test_dummy():
     comp = NonComparison()
     assert list(NonComparison().tokenize('jobs')) == []
+
+
+#####
+# testing exact comparison
+#####
+
+
+@given(word=text())
+def test_exact_deterministic(word):
+    assert ExactComparison().tokenize(word) == ExactComparison().tokenize(word)
+
+
+@given(word1=text(), word2=text())
+def test_exact_uniqueness(word1, word2):
+    assume(word1 != word2)
+    assert set(list(ExactComparison().tokenize(word1))) != set(list(ExactComparison().tokenize(word2)))
+
+
+@given(word=text())
+def test_exact_num_tokens(word):
+    assert len(list(ExactComparison().tokenize(word))) == 1
+
+
+#####
+# testing invalid comparison
+#####
 
 
 def test_invalid_comparison():

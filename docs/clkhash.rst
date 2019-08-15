@@ -55,10 +55,10 @@ field_formats
     :show-inheritance:
 
 
-tokenizer
----------
+comparators
+-----------
 
-.. automodule:: clkhash.tokenizer
+.. automodule:: clkhash.comparators
     :members:
     :undoc-members:
     :show-inheritance:

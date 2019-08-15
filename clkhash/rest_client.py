@@ -192,7 +192,7 @@ class RestClient:
         :param apikey:
         :param timeout: Stop waiting after this many seconds. The default (None) is to never give you up.
         :param update_period: Time in seconds between queries to the run's status.
-        :raises TimeoutError
+        :raises TimeoutError: if timeout is reached
         """
         for status in self.watch_run_status(project, run, apikey, timeout, update_period):
             pass
@@ -210,7 +210,7 @@ class RestClient:
         :param apikey:
         :param timeout: Stop waiting after this many seconds. The default (None) is to never give you up.
         :param update_period: Time in seconds between queries to the run's status.
-        :raises TimeoutError
+        :raises TimeoutError: if timeout is reached
         """
         start_time = time.time()
         status = old_status = self.run_get_status(project, run, apikey)

@@ -38,13 +38,13 @@ def hkdf(master_secret,  # type: bytes
     :param salt: HKDF is defined to operate with and without random
         salt. This is done to accommodate applications where a salt
         value is not available. We stress, however, that the use of salt
-        adds significantly to themstrength of HKDF, ensuring
+        adds significantly to the strength of HKDF, ensuring
         independence between different uses of the hash function,
         supporting "source-independent" extraction, and strengthening
         the analytical results that back the HKDF design.
-            Random salt differs fundamentally from the initial keying
+        Random salt differs fundamentally from the initial keying
         material in two ways: it is non-secret and can be re-used.
-            Ideally, the salt value is a random (or pseudorandom) string
+        Ideally, the salt value is a random (or pseudorandom) string
         of the length HashLen.  Yet, even a salt value of less quality
         (shorter in size or with limited entropy) may still make a
         significant contribution to the security of the output keying

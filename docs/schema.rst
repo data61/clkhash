@@ -218,15 +218,16 @@ format      one of:                no       describes the expected format of the
 hashingConfig
 ^^^^^^^^^^^^^
 
-============  ======================   ======== ===========
-name          type                     optional description
-============  ======================   ======== ===========
-comparison    one of:                  no       specifies the comparison technique for this feature.
-              :ref:`schema/ngramComparison`
-strategy      :ref:`schema/strategy`   no       the strategy for assigning bits to the encoding.
-positional    boolean                  yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
-missingValue  :ref:`schema/missingV`   yes      allows to define how missing values are handled
-============  ======================   ======== ===========
+============  ============================== ======== ===========
+name          type                           optional description
+============  ============================== ======== ===========
+comparison    one of:                        no       specifies the comparison technique for this feature.
+              :ref:`schema/ngramComparison`,
+              :ref:`schema/exactComparison`
+strategy      :ref:`schema/strategy`         no       the strategy for assigning bits to the encoding.
+positional    boolean                        yes      adds the position to the n-grams. String "222" would be tokenized (as uni-grams) to "1 2", "2 2", "3 2"
+missingValue  :ref:`schema/missingV`         yes      allows to define how missing values are handled
+============  ============================== ======== ===========
 
 
 .. _schema/strategy:
@@ -290,9 +291,9 @@ replaceWith  string                  yes      specifies the value clkhash should
 .. _schema/ngramComparison:
 
 n-gram comparison
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
-Approximate string matching with n-gram tokenization.
+Approximate string matching with n-gram tokenization. Also see the `API docs for NgramComparison <clkhash.html#clkhash.comparators.NgramComparison>`_
 
 ===========  =====================   ======== ===========
 name         type                    optional description
@@ -302,6 +303,19 @@ n            integer                 no       The 'n' in n-gram
 positional   boolean                 yes      positional n-grams also contains the position of the n-gram within the string
 ===========  =====================   ======== ===========
 
+
+.. _schema/exactComparison:
+
+exact comparison
+^^^^^^^^^^^^^^^^
+
+Exact string matching. Also see the `API docs for ExactComparison <clkhash.html#clkhash.comparators.ExactComparison>`_
+
+===========  =====================   ======== ===========
+name         type                    optional description
+===========  =====================   ======== ===========
+type         string                  no       has to be 'exact'
+===========  =====================   ======== ===========
 
 .. _schema/tfo:
 
