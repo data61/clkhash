@@ -14,11 +14,11 @@ jobs:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
-
   pool:
     vmImage: $(operatingSystem)
-
-  displayName: 'Unittest - '
+  # The stage has the name "Build and Test", and the matrix strategy adds the Python version, Operating System
+  # and architecture to the displayed name - so we don't need to prepend anything else:
+  displayName: ''
 
   steps:
 # I would not have found on my own such a step. Thanks https://dvlup.com/2019/01/03/using-powershell-to-installing-msi-in-a-devops-build/
@@ -42,7 +42,7 @@ jobs:
       python -m pip install -U -r requirements.txt
     displayName: 'Install requirements'
     
-  - script: python setup.py sdist bdist_wheel
+  - script: python setup.py bdist_wheel
     displayName: 'Package'
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
@@ -91,8 +91,6 @@ jobs:
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: 'coverageReport.xml'
-# Seems to create warning as this step is already creating its own html pages.
-#      reportDirectory: 'htmlcov'
       failIfCoverageEmpty: true
 
   - script: python -m codecov --token $(CODECOV_TOKEN) --file coverageReport.xml
@@ -102,12 +100,13 @@ jobs:
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
-    displayName: 'Build clkutil.exe'
-    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+      mv .\dist\clkutil.exe .\dist\clkutil-$(architecture).exe
+    displayName: 'Build clkutil-$(architecture).exe'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
 
-  - task: PublishPipelineArtifact@0
-    displayName: 'Publish artifacts in Azure'
-    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish intermediate build artifacts'
     inputs:
-      artifactName: Artifacts
-      targetPath: 'dist/'
+      path: 'dist'
+      artifact: '$(pythonVersion)-$(architecture)'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
