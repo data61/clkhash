@@ -2,9 +2,8 @@
 
 block_cipher = None
 
-
 a = Analysis(['clkhash\\cli.py'],
-             pathex=['C:\\Users\\tho802\\Development\\clkhash'],
+             pathex=['clkhash'],
              binaries=[],
              datas=[
                  ('clkhash/data/randomnames-schema.json', 'clkhash/data'),

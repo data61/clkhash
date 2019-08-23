@@ -102,8 +102,16 @@ jobs:
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
-    displayName: 'Build clkutil.exe'
+      mv .\dist\clkutil.exe .\dist\clkutil-x64.exe
+    displayName: 'Build clkutil-x86.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+
+  - script: |
+      pyinstaller cli.spec
+      .\dist\clkutil.exe --version
+      mv .\dist\clkutil.exe .\dist\clkutil-x64.exe
+    displayName: 'Build clkutil-x64.exe'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
   - task: PublishPipelineArtifact@0
     displayName: 'Publish artifacts in Azure'
