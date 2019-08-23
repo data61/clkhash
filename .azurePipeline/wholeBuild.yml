@@ -115,7 +115,7 @@ jobs:
 
   - task: PublishPipelineArtifact@0
     displayName: 'Publish artifacts in Azure'
-    condition: and(eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+    condition: and(eq(variables['pythonVersion'], '3.7')))
     inputs:
       artifactName: Artifacts
       targetPath: 'dist/'
