@@ -106,6 +106,13 @@ jobs:
     displayName: 'Build clkutil-x86.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
+  - task: CopyFiles@2
+    displayName: 'Copy x86 cli tool and sdist'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+    inputs:
+      contents: 'dist/?(*.exe|*.tar.gz)'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
@@ -113,9 +120,16 @@ jobs:
     displayName: 'Build clkutil-x64.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
-  - task: PublishPipelineArtifact@0
+
+  - task: CopyFiles@2
+    displayName: 'Copy x64 cli tool'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
+    inputs:
+      contents: 'dist/*.exe'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+
+  - task: PublishBuildArtifacts@1
     displayName: 'Publish artifacts in Azure'
-    condition: eq(variables['pythonVersion'], '3.7')
     inputs:
       artifactName: Artifacts
-      targetPath: 'dist/'
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
