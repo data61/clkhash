@@ -130,6 +130,7 @@ jobs:
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish artifacts in Azure'
+    condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
     inputs:
       artifactName: Artifacts
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
