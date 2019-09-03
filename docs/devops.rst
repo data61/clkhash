@@ -11,21 +11,27 @@ Two pipelines are available:
   - `Build pipeline <https://dev.azure.com/data61/Anonlink/_build?definitionId=2>`,
   - `Release pipeline <https://dev.azure.com/data61/Anonlink/_release?definitionId=1>`.
 
+
+Build Pipeline
+~~~~~~~~~~~~~~
+
 The build pipeline is described by the script `azurePipeline.yml`
-which is using resources from the folder `.azurePipeline`.
-Mainly, `mypy` is run for type checking and a number of builds and tests are started for different
-version of python and system architecture. 
-Only the packages created with ``Python 3.7`` and the ``x86``
-architecture are then published (in Azure).
+which is using template resources from the folder `.azurePipeline`.
+
+There are 3 top level jobs in the build pipeline:
+
+- *Typechecking* - runs `mypy` over the codebase
+- *Unit tests* - A template expands out into a number of builds and tests for different
+  version of python and system architecture.
+- *Check Git Tags* - Simply adds a Azure DevOps tag `"Automated"` if the build was triggered by a Git tag.
 
 The build pipeline is triggered for every pushes on the master branch,
 for every tagged commit, and for every pushes part of a pull
 request. We are not building on every push and
 pull requests not to build twice the same code. For every tagged commit,
-the build pipeline will also add the Azure tag `Automated` which will trigger
-automatically the release pipeline.
+the build pipeline will also add the Azure tag `Automated` which will trigger the release pipeline.
 
-The build pipeline does:
+The *Unit Test* job does:
 
   - install the requirements,
   - package ``clkhash``,
@@ -39,6 +45,14 @@ The build pipeline requires one environment variable provided by Azure environme
 
  - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
 
+All the complexity is abstracted into the template in `.azurePipeline/wholeBuild.yml`.
+
+The packages created with ``Python 3.7`` on both ``x86`` and ``x64`` architecture are copied
+to an ``ArtifactStagingDirectory`` then published (as build artifacts in Azure DevOps).
+
+
+Release Pipeline
+~~~~~~~~~~~~~~~~
 
 The release pipeline can either be triggered manually, or automatically from
 a successful build on master where the build is tagged `Automated`
