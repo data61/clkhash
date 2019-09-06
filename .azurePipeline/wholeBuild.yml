@@ -114,7 +114,7 @@ jobs:
   # Note PipelineArtifacts replace BuildArtifacts
   - task: PublishPipelineArtifact@1
     displayName: 'Publish artifacts in Azure'
-    condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
+    condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
     inputs:
       artifact: 'Build Artifacts ${{ parameters.operatingSystem }} for Python ${{ parameters.pythonVersion }}'
       targetPath: 'dist/'
