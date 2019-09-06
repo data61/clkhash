@@ -259,6 +259,6 @@ class RestClient:
             '{}/api/v1/projects/{}/runs/{}'.format(self.server, project, run),
             headers={"Authorization": apikey}
         )
-        if response.status_code != 200:
+        if response.status_code != 204:
             raise ServiceError("Error deleting run", response)
         return response.text
