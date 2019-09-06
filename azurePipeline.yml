@@ -22,7 +22,23 @@ jobs:
       python -m pip install -U mypy
       mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
     displayName: 'mypy'
-  
+
+- job:
+  displayName: 'Source Distribution'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+    displayName: 'Init Python'
+  - script: |
+      python -m pip install -U pip
+    displayName: 'Deps'
+  - script: python setup.py sdist
+    displayName: 'Package sdist'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifact: 'Source Distribution'
+      targetPath: 'dist/'
 - template: .azurePipeline/wholeBuild.yml  # Template reference
   parameters:
     pythonVersions: ['3.7', '3.6', '3.5', '2.7']

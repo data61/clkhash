@@ -42,8 +42,8 @@ jobs:
       python -m pip install -U -r requirements.txt
     displayName: 'Install requirements'
     
-  - script: python setup.py sdist bdist_wheel
-    displayName: 'Package'
+  - script: python setup.py bdist_wheel
+    displayName: 'Package wheels'
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
@@ -91,8 +91,6 @@ jobs:
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: 'coverageReport.xml'
-# Seems to create warning as this step is already creating its own html pages.
-#      reportDirectory: 'htmlcov'
       failIfCoverageEmpty: true
 
   - script: python -m codecov --token $(CODECOV_TOKEN) --file coverageReport.xml
@@ -106,13 +104,6 @@ jobs:
     displayName: 'Build clkutil-x86.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
-  - task: CopyFiles@2
-    displayName: 'Copy x86 cli tool and sdist'
-    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
-    inputs:
-      contents: 'dist/?(*.exe|*.tar.gz)'
-      targetFolder: $(Build.ArtifactStagingDirectory)
-
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
@@ -120,17 +111,10 @@ jobs:
     displayName: 'Build clkutil-x64.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
-
-  - task: CopyFiles@2
-    displayName: 'Copy x64 cli tool'
-    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
-    inputs:
-      contents: 'dist/*.exe'
-      targetFolder: $(Build.ArtifactStagingDirectory)
-
-  - task: PublishBuildArtifacts@1
+  # Note PipelineArtifacts replace BuildArtifacts
+  - task: PublishPipelineArtifact@1
     displayName: 'Publish artifacts in Azure'
     condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
     inputs:
-      artifactName: Artifacts
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifact: 'Build Artifacts ${{ parameters.operatingSystem }} for Python ${{ parameters.pythonVersion }}'
+      targetPath: 'dist/?(*.exe|*.whl)'
