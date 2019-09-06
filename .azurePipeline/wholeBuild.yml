@@ -100,9 +100,16 @@ jobs:
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
-      mv .\dist\clkutil.exe .\dist\clkutil-x64.exe
+      mv .\dist\clkutil.exe .\dist\clkutil-x86.exe
     displayName: 'Build clkutil-x86.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+
+  - task: PublishPipelineArtifact@1
+    condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
+    inputs:
+      artifact: 'Build Artifacts'
+      targetPath: 'dist/clkutil-x86.exe'
+
 
   - script: |
       pyinstaller cli.spec
@@ -111,10 +118,8 @@ jobs:
     displayName: 'Build clkutil-x64.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
-  # Note PipelineArtifacts replace BuildArtifacts
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish artifacts in Azure'
     condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
     inputs:
-      artifact: 'Build Artifacts ${{ parameters.operatingSystem }} for Python ${{ parameters.pythonVersion }}'
+      artifact: 'Build Artifacts'
       targetPath: 'dist/'
