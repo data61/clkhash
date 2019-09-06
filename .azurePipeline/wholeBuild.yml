@@ -117,4 +117,4 @@ jobs:
     condition: and( eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
     inputs:
       artifact: 'Build Artifacts ${{ parameters.operatingSystem }} for Python ${{ parameters.pythonVersion }}'
-      targetPath: 'dist/(*.exe|*.whl)'
+      targetPath: 'dist/'
