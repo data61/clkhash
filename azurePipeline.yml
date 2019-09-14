@@ -50,6 +50,11 @@ stages:
   displayName: Package Artifacts
   dependsOn: ['build_and_test']
   jobs:
+  - job:
+    displayName: 'Package Artifacts'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
     - task: DownloadPipelineArtifact@2
       inputs:
         #artifactName: ${{ parameters.artifactName }}
