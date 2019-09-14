@@ -10,29 +10,52 @@ pr:
     include:
     - '*'
 
-jobs:
-- job:
-  displayName: 'Typechecking'
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.7'
-    displayName: 'Init Python'
-  - script: |
-      python -m pip install -U mypy
-      mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
-    displayName: 'mypy'
-  
-- template: .azurePipeline/wholeBuild.yml  # Template reference
-  parameters:
-    pythonVersions: ['3.7', '3.6', '3.5', '2.7']
-#    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
-    operatingSystems: ['vs2017-win2016']
-    architectures: ['x64', 'x86']
+stages:
+- stage: static_checks
+  displayName: Static Checks
+  dependsOn: []
+  jobs:
+  - job:
+    displayName: 'Typechecking'
+    pool:
+      vmImage: 'ubuntu-16.04'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+    - script: |
+        python -m pip install -U mypy
+        mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+      displayName: 'mypy'
 
-- job:
-  displayName: "Check Git Tags"
-  steps:
-# In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
-  - script: echo "##vso[build.addbuildtag]Automated"
-    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+- stage: build_and_test
+  displayName: Build and Test
+  dependsOn: []
+  jobs:
+  - template: .azurePipeline/wholeBuild.yml  # Template reference
+    parameters:
+      pythonVersions: ['3.7', '3.6', '3.5', '2.7']
+  #    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
+      operatingSystems: ['vs2017-win2016']
+      architectures: ['x64', 'x86']
+
+  - job:
+    displayName: "Check Git Tags"
+    steps:
+  # In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
+    - script: echo "##vso[build.addbuildtag]Automated"
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+
+- stage: package
+  displayName: Package Artifacts
+  dependsOn: ['build_and_test']
+  jobs:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        #artifactName: ${{ parameters.artifactName }}
+        #patterns: '**/*.whl'
+        path: $(Pipeline.Workspace)
+
+    - script: |
+        ls $(Pipeline.Workspace)
+      displayName: 'List Artifacts'
