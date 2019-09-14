@@ -504,14 +504,7 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def test_create_project_2_party(self):
         out = self._create_project(project_args={'parties': '2'})
-
-        self.assertIn('project_id', out)
-        self.assertIn('result_token', out)
-        self.assertIn('update_tokens', out)
-
-        self.assertGreaterEqual(len(out['project_id']), 16)
-        self.assertGreaterEqual(len(out['result_token']), 16)
-        self.assertGreaterEqual(len(out['update_tokens']), 2)
+        self._test_create_project(out)
 
     def test_create_project_multi_party(self):
         out = self._create_project(
@@ -608,14 +601,7 @@ class TestCliInteractionWithService(CLITestHelper):
 
     def test_create_with_optional_name(self):
         out = self._create_project({'name': 'testprojectname'})
-
-        self.assertIn('project_id', out)
-        self.assertIn('result_token', out)
-        self.assertIn('update_tokens', out)
-
-        self.assertGreaterEqual(len(out['project_id']), 16)
-        self.assertGreaterEqual(len(out['result_token']), 16)
-        self.assertGreaterEqual(len(out['update_tokens']), 2)
+        self._test_create_project(out)
 
     def test_create_with_bad_schema(self):
         # Make sure we don't succeed with bad schema.
@@ -697,7 +683,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.assertIn('receipt_token', bob_upload)
 
         # Give the server a small amount of time to process
-        time.sleep(5.0)
+        time.sleep(10.0)
 
         results_raw = get_coord_results()
         res = json.loads(results_raw)
