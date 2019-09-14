@@ -263,7 +263,6 @@ class TestHashCommand(unittest.TestCase):
         assert result.exit_code != 0
 
 
-
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
 class TestHasherDefaultSchema(unittest.TestCase):
@@ -682,8 +681,11 @@ class TestCliInteractionWithService(CLITestHelper):
 
         self.assertIn('receipt_token', bob_upload)
 
-        # Give the server a small amount of time to process
-        time.sleep(10.0)
+        # Use the rest client to wait until the run is complete
+        self.rest_client.wait_for_run(project['project_id'],
+                                      run['run_id'],
+                                      project['result_token'],
+                                      timeout=10)
 
         results_raw = get_coord_results()
         res = json.loads(results_raw)

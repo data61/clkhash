@@ -121,10 +121,10 @@ class TestRestClientInteractionWithService(unittest.TestCase):
         print(format_run_status(status1))
 
         # Check we can watch the run progress this will raise if not
-        # completed in 10 seconds
+        # completed in 20 seconds
         for status_update in self.rest_client.watch_run_status(p_id, r_id,
                                                                p['result_token'],
-                                                               10, 0.5):
+                                                               20, 0.5):
             print(format_run_status(status_update))
 
         # Check that we can still "wait" on a completed run and get a valid
