@@ -18,7 +18,7 @@ jobs:
   pool:
     vmImage: $(operatingSystem)
 
-  displayName: 'Unittest - '
+  displayName: 'Test - '
 
   steps:
 # I would not have found on my own such a step. Thanks https://dvlup.com/2019/01/03/using-powershell-to-installing-msi-in-a-devops-build/
@@ -112,5 +112,8 @@ jobs:
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish build artifacts'
-    inputs: {targetPath: 'dist'}
+    displayName: 'Publish intermediate build artifacts'
+    inputs:
+      path: 'dist'
+      artifact: '$(pythonVersion)-$(architecture)'
+    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))

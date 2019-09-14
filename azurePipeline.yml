@@ -57,8 +57,7 @@ stages:
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
-        #artifactName: ${{ parameters.artifactName }}
-        #patterns: '**/*.whl'
+        #patterns: '*/*'
         path: $(Pipeline.Workspace)
 
     - script: |
