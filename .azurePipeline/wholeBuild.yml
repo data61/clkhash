@@ -104,10 +104,6 @@ jobs:
     displayName: 'Build clkutil-x86.exe'
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x86'))
 
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish x86 windows artifacts'
-    inputs: {targetPath: 'dist'}
-
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version
@@ -116,5 +112,5 @@ jobs:
     condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'), eq(variables['architecture'], 'x64'))
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish x64 windows artifacts'
+    displayName: 'Publish build artifacts'
     inputs: {targetPath: 'dist'}
