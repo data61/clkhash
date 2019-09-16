@@ -42,6 +42,13 @@ The build pipeline requires one environment variable provided by Azure environme
 
 Most of the complexity is abstracted into the template in `.azurePipeline/wholeBuild.yml`.
 
+Build Artifacts
+~~~~~~~~~~~~~~~
+
+A pipeline artifact named **Release** is created by the build pipeline which contains the universal wheel, source
+distribution and Windows executables for x86 and x64 architectures. Other artifacts are created from each build,
+including code coverage.
+
 
 Release Pipeline
 ~~~~~~~~~~~~~~~~
