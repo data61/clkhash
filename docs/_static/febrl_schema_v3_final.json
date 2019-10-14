@@ -53,7 +53,7 @@
     {
       "identifier": "state",
       "format": { "type": "string", "encoding":  "utf-8"},
-      "hashing": {"comparison": {"type": "ngram", "n": 2}, "positional": true, "strategy": {"bitsPerFeature": 100}, "missingValue": {"sentinel":  ""}
+      "hashing": {"comparison": {"type": "ngram", "n": 2, "positional": true}, "strategy": {"bitsPerFeature": 100}, "missingValue": {"sentinel":  ""}
       }
     },
     {
