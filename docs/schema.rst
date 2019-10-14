@@ -72,7 +72,7 @@ Example Schema
               "n": 2
             },
             "strategy": {
-                "numBits": 100
+                "bitsPerFeature": 100
             },
             "hash": {"type": "doubleHash"}
           }
@@ -91,7 +91,7 @@ Example Schema
               "positional": true
             },
             "strategy": {
-              "numBits": 200
+              "bitsPerFeature": 200
             },
             "hash": {"type": "doubleHash"}
           }
@@ -108,7 +108,7 @@ Example Schema
               "n": 1
             },
             "strategy": {
-              "numBits": 400
+              "bitsPerFeature": 400
             },
             "hash": {"type": "doubleHash"}
           }
@@ -218,34 +218,50 @@ format      one of:                no       describes the expected format of the
 hashingConfig
 ^^^^^^^^^^^^^
 
-============  ============================== ======== ===========
-name          type                           optional description
-============  ============================== ======== ===========
-comparison    one of:                        no       specifies the comparison technique for this feature.
+============  ==================================== ======== ===========
+name          type                                 optional description
+============  ==================================== ======== ===========
+comparison    one of:                              no       specifies the comparison technique for this feature.
               :ref:`schema/ngramComparison`,
               :ref:`schema/exactComparison`
-strategy      :ref:`schema/strategy`         no       the strategy for assigning bits to the encoding.
-hash          one of:                        yes      specifies the hash function for inserting bits into the Bloom filter, defaults to bake hash
+strategy      one of:                              no       the strategy for assigning bits to the encoding.
+              :ref:`schema/bitsPerTokenStrategy`,
+              :ref:`schema/bitsPerFeatureStrategy`
+hash          one of:                                 specifies the hash function for inserting bits into the Bloom filter, defaults to bake hash
               :ref:`schema/doubleHash`
               :ref:`schema/blakeHash`
-missingValue  :ref:`schema/missingV`         yes      allows to define how missing values are handled
-============  ============================== ======== ===========
+missingValue  :ref:`schema/missingV`               yes      allows to define how missing values are handled
+============  ==================================== ======== ===========
 
+Strategies
+^^^^^^^^^^
+A strategy defines how often a token is inserted into the Bloom filter.
 
-.. _schema/strategy:
+.. _schema/bitsPerTokenStrategy:
 
-strategy
-^^^^^^^^
+BitsPerTokenStrategy
+^^^^^^^^^^^^^^^^^^^^
+Insert every token ``bitsPerToken`` number of times.
 
-An object where either ``numBits`` or ``k`` is defined.
+==============  ======================   ======== ===========
+name            type                     optional description
+==============  ======================   ======== ===========
+bitsPerToken    integer                  no       max number of indices per token
+==============  ======================   ======== ===========
 
-============  ======================   ======== ===========
-name          type                     optional description
-============  ======================   ======== ===========
-k             integer                  yes      max number of indices per n-gram
-numBits       integer                  yes      max number of indices per feature
-============  ======================   ======== ===========
+.. _schema/bitsPerFeatureStrategy:
 
+BitsPerFeatureStrategy
+^^^^^^^^^^^^^^^^^^^^^^
+Same number of insertions for each value of this feature, irrespective of the actual number of tokens.
+The number of filter insertions for a token is computed by dividing ``bitsPerFeature`` equally amongst
+the tokens.
+
+==============  ======================   ======== ===========
+name            type                     optional description
+==============  ======================   ======== ===========
+bitsPerFeature  integer                  no       max number of indices per feature
+==============  ======================   ======== ===========
 
 .. _schema/Hash:
 
