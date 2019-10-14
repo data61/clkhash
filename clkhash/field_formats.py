@@ -10,15 +10,14 @@ from __future__ import unicode_literals
 import abc
 import re
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Text, cast, Callable
+from typing import Any, Dict, Iterable, Optional, Text, cast
 
-from future.builtins import range, super
+from future.builtins import super
 from six import add_metaclass
 
 from clkhash import comparators
-
 from clkhash.backports import raise_from, re_compile_full, strftime
-from clkhash.comparators import AbstractComparison, NgramComparison
+from clkhash.comparators import AbstractComparison
 
 
 class InvalidEntryError(ValueError):
@@ -69,6 +68,68 @@ class MissingValueSpec(object):
         )
 
 
+@add_metaclass(abc.ABCMeta)
+class StrategySpec(object):
+    """ Stores the information about the insertion strategy.
+
+    A strategy has to implement the 'ks' function, which defines how often a token gets inserted into the Bloom filter.
+    """
+
+    @abc.abstractmethod
+    def ks(self, num_tokens):
+        # type: (int) -> [int]
+        """ Return a list of 'num_tokens' 'k' values, defining how often a token gets inserted into the Bloom filter.
+
+        :param int num_tokens: number of tokens in the field value
+        :return: [ k, ... ]
+        """
+        pass
+
+    @classmethod
+    def from_json_dict(cls, json_dict):
+        # type: (Dict[str, Any]) -> StrategySpec
+        if 'bitsPerToken' in json_dict:
+            return BitsPerTokenStrategy(json_dict.get('bitsPerToken'))
+        elif 'bitsPerFeature' in json_dict:
+            return BitsPerFeatureStrategy(json_dict.get('bitsPerFeature'))
+        else:
+            raise InvalidSchemaError('unknown strategy')
+
+
+class BitsPerTokenStrategy(StrategySpec):
+    """ Insert every token the same number of times.
+
+    This is the strategy from the original Schnell paper. The provided value 'bits_per_token' (the 'k' value in the
+    paper) defines the number of hash functions that are used to insert each token into the Bloom filter.
+
+    :ivar int bits_per_token: how often each token should be inserted into the filter
+    """
+    def __init__(self, bits_per_token):
+        self.bits_per_token = bits_per_token
+
+    def ks(self, num_tokens):
+        return [self.bits_per_token] * num_tokens
+
+
+class BitsPerFeatureStrategy(StrategySpec):
+    """ Have a fixed number of filter insertions for a feature, irrespective of the actual number of tokens.
+
+    This strategy allows to reason about the importance of a feature, irrespective of the lengths of the feature values.
+    For example, in the BitsPerTokenStrategy the name 'Bob' affects only have the number of bits in the Bloom filter
+    than 'Robert'. With this BitsPerFeatureStrategy, both names set the same number of bits in the filter, thus allowing
+    to adjust importance on a per feature basis.
+
+    :ivar int bits_per_feature: total number of insertions for this feature, will be spread across all tokens.
+    """
+    def __init__(self, bits_per_feature):
+        self.bits_per_feature = bits_per_feature
+
+    def ks(self, num_tokens):
+        k = int(self.bits_per_feature / num_tokens)
+        residue = self.bits_per_feature % num_tokens
+        return ([k + 1] * residue) + ([k] * (num_tokens - residue))
+
+
 class FieldHashingProperties(object):
     """
     Stores the settings used to hash a field.
@@ -91,11 +152,10 @@ class FieldHashingProperties(object):
 
     def __init__(self,
                  comparator,  # type: AbstractComparison
+                 strategy,  # type: StrategySpec
                  encoding=_DEFAULT_ENCODING,  # type: str
                  hash_type='blakeHash',  # type: str
                  prevent_singularity=None,  # type: Optional[bool]
-                 num_bits=None,  # type: Optional[int]
-                 k=None,  # type: Optional[int]
                  missing_value=None  # type: Optional[MissingValueSpec]
                  ):
         # type: (...) -> None
@@ -115,31 +175,25 @@ class FieldHashingProperties(object):
             raise ValueError("Prevent_singularity must only be specified"
                              " with hash_type doubleHash.")
 
-        if not num_bits and not k:
-            raise ValueError('One of num_bits or k must be specified.')
+        if strategy is None:
+            raise ValueError('no strategy specified')
 
         self.comparator = comparator
         self.encoding = encoding
         self.hash_type = hash_type
         self.prevent_singularity = prevent_singularity
-        self.num_bits = num_bits
-        self.k = k
+        self.strategy = strategy
         self.missing_value = missing_value
 
-    def ks(self, num_ngrams):
+    def ks(self, num_tokens):
         # type (int) -> [int]
         """
         Provide a k for each ngram in the field value.
 
-        :param int num_ngrams: number of ngrams in the field value
-        :return: [ k, ... ] a k value for each of num_ngrams such that the sum is exactly num_bits
+        :param int num_tokens: number of tokens in the field value
+        :return: [ k, ... ]
         """
-        if self.num_bits:
-            k = int(self.num_bits / num_ngrams)
-            residue = self.num_bits % num_ngrams
-            return ([k + 1] * residue) + ([k] * (num_ngrams - residue))
-        else:
-            return [self.k if self.k else 0] * num_ngrams
+        return self.strategy.ks(num_tokens)
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
@@ -170,25 +224,17 @@ def fhp_from_json_dict(
         in the `v2` linkage schema.
     :return: A :class:`FieldHashingProperties` instance.
     """
-    hashing_strategy = json_dict['strategy']
     h = json_dict.get('hash', {'type': 'blakeHash'})
 
-    num_bits = hashing_strategy.get('numBits')
-    k = hashing_strategy.get('k')
-    if 'comparison' not in json_dict:   # schema version 2 fallback
-        comparator = NgramComparison(json_dict['ngram'], json_dict.get(
-            'positional', FieldHashingProperties._DEFAULT_POSITIONAL))   # type: AbstractComparison
-    else:
-        if json_dict['comparison'].get('type', '') == 'ngram':  # setting default
-            json_dict['comparison'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
-        comparator = comparators.get_comparator(json_dict['comparison'])
+    if json_dict['comparison'].get('type', '') == 'ngram':  # setting default
+        json_dict['comparison'].setdefault('positional', FieldHashingProperties._DEFAULT_POSITIONAL)
+    comparator = comparators.get_comparator(json_dict['comparison'])
 
     return FieldHashingProperties(
         comparator=comparator,
         hash_type=h['type'],
         prevent_singularity=h.get('prevent_singularity'),
-        num_bits=num_bits,
-        k=k,
+        strategy=StrategySpec.from_json_dict(json_dict['strategy']),
         missing_value=MissingValueSpec.from_json_dict(
             json_dict[
                 'missingValue']) if 'missingValue' in json_dict else None
