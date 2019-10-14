@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 import abc
 import re
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Text, cast
+from typing import Any, Dict, Iterable, Optional, Text, cast, List, Union, SupportsInt
 
 from future.builtins import super
 from six import add_metaclass
@@ -77,7 +77,7 @@ class StrategySpec(object):
 
     @abc.abstractmethod
     def ks(self, num_tokens):
-        # type: (int) -> [int]
+        # type: (int) -> List[int]
         """ Return a list of 'num_tokens' 'k' values, defining how often a token gets inserted into the Bloom filter.
 
         :param int num_tokens: number of tokens in the field value
@@ -87,11 +87,11 @@ class StrategySpec(object):
 
     @classmethod
     def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> StrategySpec
+        # type: (Dict[str, Union[str, SupportsInt]]) -> StrategySpec
         if 'bitsPerToken' in json_dict:
-            return BitsPerTokenStrategy(json_dict.get('bitsPerToken'))
+            return BitsPerTokenStrategy(int(json_dict['bitsPerToken']))
         elif 'bitsPerFeature' in json_dict:
-            return BitsPerFeatureStrategy(json_dict.get('bitsPerFeature'))
+            return BitsPerFeatureStrategy(int(json_dict['bitsPerFeature']))
         else:
             raise InvalidSchemaError('unknown strategy')
 
@@ -104,10 +104,14 @@ class BitsPerTokenStrategy(StrategySpec):
 
     :ivar int bits_per_token: how often each token should be inserted into the filter
     """
-    def __init__(self, bits_per_token):
+    def __init__(self,
+                 bits_per_token  # type: int
+                 ):
+        # type: (...) -> None
         self.bits_per_token = bits_per_token
 
     def ks(self, num_tokens):
+        # type: (int) -> List[int]
         return [self.bits_per_token] * num_tokens
 
 
@@ -121,10 +125,14 @@ class BitsPerFeatureStrategy(StrategySpec):
 
     :ivar int bits_per_feature: total number of insertions for this feature, will be spread across all tokens.
     """
-    def __init__(self, bits_per_feature):
+    def __init__(self,
+                 bits_per_feature  # type: int
+                 ):
+        # type: (...) -> None
         self.bits_per_feature = bits_per_feature
 
     def ks(self, num_tokens):
+        # type: (int) -> List[int]
         k = int(self.bits_per_feature / num_tokens)
         residue = self.bits_per_feature % num_tokens
         return ([k + 1] * residue) + ([k] * (num_tokens - residue))
@@ -186,7 +194,7 @@ class FieldHashingProperties(object):
         self.missing_value = missing_value
 
     def ks(self, num_tokens):
-        # type (int) -> [int]
+        # type: (int) -> List[int]
         """
         Provide a k for each ngram in the field value.
 
