@@ -134,14 +134,14 @@ def cli(verbose):
 
 @cli.command('hash', short_help="generate hashes from local PII data")
 @click.argument('pii_csv', type=click.File('r'))
-@click.argument('keys', nargs=2, type=click.Tuple([str, str]))
+@click.argument('key', type=str, required=True)
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('clk_json', type=click.File('w'))
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
 @verbose_option
-def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, verbose):
+def hash(pii_csv, key, schema, clk_json, no_header, check_header, validate, verbose):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
@@ -150,9 +150,9 @@ def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, ver
     file should contain a header row - however this row is not used
     by this tool.
 
-    It is important that the keys are only known by the two data providers. Two words should be provided. For example:
+    It is important that the key is only known by the two data providers. One word must be provided. For example:
 
-    $clkutil hash pii.csv horse staple pii-schema.json clk.json
+    $clkutil hash pii.csv horse-staple pii-schema.json clk.json
 
     Use "-" for CLK_JSON to write JSON to stdout.
     """
@@ -169,7 +169,7 @@ def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, ver
 
     try:
         clk_data = clk.generate_clk_from_csv(
-            pii_csv, keys, schema_object,
+            pii_csv, key, schema_object,
             validate=validate,
             header=header,
             progress_bar=verbose)
