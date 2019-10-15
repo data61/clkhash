@@ -22,13 +22,12 @@ class TestKeyDerivation(unittest.TestCase):
                     self.assertEqual(len(key), key_size)
 
     def test_generate_key_lists(self):
-        master_secrets = ['No, I am your father'.encode(),
-                          "No... that's not true! That's impossible!".encode()]
+        master_secret = "No, I am your fatherNo... that's not true! That's impossible!".encode()
         for num_keys in (1, 10):
-            key_lists = generate_key_lists(master_secrets, num_keys)
+            key_lists = generate_key_lists(master_secret, num_keys)
             self.assertEqual(len(key_lists), num_keys)
             for l in key_lists:
-                self.assertEqual(len(l), len(master_secrets))
+                self.assertEqual(len(l), 2)
             for key in key_lists[0]:
                 self.assertEqual(len(key), DEFAULT_KEY_SIZE,
                                  msg='key should be of size '
@@ -36,7 +35,7 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_fail_generate_key_lists(self):
         with self.assertRaises(TypeError):
-            generate_key_lists([True, False], 10)
+            generate_key_lists(True, 10)
 
     def test_nacl(self):
         master_secret = 'No, I am your father'.encode()
@@ -51,7 +50,7 @@ class TestKeyDerivation(unittest.TestCase):
         # Identifier: 'ANY freetext'
 
         fhp = FieldHashingProperties(
-            comparator=comparators.get_comparator({'type': 'ngram', 'n':2}),
+            comparator=comparators.get_comparator({'type': 'ngram', 'n': 2}),
             hash_type='doubleHash',
             k=10
         )
@@ -69,10 +68,9 @@ class TestKeyDerivation(unittest.TestCase):
         )
 
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
-        master_secrets = ['No, I am your father'.encode(),
-                          "No... that's not true! That's impossible!".encode()]
-        keys_hkdf = generate_key_lists(master_secrets, len(row), kdf='HKDF')
-        keys_legacy = generate_key_lists(master_secrets, len(row),
+        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+        keys_hkdf = generate_key_lists(master_secret, len(row), kdf='HKDF')
+        keys_legacy = generate_key_lists(master_secret, len(row),
                                          kdf='legacy')
         bloom_hkdf = next(stream_bloom_filters([row], keys_hkdf, schema))
         bloom_legacy = next(stream_bloom_filters([row], keys_legacy, schema))
@@ -87,7 +85,7 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_wrong_kdf(self):
         with self.assertRaises(ValueError):
-            generate_key_lists([b'0'], 1, kdf='breakMe')
+            generate_key_lists(b'0', 1, kdf='breakMe')
 
     def test_wrong_hash_function(self):
         with self.assertRaises(ValueError):

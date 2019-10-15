@@ -27,7 +27,7 @@ class TestDescribe(unittest.TestCase):
         size = 1000
         pii_data = randomnames.NameList(size)
 
-        clks = generate_clks(pii_data.names, pii_data.SCHEMA, ('key1', 'key2'), validate=True)
+        clks = generate_clks(pii_data.names, pii_data.SCHEMA, 'key', validate=True)
         json_clks = json.dumps({'clks': clks})
 
         plot(StringIO(json_clks))   # clkutil describe

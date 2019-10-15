@@ -177,10 +177,10 @@ class TestHashCommand(unittest.TestCase):
     def test_hash_help(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
-        assert 'keys' in result.output
+        assert 'key' in result.output
         assert 'schema' in result.output
 
-    def test_hash_requires_keys(self):
+    def test_hash_requires_key(self):
         runner = self.runner
 
         with runner.isolated_filesystem():
@@ -188,9 +188,9 @@ class TestHashCommand(unittest.TestCase):
                 f.write('Alice, 1967')
 
             result = runner.invoke(clkhash.cli.cli,
-                                   ['hash', 'in.csv', 'out.json'])
+                                   ['hash', 'in.csv'])
             assert result.exit_code != 0
-            self.assertIn('keys', result.output)
+            self.assertIn('Missing argument "KEY"', result.output)
 
     def test_hash_with_provided_schema(self):
         runner = self.runner
@@ -201,7 +201,7 @@ class TestHashCommand(unittest.TestCase):
 
             result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', 'in.csv', 'a', 'b', SIMPLE_SCHEMA_PATH,
+                ['hash', 'in.csv', 'a', SIMPLE_SCHEMA_PATH,
                  'out.json', '--no-header'])
 
             with open('out.json') as f:
@@ -221,11 +221,11 @@ class TestHashCommand(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', a_pii, 'a', 'b', schema_file, 'out.json'])
+                ['hash', a_pii, 'a', schema_file, 'out.json'])
 
             result_2 = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', a_pii, 'a', 'b', schema_file, 'out-2.json'])
+                ['hash', a_pii, 'a', schema_file, 'out-2.json'])
 
             with open('out.json') as f:
                 hasha = json.load(f)['clks']
@@ -316,7 +316,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
             hash_result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', self.pii_file.name, 'secret', 'key',
+                ['hash', self.pii_file.name, 'secret',
                  'pii-schema.json', 'pii-hashes.json'])
             self.assertEqual(hash_result.exit_code, 0, msg=hash_result.output)
 
@@ -326,7 +326,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
             with open(output_filename, 'wt') as output:
                 cli_result = runner.invoke(
                     clkhash.cli.cli,
-                    ['hash', self.pii_file.name, 'secret', 'key',
+                    ['hash', self.pii_file.name, 'secret',
                      RANDOMNAMES_SCHEMA_PATH, output.name])
             self.assertEqual(cli_result.exit_code, 0, msg=cli_result.output)
 
@@ -351,8 +351,7 @@ class TestHasherSchema(CLITestHelper):
             with open(output_filename) as output:
                 cli_result = runner.invoke(
                     clkhash.cli.cli,
-                    ['hash', pii_file.name, 'secretkey1',
-                     'secretkey2', RANDOMNAMES_SCHEMA_PATH, output.name])
+                    ['hash', pii_file.name, 'secretkey', RANDOMNAMES_SCHEMA_PATH, output.name])
 
             self.assertEqual(cli_result.exit_code, 0, msg=cli_result.output)
 
