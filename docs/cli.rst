@@ -47,7 +47,7 @@ It can be hashed using ``clkutil`` with::
 
 Where:
 
-- ``horse`` is the secret key that both participants will use to hash their data.
+- ``horse`` is the secret that both participants will use to hash their data.
 - ``simple-schema.json`` is a :ref:`schema` describing how to hash the csv. E.g, ignore the first
   column, use bigram tokens of the name, use positional unigrams of the date of birth etc.
 - ``clk.json`` is the output file.

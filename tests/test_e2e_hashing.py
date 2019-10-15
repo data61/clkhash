@@ -39,9 +39,9 @@ class TestV2(unittest.TestCase):
         schema_v1 = randomnames.NameList.SCHEMA
         # this v2 schema should be equivalent to the above v1 schema
         schema_v2 = _test_schema('randomnames-schema-v2.json')
-        key = 'secret'
-        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, key),
-                                clk.generate_clks(pii, schema_v2, key)):
+        secret = 'secret'
+        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, secret),
+                                clk.generate_clks(pii, schema_v2, secret)):
             self.assertEqual(clkv1, clkv2)
 
     def test_compare_k_and_num_bits(self):
@@ -70,7 +70,7 @@ class TestV2(unittest.TestCase):
             )
 
         pii = [('An',), ('Fred',), ('Philhowe',), ('MuhlbachBereznyz',)]
-        key = 'secret'
+        secret = 'secret'
 
         schema_k = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
@@ -79,7 +79,7 @@ class TestV2(unittest.TestCase):
             hash_type='doubleHash'
         ))
 
-        mean_k, std_k = _test_stats(pii, schema_k, key)
+        mean_k, std_k = _test_stats(pii, schema_k, secret)
         print('test_compare_k_and_num_bits k: ', mean_k, std_k)
 
         schema_num_bits = mkSchema(FieldHashingProperties(
@@ -88,7 +88,7 @@ class TestV2(unittest.TestCase):
             num_bits=int(round(mean_k)),
             hash_type='doubleHash'
         ))
-        mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, key)
+        mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, secret)
         print('test_compare_k_and_num_bits num_bits: ', mean_num_bits,
               std_num_bits)
 
@@ -106,10 +106,10 @@ class TestNamelistHashable(unittest.TestCase):
         self.assertEqual(len(s2), 100)
 
         schema = randomnames.NameList.SCHEMA
-        key = 'secret'
+        secret = 'secret'
 
-        bf1 = clk.generate_clks(s1, schema, key)
-        bf2 = clk.generate_clks(s2, schema, key)
+        bf1 = clk.generate_clks(s1, schema, secret)
+        bf2 = clk.generate_clks(s2, schema, secret)
 
         self.assertEqual(len(bf1), 100)
         self.assertEqual(len(bf2), 100)

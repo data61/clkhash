@@ -13,10 +13,10 @@ from clkhash import comparators
 class TestKeyDerivation(unittest.TestCase):
 
     def test_kdf(self):
-        master_secret = 'No, I am your father'.encode()
+        secret = 'No, I am your father'.encode()
         for num_keys in (1, 10, 50):
             for key_size in (2, 20):
-                keys = hkdf(master_secret, num_keys, key_size=key_size)
+                keys = hkdf(secret, num_keys, key_size=key_size)
                 self.assertEqual(len(keys), num_keys)
                 set_of_keys = set()
                 for key in keys:
@@ -26,16 +26,16 @@ class TestKeyDerivation(unittest.TestCase):
                 self.assertEquals(num_keys, len(set_of_keys))
 
     def test_generate_key_lists(self):
-        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+        secret = "No, I am your father. No... that's not true! That's impossible!".encode()
         for num_keys in (1, 10):
-            key_lists = generate_key_lists(master_secret, num_keys)
+            key_lists = generate_key_lists(secret, num_keys)
             self._test_key_lists(key_lists, num_keys, DEFAULT_NUM_HASHING_METHODS)
 
     def test_generate_key_lists_num_hashes(self):
-        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+        secret = "No, I am your father. No... that's not true! That's impossible!".encode()
         num_keys = 10
         for num_hashing_methods in (1, 10):
-            key_lists = generate_key_lists(master_secret, num_keys, num_hashing_methods=num_hashing_methods)
+            key_lists = generate_key_lists(secret, num_keys, num_hashing_methods=num_hashing_methods)
             self._test_key_lists(key_lists, num_keys, num_hashing_methods)
 
     def _test_key_lists(self, key_lists, num_keys, num_hashing_methods):
@@ -56,9 +56,9 @@ class TestKeyDerivation(unittest.TestCase):
             generate_key_lists(True, 10)
 
     def test_nacl(self):
-        master_secret = 'No, I am your father'.encode()
-        keys_1 = hkdf(master_secret, 5, salt=b'and pepper')
-        keys_2 = hkdf(master_secret, 5, salt=b'and vinegar')
+        secret = 'No, I am your father'.encode()
+        keys_1 = hkdf(secret, 5, salt=b'and pepper')
+        keys_2 = hkdf(secret, 5, salt=b'and vinegar')
         for k1, k2 in zip(keys_1, keys_2):
             self.assertNotEqual(k1, k2,
                                 msg='using different salts should result in '
@@ -86,9 +86,9 @@ class TestKeyDerivation(unittest.TestCase):
         )
 
         row = ['Bobby', 'Bobby', 'Bobby', 'Bobby']
-        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
-        keys_hkdf = generate_key_lists(master_secret, len(row), kdf='HKDF')
-        keys_legacy = generate_key_lists(master_secret, len(row),
+        secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+        keys_hkdf = generate_key_lists(secret, len(row), kdf='HKDF')
+        keys_legacy = generate_key_lists(secret, len(row),
                                          kdf='legacy')
         bloom_hkdf = next(stream_bloom_filters([row], keys_hkdf, schema))
         bloom_legacy = next(stream_bloom_filters([row], keys_legacy, schema))
@@ -113,5 +113,5 @@ class TestKeyDerivation(unittest.TestCase):
 
     def test_wrong_num_hashing_methods(self):
         with self.assertRaises(ValueError):
-            master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
-            generate_key_lists(master_secret, 10, num_hashing_methods=0)
+            secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+            generate_key_lists(secret, 10, num_hashing_methods=0)

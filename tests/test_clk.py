@@ -91,14 +91,14 @@ class TestComplexSchemaChanges(unittest.TestCase):
                 hashing=dict(
                     ngram=1,
                     positional=True))])
-    KEY = 'chicken'
+    SECRET = 'chicken'
 
     def test_expected_number_of_encodings_returned(self):
         loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
 
         results = clk.generate_clk_from_csv(
             io.StringIO(self.CSV_INPUT),
-            self.KEY,
+            self.SECRET,
             loaded_schema,
             validate=True,
             header=True,
@@ -111,7 +111,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
 
         results = clk.generate_clk_from_csv(
             io.StringIO(self.CSV_INPUT),
-            self.KEY,
+            self.SECRET,
             loaded_schema,
             validate=True,
             header=True,

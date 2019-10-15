@@ -177,10 +177,10 @@ class TestHashCommand(unittest.TestCase):
     def test_hash_help(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
-        assert 'key' in result.output
+        assert 'secret' in result.output
         assert 'schema' in result.output
 
-    def test_hash_requires_key(self):
+    def test_hash_requires_secret(self):
         runner = self.runner
 
         with runner.isolated_filesystem():
@@ -190,7 +190,7 @@ class TestHashCommand(unittest.TestCase):
             result = runner.invoke(clkhash.cli.cli,
                                    ['hash', 'in.csv'])
             assert result.exit_code != 0
-            self.assertIn('Missing argument "KEY"', result.output)
+            self.assertIn('Missing argument "SECRET"', result.output)
 
     def test_hash_with_provided_schema(self):
         runner = self.runner
@@ -351,7 +351,7 @@ class TestHasherSchema(CLITestHelper):
             with open(output_filename) as output:
                 cli_result = runner.invoke(
                     clkhash.cli.cli,
-                    ['hash', pii_file.name, 'secretkey', RANDOMNAMES_SCHEMA_PATH, output.name])
+                    ['hash', pii_file.name, 'secret', RANDOMNAMES_SCHEMA_PATH, output.name])
 
             self.assertEqual(cli_result.exit_code, 0, msg=cli_result.output)
 
@@ -382,7 +382,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file.name,
-                                   'secretkey',
+                                   'secret',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file.name])
         assert cli_result.exit_code == 0
@@ -390,7 +390,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file_2.name,
-                                   'secretkey',
+                                   'secret',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file_2.name])
         assert cli_result.exit_code == 0
