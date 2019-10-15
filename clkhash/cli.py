@@ -134,7 +134,7 @@ def cli(verbose):
 
 @cli.command('hash', short_help="generate hashes from local PII data")
 @click.argument('pii_csv', type=click.File('r'))
-@click.argument('key', type=str, required=True)
+@click.argument('key', type=str)
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('clk_json', type=click.File('w'))
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")

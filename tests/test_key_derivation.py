@@ -22,7 +22,7 @@ class TestKeyDerivation(unittest.TestCase):
                     self.assertEqual(len(key), key_size)
 
     def test_generate_key_lists(self):
-        master_secret = "No, I am your fatherNo... that's not true! That's impossible!".encode()
+        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
         for num_keys in (1, 10):
             key_lists = generate_key_lists(master_secret, num_keys)
             self.assertEqual(len(key_lists), num_keys)

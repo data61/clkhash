@@ -8,6 +8,7 @@
 BREAKING CHANGE:
 
 - The cli method `hash` requires only one secret instead of two.
+- The clks pre 0.14 are not compatible with clks from version 0.14.0
 
 ## 0.13.0
 
