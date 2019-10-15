@@ -382,8 +382,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file.name,
-                                   'secretkey1',
-                                   'secretkey2',
+                                   'secretkey',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file.name])
         assert cli_result.exit_code == 0
@@ -391,8 +390,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file_2.name,
-                                   'secretkey1',
-                                   'secretkey2',
+                                   'secretkey',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file_2.name])
         assert cli_result.exit_code == 0
