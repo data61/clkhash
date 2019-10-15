@@ -27,14 +27,14 @@ class TestRestClientInteractionWithService(unittest.TestCase):
 
         schema_object = clkhash.schema.from_json_file(
             schema_file=open(SAMPLE_DATA_SCHEMA_PATH, 'rt'))
-        keys = ('secret', 'key')
+        key = 'secret_key'
         cls.clk_data_1 = json.dumps(
             {'clks': generate_clk_from_csv(open(SAMPLE_DATA_PATH_1, 'rt'),
-                                           keys, schema_object,
+                                           key, schema_object,
                                            header='ignore')})
         cls.clk_data_2 = json.dumps(
             {'clks': generate_clk_from_csv(open(SAMPLE_DATA_PATH_2, 'rt'),
-                                           keys, schema_object,
+                                           key, schema_object,
                                            header='ignore')})
         cls._created_projects = []
 
