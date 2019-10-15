@@ -104,6 +104,10 @@ class BitsPerTokenStrategy(StrategySpec):
     This is the strategy from the original Schnell paper. The provided value 'bits_per_token' (the 'k' value in the
     paper) defines the number of hash functions that are used to insert each token into the Bloom filter.
 
+    One important property of this strategy is that the total number of inserted bits for a feature relates to the
+    length of its value. This can have privacy implications, as the number of bits set in a Bloom filter correlate to
+    the number of tokens of the PII.
+
     :ivar int bits_per_token: how often each token should be inserted into the filter
     """
     def __init__(self,
