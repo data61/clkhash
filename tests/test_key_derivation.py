@@ -5,7 +5,7 @@ from future.builtins import zip
 
 from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.field_formats import FieldHashingProperties, StringSpec
-from clkhash.key_derivation import DEFAULT_KEY_SIZE, generate_key_lists, hkdf
+from clkhash.key_derivation import DEFAULT_KEY_SIZE, DEFAULT_NUM_HASHING_METHODS, generate_key_lists, hkdf
 from clkhash.schema import Schema
 from clkhash import comparators
 
@@ -18,20 +18,38 @@ class TestKeyDerivation(unittest.TestCase):
             for key_size in (2, 20):
                 keys = hkdf(master_secret, num_keys, key_size=key_size)
                 self.assertEqual(len(keys), num_keys)
+                set_of_keys = set()
                 for key in keys:
                     self.assertEqual(len(key), key_size)
+                    set_of_keys.add(key)
+                # Checking that there are no duplicate keys
+                self.assertEquals(num_keys, len(set_of_keys))
 
     def test_generate_key_lists(self):
         master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
         for num_keys in (1, 10):
             key_lists = generate_key_lists(master_secret, num_keys)
-            self.assertEqual(len(key_lists), num_keys)
-            for l in key_lists:
-                self.assertEqual(len(l), 2)
-            for key in key_lists[0]:
+            self._test_key_lists(key_lists, num_keys, DEFAULT_NUM_HASHING_METHODS)
+
+    def test_generate_key_lists_num_hashes(self):
+        master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+        num_keys = 10
+        for num_hashing_methods in (1, 10):
+            key_lists = generate_key_lists(master_secret, num_keys, num_hashing_methods=num_hashing_methods)
+            self._test_key_lists(key_lists, num_keys, num_hashing_methods)
+
+    def _test_key_lists(self, key_lists, num_keys, num_hashing_methods):
+        self.assertEqual(len(key_lists), num_keys)
+        set_of_keys = set()
+        for l in key_lists:
+            self.assertEqual(len(l), num_hashing_methods)
+            for key in l:
                 self.assertEqual(len(key), DEFAULT_KEY_SIZE,
                                  msg='key should be of size '
                                      '"default_key_size"')
+                set_of_keys.add(key)
+        # Checking that there are no duplicate keys
+        self.assertEquals(num_hashing_methods * num_keys, len(set_of_keys))
 
     def test_fail_generate_key_lists(self):
         with self.assertRaises(TypeError):
@@ -92,3 +110,8 @@ class TestKeyDerivation(unittest.TestCase):
             hkdf('foo'.encode('ascii'),
                  3,
                  hash_algo='obviously_unsupported')
+
+    def test_wrong_num_hashing_methods(self):
+        with self.assertRaises(ValueError):
+            master_secret = "No, I am your father. No... that's not true! That's impossible!".encode()
+            generate_key_lists(master_secret, 10, num_hashing_methods=0)
