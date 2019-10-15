@@ -72,16 +72,18 @@ class MissingValueSpec(object):
 class StrategySpec(object):
     """ Stores the information about the insertion strategy.
 
-    A strategy has to implement the 'ks' function, which defines how often a token gets inserted into the Bloom filter.
+    A strategy has to implement the 'bits_per_token' function, which defines how often each token gets inserted into
+    the Bloom filter.
     """
 
     @abc.abstractmethod
-    def ks(self, num_tokens):
+    def bits_per_token(self, num_tokens):
         # type: (int) -> List[int]
-        """ Return a list of 'num_tokens' 'k' values, defining how often a token gets inserted into the Bloom filter.
+        """ Return a list of integers, one for each of the `num_tokens` tokens, defining how often that token gets
+        inserted into the Bloom filter.
 
-        :param int num_tokens: number of tokens in the field value
-        :return: [ k, ... ]
+        :param int num_tokens: number of tokens in the feature's value
+        :return: [ k, ... ] with k's >= 0
         """
         pass
 
@@ -108,11 +110,11 @@ class BitsPerTokenStrategy(StrategySpec):
                  bits_per_token  # type: int
                  ):
         # type: (...) -> None
-        self.bits_per_token = bits_per_token
+        self._bits_per_token = bits_per_token
 
-    def ks(self, num_tokens):
+    def bits_per_token(self, num_tokens):
         # type: (int) -> List[int]
-        return [self.bits_per_token] * num_tokens
+        return [self._bits_per_token] * num_tokens
 
 
 class BitsPerFeatureStrategy(StrategySpec):
@@ -129,12 +131,12 @@ class BitsPerFeatureStrategy(StrategySpec):
                  bits_per_feature  # type: int
                  ):
         # type: (...) -> None
-        self.bits_per_feature = bits_per_feature
+        self._bits_per_feature = bits_per_feature
 
-    def ks(self, num_tokens):
+    def bits_per_token(self, num_tokens):
         # type: (int) -> List[int]
-        k = int(self.bits_per_feature / num_tokens)
-        residue = self.bits_per_feature % num_tokens
+        k = int(self._bits_per_feature / num_tokens)
+        residue = self._bits_per_feature % num_tokens
         return ([k + 1] * residue) + ([k] * (num_tokens - residue))
 
 
@@ -192,16 +194,6 @@ class FieldHashingProperties(object):
         self.prevent_singularity = prevent_singularity
         self.strategy = strategy
         self.missing_value = missing_value
-
-    def ks(self, num_tokens):
-        # type: (int) -> List[int]
-        """
-        Provide a k for each ngram in the field value.
-
-        :param int num_tokens: number of tokens in the field value
-        :return: [ k, ... ]
-        """
-        return self.strategy.ks(num_tokens)
 
     def replace_missing_value(self, str_in):
         # type: (Text) -> Text
