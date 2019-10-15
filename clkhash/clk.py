@@ -35,7 +35,7 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
-    :param keys: A tuple of two lists of secret keys used in the HMAC.
+    :param keys: A tuple of two lists of secret keys used in the HMAC. Should have been created by `generate_key_lists`.
     :param Schema schema: Schema specifying the entry formats and
             hashing settings.
     :return: A list of serialized Bloom filters and a list of corresponding popcounts
@@ -49,7 +49,7 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
 
 
 def generate_clk_from_csv(input_f,  # type: TextIO
-                          keys,  # type: Tuple[AnyStr, AnyStr]
+                          key,  # type: AnyStr
                           schema,  # type: Schema
                           validate=True,  # type: bool
                           header=True,  # type: Union[bool, AnyStr]
@@ -63,7 +63,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
         generated Bloom filters.
 
         :param input_f: A file-like object of csv data to hash.
-        :param keys: A tuple of two lists of secret keys.
+        :param key: A secret key.
         :param schema: Schema specifying the record formats and
             hashing settings.
         :param validate: Set to `False` to disable validation of
@@ -112,13 +112,13 @@ def generate_clk_from_csv(input_f,  # type: TextIO
 
             results = generate_clks(pii_data,
                                     schema,
-                                    keys,
+                                    key,
                                     validate=validate,
                                     callback=callback)
     else:
         results = generate_clks(pii_data,
                                 schema,
-                                keys,
+                                key,
                                 validate=validate)
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
@@ -127,15 +127,16 @@ def generate_clk_from_csv(input_f,  # type: TextIO
 
 def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
                   schema,  # type: Schema
-                  keys,  # type: Tuple[AnyStr, AnyStr]
+                  key,  # type: AnyStr
                   validate=True,  # type: bool
                   callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
                   ):
     # type: (...) -> List[str]
 
-    # generate two keys for each identifier
+    # Generate two keys for each identifier, one key per hashing method used when computing the bloom filters.
+    # Otherwise could create more if required using the parameter `num_hashing_methods` in `generate_key_lists`
     key_lists = generate_key_lists(
-        keys,
+        key,
         len(schema.fields),
         key_size=schema.kdf_key_size,
         salt=schema.kdf_salt,
