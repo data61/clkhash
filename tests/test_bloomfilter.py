@@ -106,7 +106,7 @@ class TestEncoding(unittest.TestCase):
         f = lambda tokens: double_hash_encode_ngrams(
             tokens,
             (self.key_sha1, self.key_md5),
-            fhp.ks(len(tokens)),
+            fhp.strategy.bits_per_token(len(tokens)),
             1024,
             fhp.encoding)
         b1 = f(e1)

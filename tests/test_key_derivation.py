@@ -81,7 +81,7 @@ class TestKeyDerivation(unittest.TestCase):
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will
         # map each Bobby to different bits.
         self.assertLessEqual(legacy_count,
-                             fhp.strategy.ks(1)[0] * 6)  # 6 bi-grams
+                             fhp.strategy.bits_per_token(1)[0] * 6)  # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 

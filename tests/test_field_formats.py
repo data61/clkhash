@@ -56,7 +56,7 @@ class TestFieldFormats(unittest.TestCase):
         # Finally, check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
-        self.assertEqual(spec.hashing_properties.strategy.bits_per_token, 20)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='null')
@@ -139,7 +139,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
-        self.assertEqual(spec.hashing_properties.strategy.bits_per_token, 20)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         spec_dict['hashing']['missingValue'] = dict(sentinel='N/A')
@@ -316,7 +316,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, True)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
-        self.assertEqual(spec.hashing_properties.strategy.bits_per_token, 20)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         json_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
@@ -400,7 +400,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 0, False)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
-        self.assertEqual(spec.hashing_properties.strategy.bits_per_token, 20)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check for graceful fail if format spec is invalid
         spec.format = 'invalid%'
@@ -455,7 +455,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 2, False)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
-        self.assertEqual(spec.hashing_properties.strategy.bits_per_token, 20)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check missing values
         spec_dict['hashing']['missingValue']=dict(sentinel='', replaceWith='omg')
