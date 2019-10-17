@@ -43,11 +43,11 @@ Assume a csv (``fake-pii.csv``) contains rows like the following::
 
 It can be hashed using ``clkutil`` with::
 
-    $ clkutil hash --schema simple-schema.json fake-pii.csv horse staple clk.json
+    $ clkutil hash --schema simple-schema.json fake-pii.csv horse clk.json
 
 Where:
 
-- ``horse staple`` is the two part secret key that both participants will use to hash their data.
+- ``horse`` is the secret that both participants will use to hash their data.
 - ``simple-schema.json`` is a :ref:`schema` describing how to hash the csv. E.g, ignore the first
   column, use bigram tokens of the name, use positional unigrams of the date of birth etc.
 - ``clk.json`` is the output file.

@@ -131,7 +131,7 @@ class TestXorFolding(unittest.TestCase):
         schema_1.xor_folds = 1
         schema_1.l //= 2
 
-        key_lists = generate_key_lists(('secret', 'sshh'),
+        key_lists = generate_key_lists('secret',
                                        len(namelist.schema_types))
         bf_original, _, _ = next(bloomfilter.stream_bloom_filters(
             namelist.names,

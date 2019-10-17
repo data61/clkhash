@@ -5,6 +5,11 @@
 - Migrate to Azure DevOps for CI testing.
 - Synthetic data generation using distributions.
 
+BREAKING CHANGE:
+
+- The cli method `hash` requires only one secret instead of two.
+- The clks pre 0.14 are not compatible with clks from version 0.14.0
+
 ## 0.13.0
 
 - Fix example and test linkage schemas using v2.

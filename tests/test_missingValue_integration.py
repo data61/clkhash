@@ -58,6 +58,6 @@ def test_missing_value_integration():
 
     pii = [['Bob', '42'], ['null', 'NA']]
 
-    clks = generate_clks(pii, schema=s, keys=('sec1', 'sec2'))
+    clks = generate_clks(pii, schema=s, secret='sec')
     assert len(clks) == 2
     assert clks[0] == clks[1]
