@@ -126,7 +126,7 @@ def generate_key_lists(secret,  # type: Union[bytes, str]
         else:
             secret_bytes = secret.encode('UTF-8')
     except AttributeError:
-        raise TypeError("provided 'secret' have to be either of type bytes or strings.")
+        raise TypeError("provided 'secret' has to be either of type bytes or strings.")
     if kdf == 'HKDF':
         # we first create the good number of keys, and we then pack them in the expected way.
         key_tuples = hkdf(secret_bytes, num_hashing_methods * num_identifier,
