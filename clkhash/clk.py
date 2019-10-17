@@ -79,7 +79,7 @@ def generate_clk_from_csv(input_f,  # type: TextIO
             corresponding popcounts.
     """
     if header not in {False, True, 'ignore'}:
-        raise ValueError("header must be False, True or 'ignore' but is {}."
+        raise ValueError("header must be False, True or 'ignore' but is {!s}."
                          .format(header))
 
     log.info("Hashing data")
