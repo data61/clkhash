@@ -24,9 +24,16 @@ stages:
       inputs:
         versionSpec: '3.7'
     - script: |
+        python -m pip install -U mypy==0.730
+        mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+      displayName: 'mypy (pinned)'
+
+    - script: |
         python -m pip install -U mypy
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
-      displayName: 'mypy'
+      displayName: 'mypy (latest)'
+      continueOnError: true
+
   - job:
     displayName: "Check Git Tags"
     steps:
