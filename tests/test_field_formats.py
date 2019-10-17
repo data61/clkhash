@@ -11,8 +11,8 @@ class TestFieldFormats(unittest.TestCase):
 
     def check_ngram_comparator(self, comparator, n, positional):
         self.assertIsInstance(comparator, comparators.NgramComparison)
-        self.assertEquals(comparator.n, n)
-        self.assertEquals(comparator.positional, positional)
+        self.assertEqual(comparator.n, n)
+        self.assertEqual(comparator.positional, positional)
 
     def test_string_regex(self):
         regex_spec = dict(
