@@ -1,16 +1,17 @@
 import unittest
 
+from clkhash.comparators import get_comparator
 from clkhash.field_formats import (DateSpec, EnumSpec, FieldHashingProperties,
-                                   IntegerSpec, StringSpec)
+                                   IntegerSpec, StringSpec, BitsPerTokenStrategy)
 from clkhash.validate_data import (EntryError, FormatError,
                                    validate_entries, validate_header,
                                    validate_row_lengths)
-from clkhash.comparators import get_comparator
 
 
 class FieldsMaker(unittest.TestCase):
     def setUp(self):
-        ascii_hashing = FieldHashingProperties(encoding='ascii', comparator=get_comparator({'type': 'ngram', 'n': 2}), k=20)
+        ascii_hashing = FieldHashingProperties(encoding='ascii', comparator=get_comparator({'type': 'ngram', 'n': 2}),
+                                               strategy=BitsPerTokenStrategy(20))
         self.fields = [
             StringSpec(
                 identifier='given name',

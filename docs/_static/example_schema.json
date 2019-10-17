@@ -26,7 +26,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "blakeHash"}
       }
     },
@@ -41,7 +41,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "blakeHash"},
         "missingValue": {
           "sentinel": "NA",
@@ -59,7 +59,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "blakeHash"}
       }
     },
@@ -73,7 +73,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"k":  15},
+        "strategy": {"bitsPerToken":  15},
         "hash": {"type": "doubleHash", "prevent_singularity":  true}
       }
     },
@@ -86,7 +86,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  110},
+        "strategy": {"bitsPerFeature":  110},
         "hash": {"type": "doubleHash", "prevent_singularity":  true}
       }
     },
@@ -99,7 +99,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"k":  15},
+        "strategy": {"bitsPerToken":  15},
         "hash": {"type": "blakeHash"}
       }
     },
@@ -112,7 +112,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  110},
+        "strategy": {"bitsPerFeature":  110},
         "hash": {"type": "doubleHash"}
       }
     },
@@ -126,7 +126,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "blakeHash"}
       }
     },
@@ -141,7 +141,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 2},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "doubleHash", "prevent_singularity":  true}
       }
     },
@@ -154,7 +154,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"k":  20},
+        "strategy": {"bitsPerToken":  20},
         "hash": {"type": "doubleHash"}
       }
     },
@@ -168,7 +168,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  80},
+        "strategy": {"bitsPerFeature":  80},
         "hash": {"type": "blakeHash"}
       }
     },
@@ -181,7 +181,7 @@
       },
       "hashing": {
         "comparison": {"type":  "ngram", "n": 1, "positional":  true},
-        "strategy": {"numBits":  100},
+        "strategy": {"bitsPerFeature":  100},
         "hash": {"type": "doubleHash", "prevent_singularity":  true},
         "missingValue": {
           "sentinel": ""

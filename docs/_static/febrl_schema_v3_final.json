@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "clkConfig": {
+    "l": 1024,
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+        "info": "c2NoZW1hX2V4YW1wbGU=",
+        "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+        "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "rec_id",
+      "ignored": true
+    },
+    {
+      "identifier": "given_name",
+      "format": { "type": "string", "encoding": "utf-8", "maxLength": 64 },
+      "hashing": { "comparison": {"type": "ngram", "n": 2}, "strategy": {"bitsPerFeature": 200}, "hash": {"type": "doubleHash"} }
+    },
+    {
+      "identifier": "surname",
+      "format": { "type": "string", "encoding": "utf-8", "maxLength": 64 },
+      "hashing": { "comparison": {"type": "ngram", "n": 2}, "strategy": {"bitsPerFeature": 200}, "hash": {"type": "doubleHash"} }
+    },
+    {
+      "identifier": "street_number",
+      "format": { "type": "integer" },
+      "hashing": { "comparison": {"type": "ngram", "n": 1, "positional": true}, "strategy": {"bitsPerFeature": 100}, "missingValue": {"sentinel": ""} }
+    },
+    {
+      "identifier": "address_1",
+      "format": { "type": "string", "encoding": "utf-8" },
+      "hashing": { "comparison": {"type": "ngram", "n": 2}, "strategy": {"bitsPerFeature":  100} }
+    },
+    {
+      "identifier": "address_2",
+      "format": { "type": "string", "encoding": "utf-8" },
+      "hashing": { "comparison": {"type": "ngram", "n": 2}, "strategy": {"bitsPerFeature":  100} }
+    },
+    {
+      "identifier": "suburb",
+      "format": { "type": "string", "encoding": "utf-8" },
+      "hashing": { "comparison": {"type": "ngram", "n": 2}, "strategy": {"bitsPerFeature":  100} }
+    },
+    {
+      "identifier": "postcode",
+      "format": { "type": "integer", "minimum": 50, "maximum": 9999 },
+      "hashing": { "comparison": {"type": "ngram", "n": 1, "positional": true}, "strategy": {"bitsPerFeature":  100} }
+    },
+    {
+      "identifier": "state",
+      "format": { "type": "string", "encoding":  "utf-8"},
+      "hashing": {"comparison": {"type": "ngram", "n": 2, "positional": true}, "strategy": {"bitsPerFeature": 100}, "missingValue": {"sentinel":  ""}
+      }
+    },
+    {
+      "identifier": "date_of_birth",
+      "format": { "type": "integer" },
+      "hashing": { "comparison": {"type": "ngram", "n": 1, "positional": true}, "strategy": {"bitsPerFeature":  200}, "missingValue": {"sentinel": ""} }
+    },
+    {
+      "identifier": "soc_sec_id",
+      "ignored": true
+    }
+  ]
+}

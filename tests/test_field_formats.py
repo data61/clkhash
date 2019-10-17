@@ -22,7 +22,7 @@ class TestFieldFormats(unittest.TestCase):
                 encoding='ascii',
                 pattern=r'[5-9',  # This is syntactically incorrect.
                 description='foo'),
-            hashing=dict(comparison=dict(type='ngram', n=1), strategy=dict(k=20)))
+            hashing=dict(comparison=dict(type='ngram', n=1), strategy=dict(bitsPerToken=20)))
 
         # Make sure we don't accept bad regular expressions.
         with self.assertRaises(field_formats.InvalidSchemaError):
@@ -55,7 +55,8 @@ class TestFieldFormats(unittest.TestCase):
 
         # Finally, check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
-        self.assertEqual(spec.hashing_properties.k, 20)
+        self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         regex_spec['hashing']['missingValue'] = dict(sentinel='null')
@@ -72,7 +73,7 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual('cat', spec.hashing_properties.replace_missing_value('null'))
         # check invalid format specs
         hashing_properties = field_formats.FieldHashingProperties(
-            comparator=self.bigram_tokenizer, k=20)
+            comparator=self.bigram_tokenizer, strategy=field_formats.BitsPerTokenStrategy(20))
         with self.assertRaises(ValueError):
             spec = field_formats.StringSpec(
                 identifier='regex',
@@ -96,7 +97,7 @@ class TestFieldFormats(unittest.TestCase):
             hashing=dict(
                 comparison=dict(n=1, type='ngram'),
                 positional=True,
-                strategy=dict(k=20)))
+                strategy=dict(bitsPerToken=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -137,7 +138,8 @@ class TestFieldFormats(unittest.TestCase):
 
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, False)
-        self.assertEqual(spec.hashing_properties.k, 20)
+        self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         spec_dict['hashing']['missingValue'] = dict(sentinel='N/A')
@@ -147,7 +149,7 @@ class TestFieldFormats(unittest.TestCase):
 
     def test_string_nonregex_init(self):
         hashing_properties = field_formats.FieldHashingProperties(
-            comparator=self.bigram_tokenizer, k=20)
+            comparator=self.bigram_tokenizer, strategy=field_formats.BitsPerTokenStrategy(20))
         spec = field_formats.StringSpec(
             identifier='first name',
             hashing_properties=hashing_properties,
@@ -204,9 +206,8 @@ class TestFieldFormats(unittest.TestCase):
             identifier='stringWithoutEncoding',
             format=dict(type='string'),
             hashing=dict(
-                ngram=1,
-                positional=True,
-                strategy=dict(k=20)))
+                comparison=dict(type='ngram', n=1, positional=True),
+                strategy=dict(bitsPerToken=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -224,9 +225,8 @@ class TestFieldFormats(unittest.TestCase):
                 type='string',
                 pattern='f.+'),
             hashing=dict(
-                ngram=1,
-                positional=True,
-                strategy=dict(k=20)))
+                comparison=dict(type='ngram', n=1, positional=True),
+                strategy=dict(bitsPerToken=20)))
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -252,7 +252,7 @@ class TestFieldFormats(unittest.TestCase):
             },
             'hashing': {
                 'comparison': {'type': 'ngram', 'n': 1, 'positional': True},
-                'strategy': {'k': 20}
+                'strategy': {'bitsPerToken': 20}
             }
         }
 
@@ -315,7 +315,8 @@ class TestFieldFormats(unittest.TestCase):
 
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 1, True)
-        self.assertEqual(spec.hashing_properties.k, 20)
+        self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check with missing values
         json_spec['hashing']['missingValue'] = dict(sentinel='None', replaceWith='42')
@@ -330,7 +331,7 @@ class TestFieldFormats(unittest.TestCase):
             'format': {
                 'type': 'date', 'format': '%Y-%m-%d',
                 'description': 'phoenix dactylifera'},
-            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+            'hashing': {'comparison': {'type': 'ngram', 'n': 0}, 'strategy': {'bitsPerToken': 20}}
         }
 
         spec = field_formats.spec_from_json_dict(json_spec)
@@ -398,7 +399,8 @@ class TestFieldFormats(unittest.TestCase):
 
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 0, False)
-        self.assertEqual(spec.hashing_properties.k, 20)
+        self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check for graceful fail if format spec is invalid
         spec.format = 'invalid%'
@@ -411,8 +413,7 @@ class TestFieldFormats(unittest.TestCase):
             format=dict(
                 type='date',
                 format='%Y:%m-%d'),
-            hashing=dict(ngram=0, strategy=dict(k=20)))
-
+            hashing=dict(comparison=dict(type="ngram", n=0), strategy=dict(bitsPerToken=20)))
         spec = field_formats.spec_from_json_dict(regex_spec)
         from datetime import date
         from clkhash.field_formats import DateSpec
@@ -427,7 +428,8 @@ class TestFieldFormats(unittest.TestCase):
             'format': {
                 'type': 'enum',
                 'values': ['dogs', 'cats', u'fërrets'],
-                'description': 'fizz'}, 'hashing': {'comparison': {'type': 'ngram', 'n': 2}, 'strategy': {'k': 20}}}
+                'description': 'fizz'},
+            'hashing': {'comparison': {'type': 'ngram', 'n': 2}, 'strategy': {'bitsPerToken': 20}}}
 
         spec = field_formats.spec_from_json_dict(spec_dict)
 
@@ -452,7 +454,8 @@ class TestFieldFormats(unittest.TestCase):
 
         # Check the hashing specs.
         self.check_ngram_comparator(spec.hashing_properties.comparator, 2, False)
-        self.assertEqual(spec.hashing_properties.k, 20)
+        self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
+        self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
         # check missing values
         spec_dict['hashing']['missingValue']=dict(sentinel='', replaceWith='omg')
@@ -482,7 +485,7 @@ class TestFieldFormats(unittest.TestCase):
             'ignored': True,
             'format': {
                 'type': 'date', 'format': '%Y-%m-%d'},
-            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+            'hashing': {'comparison': {'type': 'ngram', 'n': 0}, 'strategy': {'bitsPerToken': 20}}
         }
         spec = field_formats.spec_from_json_dict(spec_dict)
         self.assertIsInstance(spec, field_formats.Ignore)
@@ -492,7 +495,7 @@ class TestFieldFormats(unittest.TestCase):
             'ignored': False,
             'format': {
                 'type': 'date', 'format': '%Y-%m-%d'},
-            'hashing': {'ngram': 0, 'strategy': {'k': 20}}
+            'hashing': {'comparison': {'type': 'ngram', 'n': 0}, 'strategy': {'bitsPerToken': 20}}
         }
         spec = field_formats.spec_from_json_dict(spec_dict)
         self.assertIsNotNone(spec.hashing_properties)
