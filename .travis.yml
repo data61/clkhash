@@ -32,14 +32,6 @@ jobs:
     - python: '3.8-dev'
 
   include:
-
-    - stage: Typecheck
-      python: 3.6
-      before_install:
-        - travis_retry pip install -U mypy
-      script:
-        - mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
-
     - stage: Test
       python: 'nightly'
     - python: '3.8-dev'
