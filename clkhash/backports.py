@@ -69,7 +69,7 @@ def re_compile_full(pattern, flags=0):
     # Don't worry, this short-circuits.
     assert type(pattern) is str or type(pattern) is unicode  # type: ignore
 
-    return re.compile(r'(?:{})\Z'.format(pattern), flags=flags)
+    return re.compile(r'(?:{!s})\Z'.format(pattern), flags=flags)
 
 
 def _utf_8_encoder(unicode_csv_data):

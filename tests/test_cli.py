@@ -19,6 +19,7 @@ from clkhash.rest_client import ServiceError, RestClient
 
 from tests import *
 
+ES_TIMEOUT = os.environ.get("ES_TIMEOUT", 20)
 
 class CLITestHelper(unittest.TestCase):
     SAMPLES = 100
@@ -685,7 +686,7 @@ class TestCliInteractionWithService(CLITestHelper):
         self.rest_client.wait_for_run(project['project_id'],
                                       run['run_id'],
                                       project['result_token'],
-                                      timeout=10)
+                                      timeout=ES_TIMEOUT)
 
         results_raw = get_coord_results()
         res = json.loads(results_raw)

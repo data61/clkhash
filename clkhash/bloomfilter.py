@@ -322,7 +322,7 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
             hash_function = hashing_function_from_properties(fhp)
             if ngrams:
                 bloomfilter |= hash_function(ngrams, key,
-                                             fhp.ks(len(ngrams)),
+                                             fhp.strategy.bits_per_token(len(ngrams)),
                                              hash_l, fhp.encoding)
 
     c1 = bloomfilter.count()

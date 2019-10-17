@@ -147,6 +147,33 @@ def convert_v1_to_v2(
     return result
 
 
+def convert_v2_to_v3(
+        dict  # type: Dict[str, Any]
+    ):
+    # type: (...) -> Dict[str, Any]
+    """
+    Convert v2 schema dict to v3 schema dict.
+    :param dict: v2 schema dict
+    :return: v3 schema dict
+    """
+    dict = deepcopy(dict)
+    version = dict['version']
+    if version != 2:
+        raise ValueError('Version {} not 2'.format(version))
+    dict['version'] = 3
+    for feature in dict['features']:
+        if feature.get('ignored', False):
+            continue
+        strategy = feature['hashing']['strategy']
+        if 'k' in strategy:
+            strategy['bitsPerToken'] = strategy.pop('k')
+        elif 'numBits' in strategy:
+            strategy['bitsPerFeature'] = strategy.pop('numBits')
+        ngrams = feature['hashing']['ngram']
+        feature['hashing']['comparison'] = {'type': 'ngram', 'n': feature['hashing'].pop('ngram'), 'positional': feature['hashing'].pop('positional', False)}
+    return dict
+
+
 def from_json_dict(dct, validate=True):
     # type: (Dict[str, Any], bool) -> Schema
     """ Create a Schema for v1 or v2 according to dct
@@ -167,8 +194,10 @@ def from_json_dict(dct, validate=True):
         validate_schema_dict(dct)
 
     version = dct['version']
-    if version == 1:
+    if dct['version'] == 1:
         dct = convert_v1_to_v2(dct)
+    if dct['version'] == 2:
+        dct = convert_v2_to_v3(dct)
         if validate:
             validate_schema_dict(dct)
     elif version not in MASTER_SCHEMA_FILE_NAMES.keys():
