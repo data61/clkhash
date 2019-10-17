@@ -31,7 +31,7 @@
           "n": 2
         },
         "strategy": {
-          "numBits": 200
+          "bitsPerFeature": 200
         }
       }
     },
@@ -51,7 +51,7 @@
           "n": 2
         },
         "strategy": {
-          "k": 20
+          "bitsPerToken": 20
         }
       }
     },
@@ -68,7 +68,7 @@
           "type": "ngram",
           "n": 2
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -85,7 +85,7 @@
           "n": 1,
           "positional": true
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -101,7 +101,7 @@
           "n": 1,
           "positional": true
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -116,7 +116,7 @@
           "type": "ngram",
           "n": 2
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -130,7 +130,7 @@
         "comparison": {
           "type": "exact"
         },
-        "strategy": {"numBits":  100}
+        "strategy": {"bitsPerFeature":  100}
       }
     },
     {
@@ -147,7 +147,7 @@
           "n": 1,
           "positional": true
         },
-        "strategy": {"numBits":  300}
+        "strategy": {"bitsPerFeature":  300}
       }
     },
     {
@@ -164,7 +164,7 @@
           "type": "ngram",
           "n": 2
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -181,7 +181,7 @@
           "n": 1,
           "positional": true
         },
-        "strategy": {"numBits":  200}
+        "strategy": {"bitsPerFeature":  200}
       }
     },
     {
@@ -197,7 +197,7 @@
           "n": 1,
           "positional": true
         },
-        "strategy": {"numBits":  100}
+        "strategy": {"bitsPerFeature":  100}
       }
     }
   ]

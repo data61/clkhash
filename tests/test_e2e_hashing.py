@@ -3,7 +3,7 @@ import os
 import unittest
 
 from clkhash import bloomfilter, clk, randomnames, schema
-from clkhash.field_formats import FieldHashingProperties, StringSpec
+from clkhash.field_formats import FieldHashingProperties, StringSpec, BitsPerTokenStrategy, BitsPerFeatureStrategy
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.serialization import deserialize_bitarray
@@ -44,7 +44,7 @@ class TestV2(unittest.TestCase):
                                 clk.generate_clks(pii, schema_v2, secret)):
             self.assertEqual(clkv1, clkv2)
 
-    def test_compare_k_and_num_bits(self):
+    def test_compare_strategies(self):
         def mkSchema(hashing_properties):
             return Schema(
                 l=1024,
@@ -75,7 +75,7 @@ class TestV2(unittest.TestCase):
         schema_k = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
             comparator=bigram_tokenizer,
-            k=20,
+            strategy=BitsPerTokenStrategy(20),
             hash_type='doubleHash'
         ))
 
@@ -85,7 +85,7 @@ class TestV2(unittest.TestCase):
         schema_num_bits = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
             comparator=bigram_tokenizer,
-            num_bits=int(round(mean_k)),
+            strategy=BitsPerFeatureStrategy(int(round(mean_k))),
             hash_type='doubleHash'
         ))
         mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, secret)
@@ -144,7 +144,7 @@ class TestHashingWithDifferentK(unittest.TestCase):
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         comparator=bigram_tokenizer,
-                        k=20
+                        strategy=BitsPerTokenStrategy(20)
                     ),
                     description=None,
                     case=StringSpec._DEFAULT_CASE,
@@ -157,16 +157,16 @@ class TestHashingWithDifferentK(unittest.TestCase):
         pii = [['Deckard']]
         keys = generate_key_lists('secret', 1)
 
-        schema.fields[0].hashing_properties.k = 0
+        schema.fields[0].hashing_properties.strategy = BitsPerTokenStrategy(0)
         bf0 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.k = 20
+        schema.fields[0].hashing_properties.strategy = BitsPerTokenStrategy(20)
         bf1 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.k = 40
+        schema.fields[0].hashing_properties.strategy = BitsPerTokenStrategy(40)
         bf2 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
-        schema.fields[0].hashing_properties.k = 30
+        schema.fields[0].hashing_properties.strategy = BitsPerTokenStrategy(30)
         bf15 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
 
         self.assertEqual(bf0[0].count(), 0)
@@ -200,7 +200,7 @@ class TestHashingWithDifferentHashFunctions(unittest.TestCase):
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         comparator=bigram_tokenizer,
-                        k=25,
+                        strategy=BitsPerTokenStrategy(25),
                         hash_type='blakeHash'
                     ),
                     description=None,
@@ -213,7 +213,7 @@ class TestHashingWithDifferentHashFunctions(unittest.TestCase):
                     hashing_properties=FieldHashingProperties(
                         encoding=FieldHashingProperties._DEFAULT_ENCODING,
                         comparator=bigram_tokenizer,
-                        k=25,
+                        strategy=BitsPerTokenStrategy(25),
                         hash_type='doubleHash'
                     ),
                     description=None,

@@ -4,7 +4,7 @@ import unittest
 from future.builtins import zip
 
 from clkhash.bloomfilter import stream_bloom_filters
-from clkhash.field_formats import FieldHashingProperties, StringSpec
+from clkhash.field_formats import FieldHashingProperties, StringSpec, BitsPerTokenStrategy
 from clkhash.key_derivation import DEFAULT_KEY_SIZE, DEFAULT_NUM_HASHING_METHODS, generate_key_lists, hkdf
 from clkhash.schema import Schema
 from clkhash import comparators
@@ -70,7 +70,7 @@ class TestKeyDerivation(unittest.TestCase):
         fhp = FieldHashingProperties(
             comparator=comparators.get_comparator({'type': 'ngram', 'n': 2}),
             hash_type='doubleHash',
-            k=10
+            strategy=BitsPerTokenStrategy(bits_per_token=10)
         )
 
         schema = Schema(
@@ -97,7 +97,7 @@ class TestKeyDerivation(unittest.TestCase):
         # lecay will map the 4 Bobbys' to the same bits, whereas hkdf will
         # map each Bobby to different bits.
         self.assertLessEqual(legacy_count,
-                             fhp.k * 6)  # 6 bi-grams
+                             fhp.strategy.bits_per_token(1)[0] * 6)  # 6 bi-grams
         self.assertLess(legacy_count, hkdf_count)
         self.assertLessEqual(hkdf_count, len(row) * legacy_count)
 
