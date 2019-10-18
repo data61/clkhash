@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import abc
 import decimal
-from decimal import Decimal, DecimalException
+from decimal import Decimal
 from typing import Iterable, Text, Dict, Any, Optional
 
 from future.builtins import range
@@ -195,5 +195,8 @@ def get_comparator(comp_desc):
         return NgramComparison(comp_desc.get('n', -1), comp_desc.get('positional'))
     elif typ == 'exact':
         return ExactComparison()
+    elif typ == 'numeric':
+        return NumericComparison(threshold_distance=comp_desc.get('thresholdDistance'),
+                                 resolution=comp_desc.get('resolution'))
     else:
         raise ValueError("unsupported comparison strategy: '{}'".format(typ))

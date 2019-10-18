@@ -176,7 +176,8 @@
         "comparison": {"type":  "object", "oneOf":
         [
           {"$ref": "#/definitions/ngramComparison"},
-          {"$ref": "#/definitions/exactComparison"}
+          {"$ref": "#/definitions/exactComparison"},
+          {"$ref": "#/definitions/numericComparison"}
         ]
         },
         "missingValue": {"$ref": "#/definitions/missingValue"}
@@ -196,6 +197,15 @@
       "required":  ["type"],
       "properties": {
         "type": {"const":  "exact"}
+      }
+    },
+    "numericComparison": {
+      "type": "object",
+      "required": ["type", "thresholdDistance", "resolution"],
+      "properties": {
+        "type": {"const":  "numeric"},
+        "thresholdDistance": {"type": "number", "exclusiveMinimum":  0.0},
+        "resolution": {"type":  "integer", "minimum": 1}
       }
     },
     "doubleHash": {
