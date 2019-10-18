@@ -251,7 +251,7 @@ class TestFieldFormats(unittest.TestCase):
                 'description': 'buzz'
             },
             'hashing': {
-                'comparison': {'type': 'ngram', 'n': 1, 'positional': True},
+                'comparison': {'type': 'numeric', 'thresholdDistance': 100.4, 'resolution': 25},
                 'strategy': {'bitsPerToken': 20}
             }
         }
@@ -314,7 +314,10 @@ class TestFieldFormats(unittest.TestCase):
         self.assertEqual(spec.description, 'buzz')
 
         # Check the hashing specs.
-        self.check_ngram_comparator(spec.hashing_properties.comparator, 1, True)
+        comparator = spec.hashing_properties.comparator
+        self.assertIsInstance(comparator, comparators.NumericComparison)
+        self.assertEqual(comparator.threshold_distance, 100.4)
+        self.assertEqual(comparator.resolution, 25)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
         self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
 
