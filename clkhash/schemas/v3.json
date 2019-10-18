@@ -157,7 +157,7 @@
           {
             "required": ["bitsPerToken"],
             "bitsPerToken": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "default": 20,
               "description": "every token gets inserted into the Bloom filter exactly 'bitsPerToken' times."
@@ -166,7 +166,7 @@
           {
             "required": ["bitsPerFeature"],
             "bitsPerFeature": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "default": 200,
               "description": "token get inserted into the Bloom filter a variable number of times such that the insertions of the tokens corresponding to one feature add up to 'bitsPerFeature'."
