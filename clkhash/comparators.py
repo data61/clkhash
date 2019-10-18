@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 
 import abc
+import decimal
+from decimal import Decimal, DecimalException
 from typing import Iterable, Text, Dict, Any, Optional
 
 from future.builtins import range
@@ -91,6 +93,72 @@ class ExactComparison(AbstractComparison):
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
         return word,
+
+
+class NumericComparison(AbstractComparison):
+    """ enables numerical comparisons of integers or floating point numbers.
+
+    The numerical distance between two numbers relate to the similarity of the tokens produces by this comparison class.
+    We implemented the idea of Vatsalan and Christen (Privacy-preserving matching of similar patients, Journal of
+    Biomedical Informatics, 2015).
+
+    The basic idea is to encode a number's neighbourhood. Such that the neighbourhoods of close numbers overlap.
+    For example, the tokens for x=21 are 19, 20, 21, 22, 23, and the tokens for y=23 are 21, 22, 23, 24, 25. Then the
+    two sets of tokens share three elements. It is easy to see that two numbers have more tokens in common the closer
+    they are to each other.
+
+    There are two parameter to control the overlap.
+    - threshold_distance: the maximum distance which leads to at least one common token. The token sets for points which
+                          are further apart have no elements in common. (*)
+    - resolution: controls how many tokens are generated. (the 'b' in the paper). Given an interval of size
+                  'threshold_distance' we create 'resolution tokens to either side of the mid-point plus one token for
+                  the mid-point. Thus,  2 * resolution + 1 tokens in total. A higher resolution differentiates better
+                  between different values, but should be chosen such that it plays nicely with the overall Bloom filter
+                  size and insertion strategy.
+
+    (*) the reality is a bit more tricky. Depending on the choice of parameters we first have to quantize the inputs, in
+    order to get comparable tokens. For example, if we choose a 'threshold_distance' of 8 and a 'resolution' of 2, then
+    the tokens for x=25 would be [21, 23, 25, 27, 29] and for y=26 [22, 24, 26, 28, 30], resulting in sets with no
+    common element. The quantization ensures that the inputs are mapped onto a common grid. In our example, the values
+    would be quantized to even numbers. Thus x=25 would be mapped to 26, and z=24.99 would be mapped to 24.
+    The quantization has the side effect that sometimes two values who are further than 'threshold_distance' but not
+    more than 'threshold_distance' + 1/2 quantization level apart can share a common token.
+
+    :ivar threshold_distance: maximum detectable distance. Points that are further apart won't have tokens in common.
+    :ivar resolution: controls the amount of generated tokens. Total number of tokens will be 2 * resolution + 1
+    """
+
+    def __init__(self, threshold_distance, resolution):
+        # type: (str, int) -> None
+        self.threshold_distance = Decimal(threshold_distance)
+        self.resolution = resolution
+        self.distance_interval = self.threshold_distance
+        self.min_prec = self._get_precision(self.threshold_distance)
+        self.resolution_prec = self._get_precision(Decimal(resolution))
+
+    @staticmethod
+    def _get_precision(x):  # type: (Decimal) -> int
+        return len(x.as_tuple().digits)
+
+    def tokenize(self, word):  # type: (Text) -> Iterable[Text]
+        v = Decimal(word)
+        # we have to adjust the precision of the Decimal context such that we don't get rounding, because that might
+        # lead to slightly different tokens
+        v_prec = self._get_precision(v)
+        if decimal.getcontext().prec < sum((v_prec, self.min_prec, self.resolution_prec, 5)):
+            decimal.getcontext().prec = sum((v_prec, self.min_prec, self.resolution_prec, 5))
+        v = v * 2 * self.resolution
+        residue = v % self.distance_interval
+        # that is not a proper mod function above. negative numbers have a negative residue
+        if residue < 0:
+            residue += self.distance_interval
+        if residue == 0.0:
+            v = v
+        elif residue < self.distance_interval / 2:
+            v = v - residue
+        else:
+            v = v + (self.distance_interval - residue)
+        return [str((v + i * self.distance_interval).normalize()) for i in range(-self.resolution, self.resolution + 1)]
 
 
 class NonComparison(AbstractComparison):

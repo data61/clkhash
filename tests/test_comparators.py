@@ -1,12 +1,14 @@
+import decimal
 import itertools
+import random
 
 import pytest
 from hypothesis import given, assume
-from hypothesis.strategies import text, integers
+from hypothesis.strategies import text, integers, decimals
 from pytest import fixture
 
 from clkhash import comparators
-from clkhash.comparators import NgramComparison, NonComparison, ExactComparison
+from clkhash.comparators import NgramComparison, NonComparison, ExactComparison, NumericComparison
 
 
 #######
@@ -83,6 +85,55 @@ def test_exact_uniqueness(word1, word2):
 @given(word=text())
 def test_exact_num_tokens(word):
     assert len(list(ExactComparison().tokenize(word))) == 1
+
+
+#####
+# testing numeric comparison
+#####
+@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
+       resolution=integers(min_value=1, max_value=512),
+       candidate=decimals(allow_infinity=False, allow_nan=False))
+def test_numeric_properties(thresh_dist, resolution, candidate):
+    assume(thresh_dist > 0)
+    tokens = NumericComparison(thresh_dist, resolution).tokenize(str(candidate))
+    assert len(tokens) == 2 * resolution + 1, "unexpected number of tokens"
+    tokens_again = NumericComparison(thresh_dist, resolution).tokenize(str(candidate))
+    assert tokens == tokens_again, "NumericComparison should be deterministic"
+    assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
+
+
+@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
+       resolution=integers(min_value=1, max_value=512),
+       candidate=decimals(allow_infinity=False, allow_nan=False))
+def test_numeric_overlaps(thresh_dist, resolution, candidate):
+    comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution)
+    assume(thresh_dist > 0)
+    decimal.getcontext().prec = max(decimal.getcontext().prec, comp._get_precision(candidate),
+                                    comp._get_precision(thresh_dist))
+    other = candidate + thresh_dist
+    cand_tokens = comp.tokenize(candidate)
+    other_tokens = comp.tokenize(other)
+    assert len(set(cand_tokens).intersection(
+        set(other_tokens))) == 1, "numbers exactly thresh_dist apart have 1 token in common"
+    other = candidate + thresh_dist * decimal.Decimal('1.51')  # 0.5 because of the modulo operation
+    other_tokens = comp.tokenize(other)
+    assert len(set(cand_tokens).intersection(
+        set(other_tokens))) == 0, "numbers more than thresh_dist apart have no tokens in common"
+    other = candidate + (thresh_dist / decimal.Decimal(2 * resolution)) * decimal.Decimal(random.random())
+    other_tokens = comp.tokenize(other)
+    assert len(set(cand_tokens).intersection(
+        set(other_tokens))) >= len(
+        cand_tokens) - 2, "numbers that are not more than the modulus apart have all or all - 2 tokens in common"
+
+    numbers = [candidate + thresh_dist * decimal.Decimal(str(i/10)) for i in range(20)]
+
+    def overlap(other):
+        other_tokens = comp.tokenize(other)
+        return len(set(cand_tokens).intersection(set(other_tokens)))
+    overlaps = [overlap(num) for num in numbers]
+    assert overlaps[0] == len(cand_tokens)
+    assert overlaps[-1] == 0
+    assert all(x >= y for x, y in zip(overlaps, overlaps[1:])), 'with increasing distance, the overlap reduces'
 
 
 #####
