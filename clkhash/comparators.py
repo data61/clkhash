@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import abc
 import decimal
+import math
 from decimal import Decimal
 from typing import Iterable, Text, Dict, Any, Optional
 
@@ -126,39 +127,43 @@ class NumericComparison(AbstractComparison):
 
     :ivar threshold_distance: maximum detectable distance. Points that are further apart won't have tokens in common.
     :ivar resolution: controls the amount of generated tokens. Total number of tokens will be 2 * resolution + 1
+    :ivar precision: the precision of the context the input values live in.
+                     (see https://docs.python.org/3/library/decimal.html#context-objects). Default is 28 decimal places.
     """
 
-    def __init__(self, threshold_distance, resolution):
-        # type: (str, int) -> None
-        self.threshold_distance = Decimal(threshold_distance)
+    def __init__(self, threshold_distance, resolution, precision=28):
+        # type: (str, int, Optional[int]) -> None
+        self.threshold_distance = decimal.DefaultContext.create_decimal(Decimal(threshold_distance))
         self.resolution = resolution
+        res_precision = math.ceil(math.log(float(resolution), 10)) + 2
+        # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
+        # use threshold_distance as distance_interval (saves a division which would need more precision)
         self.distance_interval = self.threshold_distance
-        self.min_prec = self._get_precision(self.threshold_distance)
-        self.resolution_prec = self._get_precision(Decimal(resolution))
-
-    @staticmethod
-    def _get_precision(x):  # type: (Decimal) -> int
-        return len(x.as_tuple().digits)
+        # in this step we quantize the distance interval to just enough precision to be able to generate 'resolution'
+        # different steps.
+        dist_res = self.distance_interval.adjusted() - res_precision
+        self.distance_interval = self.distance_interval.quantize(Decimal(f'1e{dist_res}'))
+        # we need a bit more precision as we multiply inputs by resolution during tokenization, thus, we create our own
+        # special context
+        self.context = decimal.Context(prec=precision + res_precision)
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
-        v = Decimal(word)
-        # we have to adjust the precision of the Decimal context such that we don't get rounding, because that might
-        # lead to slightly different tokens
-        v_prec = self._get_precision(v)
-        if decimal.getcontext().prec < sum((v_prec, self.min_prec, self.resolution_prec, 5)):
-            decimal.getcontext().prec = sum((v_prec, self.min_prec, self.resolution_prec, 5))
-        v = v * 2 * self.resolution
-        residue = v % self.distance_interval
-        # that is not a proper mod function above. negative numbers have a negative residue
-        if residue < 0:
-            residue += self.distance_interval
+        v = self.context.create_decimal(word)
+        v = self.context.multiply(v, 2 * self.resolution)
+        try:
+            residue = v.remainder_near(self.distance_interval, context=self.context)
+        except decimal.DecimalException:
+            residue = Decimal('0.0')
+        if residue < 0:  # residue can be negative, but we want a proper 'mod' function.
+            residue = self.context.add(residue, self.distance_interval)
         if residue == 0.0:
             v = v
         elif residue < self.distance_interval / 2:
-            v = v - residue
+            v = self.context.subtract(v, residue)
         else:
-            v = v + (self.distance_interval - residue)
-        return [str((v + i * self.distance_interval).normalize()) for i in range(-self.resolution, self.resolution + 1)]
+            v = self.context.add(v, self.context.subtract(self.distance_interval, residue))
+        return [str(self.context.normalize(self.context.add(v, i * self.distance_interval))) for i in
+                range(-self.resolution, self.resolution + 1)]
 
 
 class NonComparison(AbstractComparison):

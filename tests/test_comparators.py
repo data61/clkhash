@@ -90,11 +90,16 @@ def test_exact_num_tokens(word):
 #####
 # testing numeric comparison
 #####
-@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
+
+
+@given(thresh_dist=integers(min_value=1, max_value=28).flatmap(
+           lambda i: decimals(allow_infinity=False, allow_nan=False, min_value=0.0, places=i)),
        resolution=integers(min_value=1, max_value=512),
-       candidate=decimals(allow_infinity=False, allow_nan=False))
+       candidate=integers(min_value=1, max_value=28).flatmap(
+           lambda p: decimals(allow_infinity=False, allow_nan=False, places=p)))
 def test_numeric_properties(thresh_dist, resolution, candidate):
     assume(thresh_dist > 0)
+    assume(abs(candidate.adjusted() - thresh_dist.adjusted()) <= 28)
     tokens = NumericComparison(thresh_dist, resolution).tokenize(str(candidate))
     assert len(tokens) == 2 * resolution + 1, "unexpected number of tokens"
     tokens_again = NumericComparison(thresh_dist, resolution).tokenize(str(candidate))
@@ -102,15 +107,16 @@ def test_numeric_properties(thresh_dist, resolution, candidate):
     assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
-@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
+@given(thresh_dist=integers(min_value=1, max_value=28).flatmap(
+           lambda i: decimals(allow_infinity=False, allow_nan=False, min_value=0.0, places=i)),
        resolution=integers(min_value=1, max_value=512),
-       candidate=decimals(allow_infinity=False, allow_nan=False))
+       candidate=integers(min_value=1, max_value=28).flatmap(
+           lambda p: decimals(allow_infinity=False, allow_nan=False, places=p)))
 def test_numeric_overlaps(thresh_dist, resolution, candidate):
+    assume(abs(candidate.adjusted()-thresh_dist.adjusted()) < 28)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution)
     assume(thresh_dist > 0)
-    decimal.getcontext().prec = max(decimal.getcontext().prec, comp._get_precision(candidate),
-                                    comp._get_precision(thresh_dist))
-    other = candidate + thresh_dist
+    other = comp.context.add(candidate, thresh_dist)
     cand_tokens = comp.tokenize(candidate)
     other_tokens = comp.tokenize(other)
     assert len(set(cand_tokens).intersection(
@@ -124,7 +130,6 @@ def test_numeric_overlaps(thresh_dist, resolution, candidate):
     assert len(set(cand_tokens).intersection(
         set(other_tokens))) >= len(
         cand_tokens) - 2, "numbers that are not more than the modulus apart have all or all - 2 tokens in common"
-
     numbers = [candidate + thresh_dist * decimal.Decimal(str(i/10)) for i in range(20)]
 
     def overlap(other):
