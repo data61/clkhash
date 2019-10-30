@@ -142,7 +142,7 @@ class NumericComparison(AbstractComparison):
         # in this step we quantize the distance interval to just enough precision to be able to generate 'resolution'
         # different steps.
         dist_res = self.distance_interval.adjusted() - res_precision
-        self.distance_interval = self.distance_interval.quantize(Decimal(f'1e{dist_res}'))
+        self.distance_interval = self.distance_interval.quantize(Decimal('1e{}'.format(dist_res)))
         # we need a bit more precision as we multiply inputs by resolution during tokenization, thus, we create our own
         # special context
         self.context = decimal.Context(prec=precision + res_precision)
