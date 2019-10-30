@@ -135,7 +135,7 @@ class NumericComparison(AbstractComparison):
         # type: (str, int, Optional[int]) -> None
         self.threshold_distance = decimal.DefaultContext.create_decimal(Decimal(threshold_distance))
         self.resolution = resolution
-        res_precision = math.ceil(math.log(float(resolution), 10)) + 2
+        res_precision = int(math.ceil(math.log(float(resolution), 10))) + 2
         # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
         # use threshold_distance as distance_interval (saves a division which would need more precision)
         self.distance_interval = self.threshold_distance
