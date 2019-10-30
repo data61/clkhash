@@ -3,9 +3,10 @@ import itertools
 import random
 
 import pytest
-from hypothesis import given, assume
+from hypothesis import given, assume, settings
 from hypothesis.strategies import text, integers, decimals
 from pytest import fixture
+from datetime import timedelta
 
 from clkhash import comparators
 from clkhash.comparators import NgramComparison, NonComparison, ExactComparison, NumericComparison
@@ -92,11 +93,9 @@ def test_exact_num_tokens(word):
 #####
 
 
-@given(thresh_dist=integers(min_value=1, max_value=28).flatmap(
-           lambda i: decimals(allow_infinity=False, allow_nan=False, min_value=0.0, places=i)),
+@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
        resolution=integers(min_value=1, max_value=512),
-       candidate=integers(min_value=1, max_value=28).flatmap(
-           lambda p: decimals(allow_infinity=False, allow_nan=False, places=p)))
+       candidate=decimals(allow_infinity=False, allow_nan=False))
 def test_numeric_properties(thresh_dist, resolution, candidate):
     assume(thresh_dist > 0)
     assume(abs(candidate.adjusted() - thresh_dist.adjusted()) <= 28)
@@ -107,11 +106,10 @@ def test_numeric_properties(thresh_dist, resolution, candidate):
     assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
-@given(thresh_dist=integers(min_value=1, max_value=28).flatmap(
-           lambda i: decimals(allow_infinity=False, allow_nan=False, min_value=0.0, places=i)),
-       resolution=integers(min_value=1, max_value=512),
-       candidate=integers(min_value=1, max_value=28).flatmap(
-           lambda p: decimals(allow_infinity=False, allow_nan=False, places=p)))
+@given(thresh_dist=decimals(allow_infinity=False, allow_nan=False, min_value=0.0),
+       resolution=integers(min_value=1, max_value=256),
+       candidate=decimals(allow_infinity=False, allow_nan=False))
+@settings(deadline=timedelta(milliseconds=500))
 def test_numeric_overlaps(thresh_dist, resolution, candidate):
     assume(abs(candidate.adjusted()-thresh_dist.adjusted()) < 28)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution)
