@@ -1,14 +1,16 @@
 ## 0.14.0 (in development)
 
 - Fix bug where empty inputs don't generate tokens.
-- CLI commands to delete runs nad projects.
+- CLI commands to delete runs and projects.
 - Migrate to Azure DevOps for CI testing.
 - Synthetic data generation using distributions.
+- Switch to using a fork of `bitarray` that distributes binary wheels so installing clkhash doesn't require a compiler.
 
-BREAKING CHANGE:
+### Breaking Changes
 
 - The cli method `hash` requires only one secret instead of two.
-- The clks pre 0.14 are not compatible with clks from version 0.14.0
+- The clks generated with `clkhash` <= 0.14.0 are not compatible with clks from version 0.14.0 onwards.
+
 
 ## 0.13.0
 

@@ -6,7 +6,7 @@ if sys.version_info[0] < 3:
 
 requirements = [
         "bashplotlib>=0.6.5",
-        "bitarray>=0.8",
+        "bitarray-hardbyte>=1.0.0",             # Fork of bitarray distributing binary wheels #153
         "click>=6.7",
         "cryptography>=2.3",
         "enum34==1.1.6; python_version < '3.4'",
@@ -33,7 +33,7 @@ else:
 
 setup(
     name="clkhash",
-    version='0.14.0',
+    version='0.14.0-dev',
     description='Encoding utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
