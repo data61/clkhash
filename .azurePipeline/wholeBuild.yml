@@ -6,6 +6,7 @@ parameters:
 jobs:
 - job: 'test_and_publish'
   strategy:
+    maxParallel: 2
     matrix:
       ${{ each py in parameters.pythonVersions }}:
         ${{ each os in parameters.operatingSystems }}:
