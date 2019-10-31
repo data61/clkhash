@@ -174,9 +174,9 @@ def convert_to_latest_version(schema_dict):
     # type: (Dict[str, Any]) -> Dict[str, Any]
     """ Convert the given schema to latest schema version.
 
-     :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'features'` key
-            specifying the columns of the dataset. It must have a `'version'` key containing the master schema version
-            that this schema conforms to. It must have a `'hash'` key with all the globals.
+     :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'version'` key
+            containing a master schema version. The rest of the schema dict must conform to the corresponding
+            master schema.
      :return: schema dict of the latest version
      raises SchemaError if schema version is not supported"""
     version = schema_dict.get('version', "'not specified'")
