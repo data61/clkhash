@@ -23,7 +23,7 @@ install:
 
 script:
   - pytest --cov=clkhash
-  - codecov
+  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI
 
 
 jobs:
