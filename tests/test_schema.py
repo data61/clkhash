@@ -84,11 +84,22 @@ class TestSchemaValidation(unittest.TestCase):
 
         schema.MASTER_SCHEMA_FILE_NAMES = original_paths
 
-    def test_convert_v1_to_v2(self):
+    def test_schema_conversion(self):
         schema_v1 = _schema_dict(DATA_DIRECTORY, 'randomnames-schema.json')
-        schema.validate_schema_dict(schema_v1)
-        schema_v2 = schema.convert_v1_to_v2(schema_v1)
+        assert schema_v1['version'] == 1
+        schema_v2 = schema._convert_v1_to_v2(schema_v1)
+        assert schema_v2['version'] == 2
         schema.validate_schema_dict(schema_v2)
+        schema_v3 = schema._convert_v2_to_v3(schema_v2)
+        assert schema_v3['version'] == 3
+        schema.validate_schema_dict(schema_v3)
+
+    def test_convert_schema_to_latest(self):
+        schema_v1 = _schema_dict(DATA_DIRECTORY, 'randomnames-schema.json')
+        assert schema_v1['version'] == 1
+        newest_schema = schema.convert_to_latest_version(schema_v1)
+        schema.validate_schema_dict(newest_schema)
+        assert newest_schema['version'] == max(schema.MASTER_SCHEMA_FILE_NAMES.keys())
 
     def test_good_schema2_repr(self):
         with open(_test_data_file_path('good-schema-v2.json')) as f:
