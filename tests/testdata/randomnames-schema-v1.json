@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "clkConfig": {
+    "l": 1024,
+    "k": 30,
+    "hash": {
+      "type": "doubleHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "INDEX",
+      "format": {
+        "type": "integer"
+      },
+      "hashing": {
+        "ngram": 1,
+        "weight": 0
+      }
+    },
+    {
+      "identifier": "NAME freetext",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed",
+        "minLength": 3
+      },
+      "hashing": {
+        "ngram": 2,
+        "weight": 0.5
+      }
+    },
+    {
+      "identifier": "DOB YYYY/MM/DD",
+      "format": {
+        "type": "date",
+        "description": "Numbers separated by slashes, in the year, month, day order",
+        "format": "%Y/%m/%d"
+      },
+      "hashing": {
+        "ngram": 1,
+        "positional": true
+      }
+    },
+    {
+      "identifier": "GENDER M or F",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F"]
+      },
+      "hashing": {
+        "ngram": 1,
+        "weight": 2
+      }
+    }
+  ]
+}
