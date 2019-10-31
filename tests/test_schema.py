@@ -9,13 +9,17 @@ from jsonschema import ValidationError
 from clkhash import schema
 from clkhash.schema import SchemaError, MasterSchemaError
 
+from tests import *
+
 DATA_DIRECTORY = os.path.join(os.path.dirname(__file__),
                               '..', 'clkhash', 'data')
 
 TEST_DATA_DIRECTORY = os.path.join(os.path.dirname(__file__), 'testdata')
 
+
 def _test_data_file_path(file_name):
     return os.path.join(TEST_DATA_DIRECTORY, file_name)
+
 
 def _schema_dict(dir_name, file_name):
     with open(os.path.join(dir_name, file_name)) as f:
@@ -25,11 +29,11 @@ def _schema_dict(dir_name, file_name):
 class TestSchemaValidation(unittest.TestCase):
     def test_good_schema(self):
         # These are some perfectly fine schemas.
-        with open(_test_data_file_path('good-schema-v1.json')) as f:
+        with open(_test_data_file_path(GOOD_SCHEMA_V1_PATH)) as f:
             schema.from_json_file(f)
 
     def test_good_schema_repr(self):
-        with open(_test_data_file_path('good-schema-v1.json')) as f:
+        with open(_test_data_file_path(GOOD_SCHEMA_V1_PATH)) as f:
             s = schema.from_json_file(f)
         schema_repr = repr(s)
         assert "v3" in schema_repr  # v1 schema is converted to v2 and then to v3 :)
@@ -37,7 +41,7 @@ class TestSchemaValidation(unittest.TestCase):
 
     def test_invalid_schema(self):
         # This schema is not valid (missing encoding in its feature).
-        with open(_test_data_file_path('bad-schema-v1.json')) as f:
+        with open(_test_data_file_path(BAD_SCHEMA_V1_PATH)) as f:
             with self.assertRaises(SchemaError):
                 schema.from_json_file(f)
 
@@ -85,7 +89,7 @@ class TestSchemaValidation(unittest.TestCase):
         schema.MASTER_SCHEMA_FILE_NAMES = original_paths
 
     def test_schema_conversion(self):
-        schema_v1 = _schema_dict(DATA_DIRECTORY, 'randomnames-schema.json')
+        schema_v1 = _schema_dict(DATA_DIRECTORY, GOOD_SCHEMA_V1_PATH)
         assert schema_v1['version'] == 1
         schema_v2 = schema._convert_v1_to_v2(schema_v1)
         assert schema_v2['version'] == 2
@@ -95,21 +99,21 @@ class TestSchemaValidation(unittest.TestCase):
         schema.validate_schema_dict(schema_v3)
 
     def test_convert_schema_to_latest(self):
-        schema_v1 = _schema_dict(DATA_DIRECTORY, 'randomnames-schema.json')
+        schema_v1 = _schema_dict(DATA_DIRECTORY, GOOD_SCHEMA_V1_PATH)
         assert schema_v1['version'] == 1
         newest_schema = schema.convert_to_latest_version(schema_v1)
         schema.validate_schema_dict(newest_schema)
         assert newest_schema['version'] == max(schema.MASTER_SCHEMA_FILE_NAMES.keys())
 
     def test_good_schema2_repr(self):
-        with open(_test_data_file_path('good-schema-v2.json')) as f:
+        with open(_test_data_file_path(GOOD_SCHEMA_V2_PATH)) as f:
             s = schema.from_json_file(f)
         schema_repr = repr(s)
         assert "v3" in schema_repr
         assert "12 fields" in schema_repr
 
     def test_good_schema3_repr(self):
-        with open(_test_data_file_path('good-schema-v3.json')) as f:
+        with open(_test_data_file_path(GOOD_SCHEMA_V3_PATH)) as f:
             s = schema.from_json_file(f)
         schema_repr = repr(s)
         assert "v3" in schema_repr
