@@ -23,7 +23,7 @@ install:
 
 script:
   - pytest --cov=clkhash
-  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION"_"$EXTRAS"
+  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION""$EXTRAS"
 
 
 jobs:
@@ -37,15 +37,15 @@ jobs:
     - python: '3.8-dev'
       env:
         - INCLUDE_CLI=1
-        - EXTRAS=CLI
+        - EXTRAS=_CLI
     - python: '3.6'
       env:
         - INCLUDE_CLI=1
-        - EXTRAS=CLI
+        - EXTRAS=_CLI
     - python: '2.7'
       env:
         - INCLUDE_CLI=1
-        - EXTRAS=CLI
+        - EXTRAS=_CLI
     # OSX + Python is officially supported by Travis CI as of April 2011
     # https://docs.travis-ci.com/user/reference/osx/
     - os: osx
@@ -65,17 +65,17 @@ jobs:
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - EXTRAS=CLI_ES
+        - EXTRAS=_CLI_ES
     - stage: Integration
       python: '3.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - EXTRAS=CLI_ES
+        - EXTRAS=_CLI_ES
     - stage: Integration
       python: '2.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - EXTRAS=CLI_ES
+        - EXTRAS=_CLI_ES
 
