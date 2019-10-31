@@ -23,7 +23,7 @@ install:
 
 script:
   - pytest --cov=clkhash
-  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$COV_NAME"
+  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION"_"$EXTRAS"
 
 
 jobs:
@@ -34,27 +34,23 @@ jobs:
   include:
     - stage: Test
       python: 'nightly'
-      env:
-        - COV_NAME=linux_nightly
     - python: '3.8-dev'
       env:
         - INCLUDE_CLI=1
-        - COV_NAME=linux_3.8-dev_CLI
+        - EXTRAS=CLI
     - python: '3.6'
       env:
         - INCLUDE_CLI=1
-        - COV_NAME=linux_3.6_CLI
+        - EXTRAS=CLI
     - python: '2.7'
       env:
         - INCLUDE_CLI=1
-        - COV_NAME=linux_2.7_CLI
+        - EXTRAS=CLI
     # OSX + Python is officially supported by Travis CI as of April 2011
     # https://docs.travis-ci.com/user/reference/osx/
     - os: osx
       osx_image: xcode8.3
       python: "3.6-dev"
-      env:
-        - COV_NAME=osx_3.6
 
     - stage: Integration
       name: Test Notebooks
@@ -69,17 +65,17 @@ jobs:
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - COV_NAME=linux_3.8-dev_CLI_ES
+        - EXTRAS=CLI_ES
     - stage: Integration
       python: '3.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - COV_NAME=linux_3.7_CLI_ES
+        - EXTRAS=CLI_ES
     - stage: Integration
       python: '2.7'
       env:
         - TEST_ENTITY_SERVICE=https://testing.es.data61.xyz
         - INCLUDE_CLI=1
-        - COV_NAME=linux_2.7_CLI_ES
+        - EXTRAS=CLI_ES
 
