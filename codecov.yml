@@ -12,3 +12,8 @@ coverage:
 
 comment:
   layout: "header, diff, changes"
+
+# prevent premature reporting
+codecov:
+    notify:
+        after_n_builds: 5
