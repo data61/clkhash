@@ -165,6 +165,16 @@ class TestSchemaValidationCommand(unittest.TestCase):
         assert result.exit_code == -1
         assert 'schema is not valid.' in result.output
 
+    def test_good_v3_schema(self):
+        result = self.validate_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        assert 'schema is valid' in result.output
+
+    def test_bad_v3_schema(self):
+        result = self.validate_schema(BAD_SCHEMA_V3_PATH)
+        assert result.exit_code == -1
+        assert 'schema is not valid.' in result.output
+
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
@@ -205,6 +215,19 @@ class TestSchemaConversionCommand(unittest.TestCase):
 
     def test_bad_v2_schema(self):
         result = self.convert_schema(BAD_SCHEMA_V2_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+
+    def test_good_v3_schema(self):
+        result = self.convert_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        with open('out.json') as f:
+            json_dict = json.load(f)
+            self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v3_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V3_PATH)
         assert result.exit_code == 1
         self.assertIsInstance(result.exception, schema.SchemaError)
         assert 'schema is not valid.' in result.exception.msg
