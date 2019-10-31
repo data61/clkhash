@@ -94,7 +94,7 @@ class Schema:
         return "<Schema (v3): {} fields>".format(len(self.fields))
 
 
-def convert_v1_to_v2(
+def _convert_v1_to_v2(
         dict  # type: Dict[str, Any]
     ):
     # type: (...) -> Dict[str, Any]
@@ -147,7 +147,7 @@ def convert_v1_to_v2(
     return result
 
 
-def convert_v2_to_v3(
+def _convert_v2_to_v3(
         dict  # type: Dict[str, Any]
     ):
     # type: (...) -> Dict[str, Any]
@@ -174,6 +174,26 @@ def convert_v2_to_v3(
     return dict
 
 
+def convert_to_latest_version(schema_dict):
+    """ Convert the given schema to latest schema version.
+
+     :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'features'` key
+            specifying the columns of the dataset. It must have a `'version'` key containing the master schema version
+            that this schema conforms to. It must have a `'hash'` key with all the globals.
+     :return: schema dict of the latest version
+     raises SchemaError if schema version is not supported"""
+    version = schema_dict.get('version', "'not specified'")
+    if version not in MASTER_SCHEMA_FILE_NAMES.keys():
+        msg = ('Schema version {} is not supported. '
+               'Consider updating clkhash.').format(version)
+        raise SchemaError(msg)
+    if schema_dict['version'] == 1:
+        schema_dict = _convert_v1_to_v2(schema_dict)
+    if schema_dict['version'] == 2:
+        schema_dict = _convert_v2_to_v3(schema_dict)
+    return schema_dict
+
+
 def from_json_dict(dct, validate=True):
     # type: (Dict[str, Any], bool) -> Schema
     """ Create a Schema for v1 or v2 according to dct
@@ -192,19 +212,9 @@ def from_json_dict(dct, validate=True):
     if validate:
         # This raises iff the schema is invalid.
         validate_schema_dict(dct)
-
-    version = dct['version']
-    if dct['version'] == 1:
-        dct = convert_v1_to_v2(dct)
-    if dct['version'] == 2:
-        dct = convert_v2_to_v3(dct)
-        if validate:
-            validate_schema_dict(dct)
-    elif version not in MASTER_SCHEMA_FILE_NAMES.keys():
-        msg = ('Schema version {} is not supported. '
-               'Consider updating clkhash.').format(version)
-        raise SchemaError(msg)
-
+    dct = convert_to_latest_version(dct)
+    if validate:
+        validate_schema_dict(dct)
     clk_config = dct['clkConfig']
     l = clk_config['l']
     xor_folds = clk_config.get('xor_folds', 0)
