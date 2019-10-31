@@ -430,7 +430,7 @@ def convert_schema(schema_json, output):
         msg = 'The provided schema is not a valid JSON file.'
         raise_from(SchemaError(msg), e)
     validate_schema_dict(schema_dict)
-    new_schema_dict = convert_to_latest_version(schema_dict)
+    new_schema_dict = convert_to_latest_version(schema_dict, validate_result=True)
     json.dump(new_schema_dict, output)
 
 

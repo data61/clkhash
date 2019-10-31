@@ -170,13 +170,14 @@ def _convert_v2_to_v3(schema_dict):
     return schema_dict
 
 
-def convert_to_latest_version(schema_dict):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+def convert_to_latest_version(schema_dict, validate_result=False):
+    # type: (Dict[str, Any], Optional[bool]) -> Dict[str, Any]
     """ Convert the given schema to latest schema version.
 
      :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'version'` key
             containing a master schema version. The rest of the schema dict must conform to the corresponding
             master schema.
+     :param validate_result: validate converted schema against schema specification
      :return: schema dict of the latest version
      raises SchemaError if schema version is not supported"""
     version = schema_dict.get('version', "'not specified'")
@@ -188,6 +189,8 @@ def convert_to_latest_version(schema_dict):
         schema_dict = _convert_v1_to_v2(schema_dict)
     if schema_dict['version'] == 2:
         schema_dict = _convert_v2_to_v3(schema_dict)
+    if validate_result:
+        validate_schema_dict(schema_dict)
     return schema_dict
 
 
