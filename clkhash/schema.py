@@ -153,7 +153,7 @@ def _convert_v2_to_v3(schema_dict):
     :return: v3 schema dict
     """
     schema_dict = deepcopy(schema_dict)
-    version = dict['version']
+    version = schema_dict['version']
     if version != 2:
         raise ValueError('Version {} not 2'.format(version))
     schema_dict['version'] = 3
