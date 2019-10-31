@@ -193,7 +193,9 @@ def convert_to_latest_version(schema_dict):
 
 def from_json_dict(dct, validate=True):
     # type: (Dict[str, Any], bool) -> Schema
-    """ Create a Schema for v1 or v2 according to dct
+    """ Create a Schema of the most recent version according to dct
+
+    if the provided schema dict is of an older version, then it will be automatically converted to the latest.
 
     :param dct: This dictionary must have a `'features'`
             key specifying the columns of the dataset. It must have
