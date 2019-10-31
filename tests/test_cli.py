@@ -14,12 +14,13 @@ from click.testing import CliRunner
 from future.builtins import range
 
 import clkhash.cli
-from clkhash import randomnames, rest_client
+from clkhash import randomnames, rest_client, schema
 from clkhash.rest_client import ServiceError, RestClient
 
 from tests import *
 
 ES_TIMEOUT = os.environ.get("ES_TIMEOUT", 20)
+
 
 class CLITestHelper(unittest.TestCase):
     SAMPLES = 100
@@ -129,6 +130,8 @@ class BasicCLITests(unittest.TestCase):
         assert 'hashes in' in result.output
 
 
+@unittest.skipUnless("INCLUDE_CLI" in os.environ,
+                     "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
 class TestSchemaValidationCommand(unittest.TestCase):
 
     @staticmethod
@@ -161,6 +164,73 @@ class TestSchemaValidationCommand(unittest.TestCase):
         result = self.validate_schema(BAD_SCHEMA_V2_PATH)
         assert result.exit_code == -1
         assert 'schema is not valid.' in result.output
+
+    def test_good_v3_schema(self):
+        result = self.validate_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        assert 'schema is valid' in result.output
+
+    def test_bad_v3_schema(self):
+        result = self.validate_schema(BAD_SCHEMA_V3_PATH)
+        assert result.exit_code == -1
+        assert 'schema is not valid.' in result.output
+
+
+@unittest.skipUnless("INCLUDE_CLI" in os.environ,
+                     "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
+class TestSchemaConversionCommand(unittest.TestCase):
+
+    LATEST_VERSION = max(schema.MASTER_SCHEMA_FILE_NAMES.keys())
+
+    @staticmethod
+    def convert_schema(schema_path):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, [
+            'convert-schema', schema_path, 'out.json'
+        ])
+        return result
+
+    def test_good_v1_schema(self):
+        for schema_path in GOOD_SCHEMA_V1_PATH, SIMPLE_SCHEMA_PATH:
+            result = self.convert_schema(schema_path)
+            assert result.exit_code == 0
+            with open('out.json') as f:
+                json_dict = json.load(f)
+                self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v1_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V1_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+        assert "'l' is a required property" in result.exception.msg
+
+    def test_good_v2_schema(self):
+        for schema_path in GOOD_SCHEMA_V2_PATH, RANDOMNAMES_SCHEMA_PATH:
+            result = self.convert_schema(schema_path)
+            assert result.exit_code == 0
+            with open('out.json') as f:
+                json_dict = json.load(f)
+                self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v2_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V2_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+
+    def test_good_v3_schema(self):
+        result = self.convert_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        with open('out.json') as f:
+            json_dict = json.load(f)
+            self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v3_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V3_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
 
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,

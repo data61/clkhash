@@ -111,6 +111,28 @@ Example
     all bits set. Consult the :doc:`tutorial_cli` for further details.
 
 
+.. _schema_handling:
+
+Schema Handling
+---------------
+
+A schema file can be tested for validity against the schema specification with the ``validate-schema`` command.
+
+.. command-output:: clkutil validate-schema --help
+
+Example
+~~~~~~~
+
+::
+
+     $ clkutil validate-schema clkhash/data/randomnames-schema.json
+     schema is valid
+
+
+Schema files of older versions can be converted to the latest version with the ``convert-schema`` command.
+
+.. command-output:: clkutil convert-schema --help
+
 
 .. _data-generation:
 

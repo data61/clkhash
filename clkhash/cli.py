@@ -13,7 +13,8 @@ from clkhash import (benchmark as bench, clk, randomnames, validate_data,
                      describe as descr)
 from clkhash.rest_client import (ClientWaitingConfiguration, ServiceError,
                                  format_run_status, RestClient)
-from clkhash.schema import SchemaError
+from clkhash.schema import SchemaError, validate_schema_dict, convert_to_latest_version
+from clkhash.backports import raise_from
 
 from typing import List, Callable
 
@@ -413,6 +414,24 @@ def describe(clk_json):
     """show distribution of clk's popcounts
     """
     descr.plot(clk_json)
+
+
+@cli.command('convert-schema', short_help='converts schema file to latest version')
+@click.argument('schema_json', type=click.File('r'))
+@click.argument('output', type=click.File('w'))
+def convert_schema(schema_json, output):
+    """convert the given schema file to the latest version.
+    """
+    try:
+        schema_dict = json.load(schema_json)
+    except ValueError as e:  # In Python 3 we can be more specific
+        # with json.decoder.JSONDecodeError,
+        # but that doesn't exist in Python 2.
+        msg = 'The provided schema is not a valid JSON file.'
+        raise_from(SchemaError(msg), e)
+    validate_schema_dict(schema_dict)
+    new_schema_dict = convert_to_latest_version(schema_dict, validate_result=True)
+    json.dump(new_schema_dict, output)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')
