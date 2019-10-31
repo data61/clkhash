@@ -94,10 +94,8 @@ class Schema:
         return "<Schema (v3): {} fields>".format(len(self.fields))
 
 
-def _convert_v1_to_v2(
-        dict  # type: Dict[str, Any]
-    ):
-    # type: (...) -> Dict[str, Any]
+def _convert_v1_to_v2(dict):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
     """
     Convert v1 schema dict to v2 schema dict.
     :param dict: v1 schema dict
@@ -147,10 +145,8 @@ def _convert_v1_to_v2(
     return result
 
 
-def _convert_v2_to_v3(
-        dict  # type: Dict[str, Any]
-    ):
-    # type: (...) -> Dict[str, Any]
+def _convert_v2_to_v3(dict):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
     """
     Convert v2 schema dict to v3 schema dict.
     :param dict: v2 schema dict
@@ -175,6 +171,7 @@ def _convert_v2_to_v3(
 
 
 def convert_to_latest_version(schema_dict):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
     """ Convert the given schema to latest schema version.
 
      :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'features'` key
