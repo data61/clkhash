@@ -34,15 +34,18 @@ def _test_stats(pii, schema, keys):
 
 class TestV2(unittest.TestCase):
 
-    def test_compare_v1_and_v2(self):
+    def test_compare_v1_v2_and_v3(self):
         pii = randomnames.NameList(100).names
-        schema_v1 = randomnames.NameList.SCHEMA
-        # this v2 schema should be equivalent to the above v1 schema
+        schema_v3 = randomnames.NameList.SCHEMA
+        # this v2 schema should be equivalent to the above v3 schema
         schema_v2 = _test_schema('randomnames-schema-v2.json')
+        schema_v1 = _test_schema('randomnames-schema-v1.json')
         secret = 'secret'
-        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, secret),
-                                clk.generate_clks(pii, schema_v2, secret)):
+        for clkv1, clkv2, clkv3 in zip(clk.generate_clks(pii, schema_v1, secret),
+                                       clk.generate_clks(pii, schema_v2, secret),
+                                       clk.generate_clks(pii, schema_v3, secret)):
             self.assertEqual(clkv1, clkv2)
+            self.assertEqual(clkv1, clkv3)
 
     def test_compare_strategies(self):
         def mkSchema(hashing_properties):
