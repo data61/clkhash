@@ -23,8 +23,9 @@ install:
 
 script:
   - pytest --cov=clkhash
-  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION""[ $CLI ] && _$CLI""[ $TEST_ENTITY_SERVICE ] && _$ES"
-
+  - [ $CLI ] && export CLI_CI_STR="_CLI"
+  - [ $TEST_ENTITY_SERVICE ] && export ES_CI_STR="_ES"
+  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION""$CLI_CI_STR""$ES_CI_STR"
 
 jobs:
   allow_failures:
