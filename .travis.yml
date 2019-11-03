@@ -23,7 +23,7 @@ install:
 
 script:
   - pytest --cov=clkhash
-  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION""$EXTRAS"
+  - codecov -e TRAVIS_OS_NAME,TRAVIS_PYTHON_VERSION,INCLUDE_CLI -n "$TRAVIS_OS_NAME"_"$TRAVIS_PYTHON_VERSION""[ $CLI ] && _$CLI""[ $TEST_ENTITY_SERVICE ] && _$ES"
 
 
 jobs:
@@ -42,6 +42,7 @@ jobs:
       env:
         - INCLUDE_CLI=1
         - EXTRAS=_CLI
+
     - python: '2.7'
       env:
         - INCLUDE_CLI=1
