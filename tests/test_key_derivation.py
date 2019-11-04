@@ -23,7 +23,7 @@ class TestKeyDerivation(unittest.TestCase):
                     self.assertEqual(len(key), key_size)
                     set_of_keys.add(key)
                 # Checking that there are no duplicate keys
-                self.assertEquals(num_keys, len(set_of_keys))
+                self.assertEqual(num_keys, len(set_of_keys))
 
     def test_generate_key_lists(self):
         secret = "No, I am your father. No... that's not true! That's impossible!".encode()
@@ -49,7 +49,7 @@ class TestKeyDerivation(unittest.TestCase):
                                      '"default_key_size"')
                 set_of_keys.add(key)
         # Checking that there are no duplicate keys
-        self.assertEquals(num_hashing_methods * num_keys, len(set_of_keys))
+        self.assertEqual(num_hashing_methods * num_keys, len(set_of_keys))
 
     def test_fail_generate_key_lists(self):
         with self.assertRaises(TypeError):
