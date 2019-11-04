@@ -95,8 +95,8 @@ jobs:
       failIfCoverageEmpty: true
 
   - bash: |
-        opSysFlag=$(echo ${{ parameters.operatingSystem }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
-        pyVFlag=$(echo python${{ parameters.pythonVersion }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+        opSysFlag=$(echo ${{ operatingSystem }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+        pyVFlag=$(echo python${{ pythonVersion }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
         echo "python -m codecov --file coverage.xml -F $opSysFlag,$pyVFlag"
         python -m codecov --token $(CODECOV_TOKEN) \
           --file coverageReport.xml \
