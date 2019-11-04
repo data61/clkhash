@@ -97,7 +97,7 @@ jobs:
   - bash: |
         python -m codecov --token $(CODECOV_TOKEN) \
           --file coverageReport.xml \
-          -n $(operatingSystem)_$(pythonVersion)
+          -n $(operatingSystem)($architecture)_$(pythonVersion)
     displayName: 'Send coverage to codecov'
     condition: succeededOrFailed()
 
