@@ -298,7 +298,7 @@ def create(name, project, apikey, output, threshold, server, retry_multiplier, r
 
 
 @cli.command('upload', short_help='upload hashes to entity service')
-@click.argument('clk_json', type=click.File('r'))
+@click.argument('clk_json', type=click.File('rb'))
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('-o', '--output', type=click.File('w'), default='-')
