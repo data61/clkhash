@@ -51,7 +51,7 @@ jobs:
     timeoutInMinutes: 10 # it should pass in 2.5 minutes, so 10 should be more than enough even if the server is busy.
     env:
       INCLUDE_CLI: 1
-      TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+      TEST_ENTITY_SERVICE: https://something.es.data61.xyz
   
   # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
   # all the tutorials should be run.
