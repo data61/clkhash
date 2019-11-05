@@ -131,7 +131,7 @@ def test_numeric_overlaps(thresh_dist, resolution, precision, candidate):
     other_tokens = comp.tokenize(str(other))
     assert len(set(cand_tokens).intersection(
         set(other_tokens))) == 0, "numbers more than thresh_dist apart have no tokens in common"
-    other = candidate + int((thresh_dist / (2 * resolution) * random.random()))
+    other = candidate + (thresh_dist / (2 * resolution) * random.random())
     other_tokens = comp.tokenize(str(other))
     assert len(set(cand_tokens).intersection(
         set(other_tokens))) >= len(
