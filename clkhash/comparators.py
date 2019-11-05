@@ -131,8 +131,14 @@ class NumericComparison(AbstractComparison):
     """
 
     def __init__(self, threshold_distance, resolution, fractional_precision=0):
-        # type: (float, int, Optional[int]) -> None
+        # type: (float, int, int) -> None
         # check that there is enough precision to have non-zero threshold_distance
+        if not threshold_distance > 0:
+            raise ValueError('threhold_distance has to be positive, but was {}'.format(threshold_distance))
+        if resolution < 1:
+            raise ValueError('resolution has to be greater than zero, but was {}'.format(resolution))
+        if fractional_precision < 0:
+            raise ValueError('fractional_precision cannot be less than zero, but was {}'.format(fractional_precision))
         self.threshold_distance = int(round(threshold_distance * pow(10, fractional_precision)))
         if self.threshold_distance == 0:
             raise ValueError('not enough fractional precision to encode threshold_distance')
@@ -146,11 +152,11 @@ class NumericComparison(AbstractComparison):
         try:
             v = int(word, base=10)  # we try int first, so we don't loose precision
         except ValueError:
-            v = float(word)
-        if self.fractional_precision > 0:
-            v = int(round(v * pow(10, self.fractional_precision)))
-        else:
-            v = int(v)
+            v_float = float(word)
+            if self.fractional_precision > 0:
+                v = int(round(v_float * pow(10, self.fractional_precision)))
+            else:
+                v = int(v_float)
         v = v * 2 * self.resolution
         residue = v % self.distance_interval
 
@@ -199,8 +205,8 @@ def get_comparator(comp_desc):
     elif typ == 'exact':
         return ExactComparison()
     elif typ == 'numeric':
-        return NumericComparison(threshold_distance=comp_desc.get('thresholdDistance'),
-                                 resolution=comp_desc.get('resolution'),
+        return NumericComparison(threshold_distance=comp_desc.get('thresholdDistance', -1),
+                                 resolution=comp_desc.get('resolution', -1),
                                  fractional_precision=comp_desc.get('fractional_precision', 0))
     else:
         raise ValueError("unsupported comparison strategy: '{}'".format(typ))
