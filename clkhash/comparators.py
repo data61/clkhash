@@ -144,11 +144,13 @@ class NumericComparison(AbstractComparison):
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
         try:
-            v = int(word, base=10)
+            v = int(word, base=10)  # we try int first, so we don't loose precision
         except ValueError:
             v = float(word)
         if self.fractional_precision > 0:
             v = int(round(v * pow(10, self.fractional_precision)))
+        else:
+            v = int(v)
         v = v * 2 * self.resolution
         residue = v % self.distance_interval
 
