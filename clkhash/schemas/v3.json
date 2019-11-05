@@ -194,18 +194,19 @@
     },
     "exactComparison": {
       "type": "object",
-      "required":  ["type"],
+      "required": ["type"],
       "properties": {
-        "type": {"const":  "exact"}
+        "type": {"const": "exact"}
       }
     },
     "numericComparison": {
       "type": "object",
       "required": ["type", "thresholdDistance", "resolution"],
       "properties": {
-        "type": {"const":  "numeric"},
-        "thresholdDistance": {"type": "number", "exclusiveMinimum":  0.0},
-        "resolution": {"type":  "integer", "minimum": 1}
+        "type": {"const": "numeric"},
+        "thresholdDistance": {"type": "number", "exclusiveMinimum": 0.0},
+        "resolution": {"type": "integer", "minimum": 1},
+        "fractional_precision": {"type": "integer", "minimum": 0, "default": 0}
       }
     },
     "doubleHash": {
