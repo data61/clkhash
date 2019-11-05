@@ -252,7 +252,7 @@ class TestFieldFormats(unittest.TestCase):
                 'description': 'buzz'
             },
             'hashing': {
-                'comparison': {'type': 'numeric', 'thresholdDistance': '100.4', 'resolution': 25},
+                'comparison': {'type': 'numeric', 'thresholdDistance': 100, 'resolution': 25},
                 'strategy': {'bitsPerToken': 20}
             }
         }
@@ -317,7 +317,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         comparator = spec.hashing_properties.comparator
         self.assertIsInstance(comparator, comparators.NumericComparison)
-        self.assertEqual(comparator.threshold_distance, Decimal('100.4'))
+        self.assertEqual(comparator.threshold_distance, 100)
         self.assertEqual(comparator.resolution, 25)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
         self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
