@@ -3,9 +3,6 @@
 from __future__ import unicode_literals
 
 import abc
-import decimal
-import math
-from decimal import Decimal
 from typing import Iterable, Text, Dict, Any, Optional
 
 from future.builtins import range
@@ -125,44 +122,43 @@ class NumericComparison(AbstractComparison):
     The quantization has the side effect that sometimes two values who are further than 'threshold_distance' but not
     more than 'threshold_distance' + 1/2 quantization level apart can share a common token.
 
+    We are dealing with floating point numbers by quantizing them to integers by multiplying them with
+    10 ** 'fractional_precision' and then rounding them to the nearest integer.
+
     :ivar threshold_distance: maximum detectable distance. Points that are further apart won't have tokens in common.
     :ivar resolution: controls the amount of generated tokens. Total number of tokens will be 2 * resolution + 1
-    :ivar precision: the precision of the context the input values live in.
-                     (see https://docs.python.org/3/library/decimal.html#context-objects). Default is 28 decimal places.
+    :ivar fractional_precision: number of digits after the point to be considered
     """
 
-    def __init__(self, threshold_distance, resolution, precision=28):
-        # type: (str, int, Optional[int]) -> None
-        self.threshold_distance = decimal.DefaultContext.create_decimal(Decimal(threshold_distance))
+    def __init__(self, threshold_distance, resolution, fractional_precision=0):
+        # type: (float, int, Optional[int]) -> None
+        # check that there is enough precision to have non-zero threshold_distance
+        self.threshold_distance = int(round(threshold_distance * pow(10, fractional_precision)))
+        if self.threshold_distance == 0:
+            raise ValueError('not enough fractional precision to encode threshold_distance')
         self.resolution = resolution
-        res_precision = int(math.ceil(math.log(float(resolution), 10))) + 2
+        self.fractional_precision = fractional_precision
         # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
         # use threshold_distance as distance_interval (saves a division which would need more precision)
         self.distance_interval = self.threshold_distance
-        # in this step we quantize the distance interval to just enough precision to be able to generate 'resolution'
-        # different steps.
-        dist_res = self.distance_interval.adjusted() - res_precision
-        self.distance_interval = self.distance_interval.quantize(Decimal('1e{}'.format(dist_res)))
-        # we need a bit more precision as we multiply inputs by resolution during tokenization, thus, we create our own
-        # special context
-        self.context = decimal.Context(prec=precision + res_precision)
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
-        v = self.context.create_decimal(word)
-        v = self.context.multiply(v, 2 * self.resolution)
         try:
-            residue = v.remainder_near(self.distance_interval, context=self.context)
-        except decimal.DecimalException:
-            residue = Decimal('0.0')
-        if residue < 0:  # residue can be negative, but we want a proper 'mod' function.
-            residue = self.context.add(residue, self.distance_interval)
-        if residue == 0.0:
+            v = int(word, base=10)
+        except ValueError:
+            v = float(word)
+        if self.fractional_precision > 0:
+            v = int(round(v * pow(10, self.fractional_precision)))
+        v = v * 2 * self.resolution
+        residue = v % self.distance_interval
+
+        if residue == 0:
             v = v
         elif residue < self.distance_interval / 2:
-            v = self.context.subtract(v, residue)
+            v = v - residue
         else:
-            v = self.context.add(v, self.context.subtract(self.distance_interval, residue))
-        return [str(self.context.normalize(self.context.add(v, i * self.distance_interval))) for i in
+            v = v + (self.distance_interval - residue)
+        return [str(v + i * self.distance_interval) for i in
                 range(-self.resolution, self.resolution + 1)]
 
 
@@ -202,6 +198,7 @@ def get_comparator(comp_desc):
         return ExactComparison()
     elif typ == 'numeric':
         return NumericComparison(threshold_distance=comp_desc.get('thresholdDistance'),
-                                 resolution=comp_desc.get('resolution'))
+                                 resolution=comp_desc.get('resolution'),
+                                 fractional_precision=comp_desc.get('fractional_precision', 0))
     else:
         raise ValueError("unsupported comparison strategy: '{}'".format(typ))
