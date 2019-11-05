@@ -122,8 +122,12 @@ class NumericComparison(AbstractComparison):
     The quantization has the side effect that sometimes two values who are further than 'threshold_distance' but not
     more than 'threshold_distance' + 1/2 quantization level apart can share a common token.
 
-    We are dealing with floating point numbers by quantizing them to integers by multiplying them with
+    We are dealing with floating point numbers by quantising them to integers by multiplying them with
     10 ** 'fractional_precision' and then rounding them to the nearest integer.
+
+    Thus, we don't support to full range of floats, but the subset between
+    2.2250738585072014e-(308 - fractional_precision - log(resolution, 10)) and
+    1.7976931348623157e+(308 - fractional_precision - log(resolution, 10))
 
     :ivar threshold_distance: maximum detectable distance. Points that are further apart won't have tokens in common.
     :ivar resolution: controls the amount of generated tokens. Total number of tokens will be 2 * resolution + 1
