@@ -1,3 +1,4 @@
+from __future__ import division
 import itertools
 import random
 import math
@@ -160,8 +161,7 @@ def test_numeric_properties_with_integers(thresh_dist, resolution, candidate):
 @given(thresh_dist=integers(min_value=1),
        resolution=integers(min_value=1, max_value=512),
        candidate=integers())
-def test_numeric_overlaps(thresh_dist, resolution, candidate):
-#def test_numeric_overlaps(thresh_dist=5, resolution=1, candidate=0):
+def test_numeric_overlaps_with_integers(thresh_dist, resolution, candidate):
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=0)
     other = candidate + thresh_dist
     cand_tokens = comp.tokenize(str(candidate))
