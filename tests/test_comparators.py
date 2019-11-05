@@ -95,7 +95,7 @@ def test_exact_num_tokens(word):
 # we restrict the exponents of the floats such that exponent of number + precision < 308. Otherwise we might get
 # infinity during the tokenization process.
 @given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e287),
-       resolution=integers(min_value=1, max_value=512),
+       resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_nan=False, allow_infinity=False, max_value=1e288, min_value=-1e287))
 def test_numeric_properties(thresh_dist, resolution, precision, candidate):
@@ -113,7 +113,7 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
 
 
 @given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287),
-       resolution=integers(min_value=1, max_value=512),
+       resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
 def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precision, candidate):
@@ -139,7 +139,7 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
 
 
 @given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287),
-       resolution=integers(min_value=1, max_value=512),
+       resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
 def test_numeric_overlaps(thresh_dist, resolution, precision, candidate):
