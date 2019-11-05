@@ -92,6 +92,22 @@ def test_exact_num_tokens(word):
 # testing numeric comparison
 #####
 
+
+def test_numeric_exceptions():
+    with pytest.raises(ValueError) as ex_info:
+        NumericComparison(0, 1, 1)
+    assert "threhold_distance has to be positive" in str(ex_info.value)
+    with pytest.raises(ValueError) as ex_info:
+        NumericComparison(1, 0, 1)
+    assert "resolution has to be greater than zero" in str(ex_info.value)
+    with pytest.raises(ValueError) as ex_info:
+        NumericComparison(1, 1, -1)
+    assert "fractional_precision" in str(ex_info.value) and "less than zero" in str(ex_info.value)
+    with pytest.raises(ValueError) as ex_info:
+        NumericComparison(0.001, 1, 2)
+    assert "not enough fractional precision" in str(ex_info.value)
+
+
 # we restrict the exponents of the floats such that exponent of number + precision < 308. Otherwise we might get
 # infinity during the tokenization process.
 @given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e287),
