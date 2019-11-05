@@ -112,7 +112,7 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
         assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
-@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e288),
+@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=5e287),
        resolution=integers(min_value=1, max_value=512),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e288, min_value=-1e288))
