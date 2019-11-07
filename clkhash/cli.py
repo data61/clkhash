@@ -335,7 +335,7 @@ def upload(clk_json, project, apikey, output, server, retry_multiplier, retry_ma
 @verbose_option
 def results(project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
-    Check to see if results are available for a particular mapping
+    Check to see if results are available for a particular run
     and if so download.
 
     Authentication is carried out using the --apikey option which
