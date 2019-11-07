@@ -114,15 +114,16 @@ class NumericComparison(AbstractComparison):
                   between different values, but should be chosen such that it plays nicely with the overall Bloom filter
                   size and insertion strategy.
 
-    (*) the reality is a bit more tricky. Depending on the choice of parameters we first have to quantize the inputs, in
-    order to get comparable tokens. For example, if we choose a 'threshold_distance' of 8 and a 'resolution' of 2, then
-    the tokens for x=25 would be [21, 23, 25, 27, 29] and for y=26 [22, 24, 26, 28, 30], resulting in sets with no
-    common element. The quantization ensures that the inputs are mapped onto a common grid. In our example, the values
-    would be quantized to even numbers. Thus x=25 would be mapped to 26, and z=24.99 would be mapped to 24.
-    The quantization has the side effect that sometimes two values who are further than 'threshold_distance' but not
-    more than 'threshold_distance' + 1/2 quantization level apart can share a common token.
+    (*) the reality is a bit more tricky. We first have to quantize the inputs to multiples of 'threshold_distance' /
+    (2 * resolution), in order to get comparable tokens.
+    For example, if we choose a 'threshold_distance' of 8 and a 'resolution' of 2, then the tokens for x=25 would be
+    [21, 23, 25, 27, 29] and for y=26 [22, 24, 26, 28, 30], resulting in sets with no common element. The quantization
+    ensures that the inputs are mapped onto a common grid. In our example, the values would be quantized to even
+    numbers (multiples of 8 / (2 * 2) = 2). Thus x=25 would be mapped to 26, and z=24.99 would be mapped to 24. The
+    quantization has the side effect that sometimes two values which are further than 'threshold_distance' but not more
+    than 'threshold_distance' + 1/2 quantization level apart can share a common token.
 
-    We are dealing with floating point numbers by quantising them to integers by multiplying them with
+    We are dealing with floating point numbers by quantizing them to integers by multiplying them with
     10 ** 'fractional_precision' and then rounding them to the nearest integer.
 
     Thus, we don't support to full range of floats, but the subset between
