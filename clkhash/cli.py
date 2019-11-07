@@ -223,7 +223,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
 @click.option('--type', default='permutations',
-              type=click.Choice(['mapping', 'permutations',
+              type=click.Choice(['permutations',
                                  'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
