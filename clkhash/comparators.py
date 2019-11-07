@@ -155,6 +155,8 @@ class NumericComparison(AbstractComparison):
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
         try:
             v = int(word, base=10)  # we try int first, so we don't loose precision
+            if self.fractional_precision > 0:
+                v *= pow(10, self.fractional_precision)
         except ValueError:
             v_float = float(word)
             if self.fractional_precision > 0:
