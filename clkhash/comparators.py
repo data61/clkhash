@@ -144,14 +144,13 @@ class NumericComparison(AbstractComparison):
             raise ValueError('resolution has to be greater than zero, but was {}'.format(resolution))
         if fractional_precision < 0:
             raise ValueError('fractional_precision cannot be less than zero, but was {}'.format(fractional_precision))
-        self.threshold_distance = int(round(threshold_distance * pow(10, fractional_precision)))
-        if self.threshold_distance == 0:
+        # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
+        # use threshold_distance as distance_interval (saves a division which would need more precision)
+        self.distance_interval = int(round(threshold_distance * pow(10, fractional_precision)))
+        if self.distance_interval == 0:
             raise ValueError('not enough fractional precision to encode threshold_distance')
         self.resolution = resolution
         self.fractional_precision = fractional_precision
-        # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
-        # use threshold_distance as distance_interval (saves a division which would need more precision)
-        self.distance_interval = self.threshold_distance
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
         try:
