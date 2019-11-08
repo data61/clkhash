@@ -108,14 +108,17 @@ def test_numeric_exceptions():
     assert "not enough fractional precision" in str(ex_info.value)
 
 
+def test_numeric_mix_int_and_floats():
+    comp = NumericComparison(1, 20, 3)
+    assert comp.tokenize('42') == comp.tokenize('42.000')
+
 # we restrict the exponents of the floats such that exponent of number + precision < 308. Otherwise we might get
 # infinity during the tokenization process.
-@given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e287),
+@given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e287, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_nan=False, allow_infinity=False, max_value=1e288, min_value=-1e287))
 def test_numeric_properties(thresh_dist, resolution, precision, candidate):
-    assume(thresh_dist > 0)
     adj_dist = thresh_dist * pow(10, precision)
     if int(round(adj_dist)) <= 0:
         with pytest.raises(ValueError):
@@ -128,12 +131,11 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
         assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
-@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287),
+@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
 def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precision, candidate):
-    assume(thresh_dist > 0)
     assume(int(round(thresh_dist * pow(10, precision))) > 0)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=precision)
     other = candidate + thresh_dist
@@ -154,12 +156,11 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
         cand_tokens) - 2, "numbers that are not more than the modulus apart have all or all - 2 tokens in common"
 
 
-@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287),
+@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
        candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
 def test_numeric_overlaps(thresh_dist, resolution, precision, candidate):
-    assume(thresh_dist > 0)
     assume(int(round(thresh_dist * pow(10, precision))) > 0)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=precision)
     cand_tokens = comp.tokenize(str(candidate))
