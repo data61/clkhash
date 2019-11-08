@@ -317,7 +317,7 @@ class TestFieldFormats(unittest.TestCase):
         # Check the hashing specs.
         comparator = spec.hashing_properties.comparator
         self.assertIsInstance(comparator, comparators.NumericComparison)
-        self.assertEqual(comparator.threshold_distance, 100)
+        self.assertEqual(comparator.distance_interval, 100)
         self.assertEqual(comparator.resolution, 25)
         self.assertIsInstance(spec.hashing_properties.strategy, field_formats.BitsPerTokenStrategy)
         self.assertEqual(spec.hashing_properties.strategy._bits_per_token, 20)
