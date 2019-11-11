@@ -223,7 +223,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
 @click.option('--type', default='permutations',
-              type=click.Choice(['mapping', 'permutations',
+              type=click.Choice(['permutations',
                                  'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
@@ -335,7 +335,7 @@ def upload(clk_json, project, apikey, output, server, retry_multiplier, retry_ma
 @verbose_option
 def results(project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
-    Check to see if results are available for a particular mapping
+    Check to see if results are available for a particular run
     and if so download.
 
     Authentication is carried out using the --apikey option which
