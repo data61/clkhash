@@ -63,7 +63,7 @@ jobs:
       before_install:
         - travis_retry pip install -U -r docs/doc-requirements-anonlink.txt -r docs/doc-requirements-others.txt
       script:
-        - pytest --nbval docs -x -v --sanitize-with docs/tutorial_sanitize.cfg
+        - pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
 
     - stage: Integration
       python: '3.8-dev'
