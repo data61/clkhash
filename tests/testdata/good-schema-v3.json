@@ -193,11 +193,11 @@
       },
       "hashing": {
         "comparison": {
-          "type": "ngram",
-          "n": 1,
-          "positional": true
+          "type": "numeric",
+          "thresholdDistance": 100,
+          "resolution": 50
         },
-        "strategy": {"bitsPerFeature":  100}
+        "strategy": {"bitsPerFeature":  101}
       }
     }
   ]
