@@ -353,7 +353,7 @@ type         string                  no       has to be 'exact'
 numeric comparison
 ^^^^^^^^^^^^^^^^^^
 
-Numerical comparisons of integers or floating point numbers such that the distance between two numbers relate to the similarity of the produced tokens. Also see the `API docs for NgramComparison <clkhash.html#clkhash.comparators.NumericComparison>`_
+Numerical comparisons of integers or floating point numbers such that the distance between two numbers relate to the similarity of the produced tokens. Also see the `API docs for NumericComparison <clkhash.html#clkhash.comparators.NumericComparison>`_
 
 ===========          =====================   ======== ===========
 name                 type                    optional description
