@@ -84,9 +84,9 @@ class ExactComparison(AbstractComparison):
 
     High similarity score if inputs are identical, low otherwise.
 
-    Internally, this is done by treating the whole input as one token. Thus, if you have chosen the 'fixed k' strategy
-    for hashing, you might want to adjust the 'k' value such that the value gets an appropriate representation in the
-    filter.
+    Internally, this is done by treating the whole input as one token. Thus, if you have chosen the 'bitsPerToken'
+    strategy for hashing, you might want to adjust the value such that the corresponding feature gets an appropriate
+    representation in the filter.
     """
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
@@ -100,13 +100,13 @@ class NumericComparison(AbstractComparison):
     We implemented the idea of Vatsalan and Christen (Privacy-preserving matching of similar patients, Journal of
     Biomedical Informatics, 2015).
 
-    The basic idea is to encode a number's neighbourhood. Such that the neighbourhoods of close numbers overlap.
-    For example, the tokens for x=21 are 19, 20, 21, 22, 23, and the tokens for y=23 are 21, 22, 23, 24, 25. Then the
-    two sets of tokens share three elements. It is easy to see that two numbers have more tokens in common the closer
-    they are to each other.
+    The basic idea is to encode a number's neighbourhood such that the neighbourhoods of close numbers overlap.
+    For example, the neighbourhood of x=21 is 19, 20, 21, 22, 23, and the neighbourhood of y=23 is 21, 22, 23, 24, 25.
+    These two neighbourhoods share three elements. The overlap of the neighbourhoods of two numbers increases the closer
+    the numbers are to each other.
 
     There are two parameter to control the overlap.
-    - threshold_distance: the maximum distance which leads to at least one common token. The token sets for points which
+    - threshold_distance: the maximum distance which leads to an non-empty overlap. Neighbourhoods for points which
                           are further apart have no elements in common. (*)
     - resolution: controls how many tokens are generated. (the 'b' in the paper). Given an interval of size
                   'threshold_distance' we create 'resolution tokens to either side of the mid-point plus one token for
@@ -115,13 +115,19 @@ class NumericComparison(AbstractComparison):
                   size and insertion strategy.
 
     (*) the reality is a bit more tricky. We first have to quantize the inputs to multiples of 'threshold_distance' /
-    (2 * resolution), in order to get comparable tokens.
-    For example, if we choose a 'threshold_distance' of 8 and a 'resolution' of 2, then the tokens for x=25 would be
-    [21, 23, 25, 27, 29] and for y=26 [22, 24, 26, 28, 30], resulting in sets with no common element. The quantization
-    ensures that the inputs are mapped onto a common grid. In our example, the values would be quantized to even
-    numbers (multiples of 8 / (2 * 2) = 2). Thus x=25 would be mapped to 26, and z=24.99 would be mapped to 24. The
-    quantization has the side effect that sometimes two values which are further than 'threshold_distance' but not more
-    than 'threshold_distance' + 1/2 quantization level apart can share a common token.
+    (2 * resolution), in order to get comparable neighbourhoods.
+    For example, if we choose a 'threshold_distance' of 8 and a 'resolution' of 2, then, without quantization, the
+    neighbourhood of x=25 would be [21, 23, 25, 27, 29] and for y=26 [22, 24, 26, 28, 30], resulting in no overlap.
+    The quantization ensures that the inputs are mapped onto a common grid. In our example, the values would be
+    quantized to even numbers (multiples of 8 / (2 * 2) = 2). Thus x=25 would be mapped to 26.
+    The quantization has the side effect that sometimes two values which are further than 'threshold_distance' but not
+    more than 'threshold_distance' + 1/2 quantization level apart can share a common token. For instance, a=24.99 would
+    be mapped to 24 with a neighbourhood of [20, 22, 24, 26, 28], and b=16 neighbourhood is [12, 14, 16, 18, 20].
+
+    We produce the output tokens based on the neighbourhood in the following way. Instead of creating a neighbourhood
+    around the quantized input with values dist_interval = threshold_distance / (2 * resolution) apart, we instead
+    multiply all values by (2 * resolution). This saves the division, which can introduce numerical inaccuracies.
+    Thus, the tokens for x=25 are [88, 96, 104, 112, 120].
 
     We are dealing with floating point numbers by quantizing them to integers by multiplying them with
     10 ** 'fractional_precision' and then rounding them to the nearest integer.
