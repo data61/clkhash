@@ -14,8 +14,10 @@ SAMPLE_DATA_SCHEMA_PATH = os.path.join(TESTDATA, 'dirty-data-schema.json')
 
 GOOD_SCHEMA_V1_PATH = os.path.join(TESTDATA, 'good-schema-v1.json')
 GOOD_SCHEMA_V2_PATH = os.path.join(TESTDATA, 'good-schema-v2.json')
+GOOD_SCHEMA_V3_PATH = os.path.join(TESTDATA, 'good-schema-v3.json')
 BAD_SCHEMA_V1_PATH = os.path.join(TESTDATA, 'bad-schema-v1.json')
 BAD_SCHEMA_V2_PATH = os.path.join(TESTDATA, 'bad-schema-v2.json')
+BAD_SCHEMA_V3_PATH = os.path.join(TESTDATA, 'bad-schema-v3.json')
 
 RANDOMNAMES_SCHEMA_PATH = os.path.join(
     TESTDATA,

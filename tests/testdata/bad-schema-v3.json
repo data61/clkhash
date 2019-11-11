@@ -13,7 +13,7 @@
   "features": [
     {
       "identifier": "INDEX",
-      "ignored": true
+      "ignored": false
     },
     {
       "identifier": "NAME freetext",
@@ -24,12 +24,9 @@
         "minLength": 3
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 2
-        },
+        "ngram": 2,
         "strategy": {
-          "bitsPerToken": 15
+          "throughTheWall": 15
         },
         "hash": {"type": "doubleHash"}
       }
@@ -42,13 +39,10 @@
         "format": "%Y/%m/%d"
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 1,
-          "positional": true
-        },
+        "ngram": 1,
+        "positional": true,
         "strategy": {
-          "bitsPerToken": 30
+          "bitsPerFeature": 60
         },
         "hash": {"type": "doubleHash"}
       }
@@ -60,12 +54,9 @@
         "values": ["M", "F"]
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 1
-        },
+        "ngram": 1,
         "strategy": {
-          "bitsPerToken": 60
+          "bitsPerFeature": 60
         },
         "hash": {"type": "doubleHash"}
       }

@@ -11,13 +11,15 @@ We use the block-size of SHA1 and MD5 as the default key size for HMAC
 """
 DEFAULT_KEY_SIZE = 64
 
+DEFAULT_NUM_HASHING_METHODS = 2
+
 _HASH_FUNCTIONS = {
     'SHA256': hashes.SHA256,
     'SHA512': hashes.SHA512
 }
 
 
-def hkdf(master_secret,  # type: bytes
+def hkdf(secret,  # type: bytes
          num_keys,  # type: int
          hash_algo='SHA256',  # type: str
          salt=None,  # type: Optional[bytes]
@@ -27,9 +29,9 @@ def hkdf(master_secret,  # type: bytes
     # type: (...) -> Tuple[bytes, ...]
     """
     Executes the HKDF key derivation function as described in rfc5869 to
-    derive `num_keys` keys of size `key_size` from the master_secret.
+    derive `num_keys` keys of size `key_size` from the secret.
 
-    :param master_secret: input keying material
+    :param secret: input keying material
     :param num_keys: the number of keys the kdf should produce
     :param hash_algo: The hash function used by HKDF for the internal
         HMAC calls. The choice of hash function defines the maximum
@@ -78,13 +80,14 @@ def hkdf(master_secret,  # type: bytes
                 backend=default_backend())
     # hkdf.derive returns a block of num_keys * key_size bytes which we
     # divide up into num_keys chunks, each of size key_size
-    keybytes = hkdf.derive(master_secret)
+    keybytes = hkdf.derive(secret)
     keys = tuple(keybytes[i * key_size:(i + 1) * key_size] for i in range(num_keys))
     return keys
 
 
-def generate_key_lists(master_secrets,  # type: Sequence[Union[bytes, str]]
+def generate_key_lists(secret,  # type: Union[bytes, str]
                        num_identifier,  # type: int
+                       num_hashing_methods=DEFAULT_NUM_HASHING_METHODS,  # type: int
                        key_size=DEFAULT_KEY_SIZE,  # type: int
                        salt=None,  # type: Optional[bytes]
                        info=None,  # type: Optional[bytes]
@@ -93,41 +96,45 @@ def generate_key_lists(master_secrets,  # type: Sequence[Union[bytes, str]]
                        ):
     # type: (...) -> Tuple[Tuple[bytes, ...], ...]
     """
-    Generates a derived key for each identifier for each master secret using a key derivation function (KDF).
+    Generates `num_hashing_methods` derived keys for each identifier for the secret using a key derivation
+    function (KDF).
 
     The only supported key derivation function for now is 'HKDF'.
 
-    The previous key usage can be reproduced by setting kdf to 'legacy'.
+    The previous secret usage can be reproduced by setting kdf to 'legacy', but it will use the secret twice.
     This is highly discouraged, as this strategy will map the same n-grams in different identifier
     to the same bits in the Bloom filter and thus does not lead to good results.
 
-    :param master_secrets: a list of master secrets (either as bytes or strings)
+    :param secret: a secret (either as bytes or string)
     :param num_identifier: the number of identifiers
+    :param num_hashing_methods: number of hashing methods used per identifier, each of them requiring a different key
     :param key_size: the size of the derived keys
     :param salt: salt for the KDF as bytes
     :param info: optional context and application specific information as bytes
     :param kdf: the key derivation function algorithm to use
     :param hash_algo: the hashing algorithm to use (ignored if `kdf` is not 'HKDF')
     :return: The derived keys.
-             First dimension is of size num_identifier, second dimension is the same as master_secrets.
+             First dimension is of size num_identifier, second dimension is of size num_hashing_methods
              A key is represented as bytes.
     """
-    keys = []
+    if num_hashing_methods < 1:
+        raise ValueError('num_hashing_methods: "{}" is not supported, it'
+                         ' should be greater than 0.'.format(num_hashing_methods))
     try:
-        for key in master_secrets:
-            if isinstance(key, bytes):
-                keys.append(key)
-            else:
-                keys.append(key.encode('UTF-8'))
+        if isinstance(secret, bytes):
+            secret_bytes = secret
+        else:
+            secret_bytes = secret.encode('UTF-8')
     except AttributeError:
-        raise TypeError("provided 'master_secrets' have to be either of type bytes or strings.")
+        raise TypeError("provided 'secret' has to be either of type bytes or strings.")
     if kdf == 'HKDF':
-        key_lists = [hkdf(key, num_identifier,
+        # we first create the good number of keys, and we then pack them in the expected way.
+        key_tuples = hkdf(secret_bytes, num_hashing_methods * num_identifier,
                           hash_algo=hash_algo, salt=salt,
                           info=info, key_size=key_size)
-                     for key in keys]
         # regroup such that we get a tuple of keys for each identifier
-        return tuple(zip(*key_lists))
+        split_list = [key_tuples[(i*num_hashing_methods):((i+1)*num_hashing_methods)] for i in range(num_identifier)]
+        return tuple(split_list)
     if kdf == 'legacy':
-        return tuple(tuple(keys) for _ in range(num_identifier))
+        return tuple(tuple([secret_bytes] * num_hashing_methods) for _ in range(num_identifier))
     raise ValueError('kdf: "{}" is not supported.'.format(kdf))

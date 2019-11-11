@@ -13,7 +13,8 @@ from clkhash import (benchmark as bench, clk, randomnames, validate_data,
                      describe as descr)
 from clkhash.rest_client import (ClientWaitingConfiguration, ServiceError,
                                  format_run_status, RestClient)
-from clkhash.schema import SchemaError
+from clkhash.schema import SchemaError, validate_schema_dict, convert_to_latest_version
+from clkhash.backports import raise_from
 
 from typing import List, Callable
 
@@ -125,7 +126,7 @@ def cli(verbose):
 
     Example:
 
-        clkutil hash private_data.csv secretkey1 secretkey2 schema.json output-clks.json
+        clkutil hash private_data.csv secret schema.json output-clks.json
 
 
     All rights reserved Confidential Computing 2016.
@@ -134,14 +135,14 @@ def cli(verbose):
 
 @cli.command('hash', short_help="generate hashes from local PII data")
 @click.argument('pii_csv', type=click.File('r'))
-@click.argument('keys', nargs=2, type=click.Tuple([str, str]))
+@click.argument('secret', type=str)
 @click.argument('schema', type=click.File('r', lazy=True))
 @click.argument('clk_json', type=click.File('w'))
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
 @verbose_option
-def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, verbose):
+def hash(pii_csv, secret, schema, clk_json, no_header, check_header, validate, verbose):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
@@ -150,9 +151,9 @@ def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, ver
     file should contain a header row - however this row is not used
     by this tool.
 
-    It is important that the keys are only known by the two data providers. Two words should be provided. For example:
+    It is important that the secret is only known by the two data providers. One word must be provided. For example:
 
-    $clkutil hash pii.csv horse staple pii-schema.json clk.json
+    $clkutil hash pii.csv horse-staple pii-schema.json clk.json
 
     Use "-" for CLK_JSON to write JSON to stdout.
     """
@@ -169,7 +170,7 @@ def hash(pii_csv, keys, schema, clk_json, no_header, check_header, validate, ver
 
     try:
         clk_data = clk.generate_clk_from_csv(
-            pii_csv, keys, schema_object,
+            pii_csv, secret, schema_object,
             validate=validate,
             header=header,
             progress_bar=verbose)
@@ -222,7 +223,7 @@ After both users have uploaded their data one can watch for and retrieve the res
 
 @cli.command('create-project', short_help="create a linkage project on the entity service")
 @click.option('--type', default='permutations',
-              type=click.Choice(['mapping', 'permutations',
+              type=click.Choice(['permutations',
                                  'similarity_scores', 'groups']),
               help='Protocol/view type for the project.')
 @click.option('--schema', type=click.File('r'), help="Schema to publicly share with participating parties.")
@@ -297,7 +298,7 @@ def create(name, project, apikey, output, threshold, server, retry_multiplier, r
 
 
 @cli.command('upload', short_help='upload hashes to entity service')
-@click.argument('clk_json', type=click.File('r'))
+@click.argument('clk_json', type=click.File('rb'))
 @click.option('--project', help='Project identifier')
 @click.option('--apikey', help='Authentication API key for the server.')
 @click.option('-o', '--output', type=click.File('w'), default='-')
@@ -334,7 +335,7 @@ def upload(clk_json, project, apikey, output, server, retry_multiplier, retry_ma
 @verbose_option
 def results(project, apikey, run, watch, output, server, retry_multiplier, retry_max_exp, retry_stop, verbose):
     """
-    Check to see if results are available for a particular mapping
+    Check to see if results are available for a particular run
     and if so download.
 
     Authentication is carried out using the --apikey option which
@@ -413,6 +414,24 @@ def describe(clk_json):
     """show distribution of clk's popcounts
     """
     descr.plot(clk_json)
+
+
+@cli.command('convert-schema', short_help='converts schema file to latest version')
+@click.argument('schema_json', type=click.File('r'))
+@click.argument('output', type=click.File('w'))
+def convert_schema(schema_json, output):
+    """convert the given schema file to the latest version.
+    """
+    try:
+        schema_dict = json.load(schema_json)
+    except ValueError as e:  # In Python 3 we can be more specific
+        # with json.decoder.JSONDecodeError,
+        # but that doesn't exist in Python 2.
+        msg = 'The provided schema is not a valid JSON file.'
+        raise_from(SchemaError(msg), e)
+    validate_schema_dict(schema_dict)
+    new_schema_dict = convert_to_latest_version(schema_dict, validate_result=True)
+    json.dump(new_schema_dict, output)
 
 
 @cli.command('generate', short_help='generate random pii data for testing')

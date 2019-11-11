@@ -1,6 +1,6 @@
 {
   "id": "https://data61.github.io/schemas/clkhash/linkage-schema-v1.json",
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "hashing-schema",
   "type": "object",
   "required": ["version", "clkConfig", "features"],

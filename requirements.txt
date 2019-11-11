@@ -1,5 +1,5 @@
 bashplotlib==0.6.5
-bitarray==0.9.3
+bitarray-hardbyte==1.1.0
 click==7.0
 cryptography==2.7
 enum34==1.1.6; python_version < '3.4'
