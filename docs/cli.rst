@@ -43,11 +43,11 @@ Assume a csv (``fake-pii.csv``) contains rows like the following::
 
 It can be hashed using ``clkutil`` with::
 
-    $ clkutil hash --schema simple-schema.json fake-pii.csv horse staple clk.json
+    $ clkutil hash --schema simple-schema.json fake-pii.csv horse clk.json
 
 Where:
 
-- ``horse staple`` is the two part secret key that both participants will use to hash their data.
+- ``horse`` is the secret that both participants will use to hash their data.
 - ``simple-schema.json`` is a :ref:`schema` describing how to hash the csv. E.g, ignore the first
   column, use bigram tokens of the name, use positional unigrams of the date of birth etc.
 - ``clk.json`` is the output file.
@@ -110,6 +110,28 @@ Example
     It is an indication of problems in the hashing if the distribution is skewed towards no bits set or
     all bits set. Consult the :doc:`tutorial_cli` for further details.
 
+
+.. _schema_handling:
+
+Schema Handling
+---------------
+
+A schema file can be tested for validity against the schema specification with the ``validate-schema`` command.
+
+.. command-output:: clkutil validate-schema --help
+
+Example
+~~~~~~~
+
+::
+
+     $ clkutil validate-schema clkhash/data/randomnames-schema.json
+     schema is valid
+
+
+Schema files of older versions can be converted to the latest version with the ``convert-schema`` command.
+
+.. command-output:: clkutil convert-schema --help
 
 
 .. _data-generation:

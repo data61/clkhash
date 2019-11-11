@@ -1,7 +1,11 @@
 {
-  "version": 3,
+  "version": 1,
   "clkConfig": {
     "l": 1024,
+    "k": 30,
+    "hash": {
+      "type": "doubleHash"
+    },
     "kdf": {
       "type": "HKDF",
       "hash": "SHA256",
@@ -13,7 +17,13 @@
   "features": [
     {
       "identifier": "INDEX",
-      "ignored": true
+      "format": {
+        "type": "integer"
+      },
+      "hashing": {
+        "ngram": 1,
+        "weight": 0
+      }
     },
     {
       "identifier": "NAME freetext",
@@ -24,14 +34,8 @@
         "minLength": 3
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 2
-        },
-        "strategy": {
-          "bitsPerToken": 15
-        },
-        "hash": {"type": "doubleHash"}
+        "ngram": 2,
+        "weight": 0.5
       }
     },
     {
@@ -42,15 +46,8 @@
         "format": "%Y/%m/%d"
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 1,
-          "positional": true
-        },
-        "strategy": {
-          "bitsPerToken": 30
-        },
-        "hash": {"type": "doubleHash"}
+        "ngram": 1,
+        "positional": true
       }
     },
     {
@@ -60,14 +57,8 @@
         "values": ["M", "F"]
       },
       "hashing": {
-        "comparison": {
-          "type": "ngram",
-          "n": 1
-        },
-        "strategy": {
-          "bitsPerToken": 60
-        },
-        "hash": {"type": "doubleHash"}
+        "ngram": 1,
+        "weight": 2
       }
     }
   ]

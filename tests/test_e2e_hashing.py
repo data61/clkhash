@@ -34,15 +34,18 @@ def _test_stats(pii, schema, keys):
 
 class TestV2(unittest.TestCase):
 
-    def test_compare_v1_and_v2(self):
+    def test_compare_v1_v2_and_v3(self):
         pii = randomnames.NameList(100).names
-        schema_v1 = randomnames.NameList.SCHEMA
-        # this v2 schema should be equivalent to the above v1 schema
+        schema_v3 = randomnames.NameList.SCHEMA
+        # this v2 schema should be equivalent to the above v3 schema
         schema_v2 = _test_schema('randomnames-schema-v2.json')
-        keys = ('secret', 'sshh')
-        for clkv1, clkv2 in zip(clk.generate_clks(pii, schema_v1, keys),
-                                clk.generate_clks(pii, schema_v2, keys)):
+        schema_v1 = _test_schema('randomnames-schema-v1.json')
+        secret = 'secret'
+        for clkv1, clkv2, clkv3 in zip(clk.generate_clks(pii, schema_v1, secret),
+                                       clk.generate_clks(pii, schema_v2, secret),
+                                       clk.generate_clks(pii, schema_v3, secret)):
             self.assertEqual(clkv1, clkv2)
+            self.assertEqual(clkv1, clkv3)
 
     def test_compare_strategies(self):
         def mkSchema(hashing_properties):
@@ -70,7 +73,7 @@ class TestV2(unittest.TestCase):
             )
 
         pii = [('An',), ('Fred',), ('Philhowe',), ('MuhlbachBereznyz',)]
-        keys = ('secret', 'sshh')
+        secret = 'secret'
 
         schema_k = mkSchema(FieldHashingProperties(
             encoding=FieldHashingProperties._DEFAULT_ENCODING,
@@ -79,7 +82,7 @@ class TestV2(unittest.TestCase):
             hash_type='doubleHash'
         ))
 
-        mean_k, std_k = _test_stats(pii, schema_k, keys)
+        mean_k, std_k = _test_stats(pii, schema_k, secret)
         print('test_compare_k_and_num_bits k: ', mean_k, std_k)
 
         schema_num_bits = mkSchema(FieldHashingProperties(
@@ -88,7 +91,7 @@ class TestV2(unittest.TestCase):
             strategy=BitsPerFeatureStrategy(int(round(mean_k))),
             hash_type='doubleHash'
         ))
-        mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, keys)
+        mean_num_bits, std_num_bits = _test_stats(pii, schema_num_bits, secret)
         print('test_compare_k_and_num_bits num_bits: ', mean_num_bits,
               std_num_bits)
 
@@ -106,10 +109,10 @@ class TestNamelistHashable(unittest.TestCase):
         self.assertEqual(len(s2), 100)
 
         schema = randomnames.NameList.SCHEMA
-        keys = ('secret', 'sshh')
+        secret = 'secret'
 
-        bf1 = clk.generate_clks(s1, schema, keys)
-        bf2 = clk.generate_clks(s2, schema, keys)
+        bf1 = clk.generate_clks(s1, schema, secret)
+        bf2 = clk.generate_clks(s2, schema, secret)
 
         self.assertEqual(len(bf1), 100)
         self.assertEqual(len(bf2), 100)
@@ -155,7 +158,7 @@ class TestHashingWithDifferentK(unittest.TestCase):
         )
 
         pii = [['Deckard']]
-        keys = generate_key_lists(('secret',), 1)
+        keys = generate_key_lists('secret', 1)
 
         schema.fields[0].hashing_properties.strategy = BitsPerTokenStrategy(0)
         bf0 = next(bloomfilter.stream_bloom_filters(pii, keys, schema))
@@ -225,7 +228,7 @@ class TestHashingWithDifferentHashFunctions(unittest.TestCase):
         )
 
         pii = [['Deckard', 'Cane']]
-        keys = generate_key_lists(('secret1', 'secret2'), 2)
+        keys = generate_key_lists('secret', 2)
         blake_field = schema.fields[0]
         double_hash_field = schema.fields[1]
 

@@ -91,14 +91,14 @@ class TestComplexSchemaChanges(unittest.TestCase):
                 hashing=dict(
                     ngram=1,
                     positional=True))])
-    KEYS = ('chicken', 'nuggets')
+    SECRET = 'chicken'
 
     def test_expected_number_of_encodings_returned(self):
         loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
 
         results = clk.generate_clk_from_csv(
             io.StringIO(self.CSV_INPUT),
-            self.KEYS,
+            self.SECRET,
             loaded_schema,
             validate=True,
             header=True,
@@ -111,14 +111,14 @@ class TestComplexSchemaChanges(unittest.TestCase):
 
         results = clk.generate_clk_from_csv(
             io.StringIO(self.CSV_INPUT),
-            self.KEYS,
+            self.SECRET,
             loaded_schema,
             validate=True,
             header=True,
             progress_bar=False)
 
-        assert results[0] == 'THHkzVWFYtzMJzmWobTLN8k8VwRN8+na10bN3N9I9oDPGuRZLGpV/QXZYtRZ6/wc+K3W9wvmDA2KpHmOTlVAY9jDblysQ9zlR86OMSbBn+uG3Qxi8EDpUN6nSI5FfOK1Zt77J0ye8P3wifF6QdkFfm3UXNGWil7CPNnUa/fHG0w='
-        assert results[1] == '/r76/u//7+1O/3bG//7N5t3evpe/Wt7+v/f/Xt/+9rpXW//f/p7/v//3/vv7v/7/fv7X//vf3Vf/9vP//nd/3t93dt7/dPr/fj7f1z5B3/7W1u/qr+b3//q6729n6/au7772TPz+2s3u/n/88/9OTG/PxvrOh/7Hb89cz+Z3vmo='
+        assert results[0] == 'SU9+/O/Jzzi0sfzH8K2l3+qfhn8Ky3jVI21DVdH9j2fXE++JH8GcQGSeYxDZFxALCAT8CHwYJyQcRT3MhUQOFWcOf5fWdr6ofh6DYy8iv////weyunbMahfV9RMWkRwQmBL3fjreUVOCS9D9kAbQC2XgULidKCTHd9ZpbPJ91eE='
+        assert results[1] == 'Pfl1/d7/31/+9u9x9zv//76/83//0v1Xt/dX/3X/e79XP7vd+Xfkf//2/9Xb/7Fd73e9f/n0f/c7Vb99B/X29d8997Pz/vJ87X/X/vcX9vt1d+/+5bP1fvfevnfX8d/f/j0XPL7f999kc/28/3d4c7t/9b/+Pf411/f2+3z1d/s='
 
 
 class TestHeaderChecking(unittest.TestCase):
@@ -147,7 +147,7 @@ class TestHeaderChecking(unittest.TestCase):
     def test_header(self):
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_correct_header),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header=True,
             progress_bar=False)
@@ -156,7 +156,7 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_incorrect_header_name),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=True,
                 progress_bar=False)
@@ -164,7 +164,7 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_incorrect_count),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=True,
                 progress_bar=False)
@@ -172,7 +172,7 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_no_header),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=True,
                 progress_bar=False)
@@ -180,7 +180,7 @@ class TestHeaderChecking(unittest.TestCase):
     def test_ignore_header(self):
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_correct_header),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header='ignore',
             progress_bar=False)
@@ -188,7 +188,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_incorrect_header_name),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header='ignore',
             progress_bar=False)
@@ -196,7 +196,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_incorrect_count),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header='ignore',
             progress_bar=False)
@@ -204,7 +204,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_no_header),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header='ignore',
             progress_bar=False)
@@ -214,7 +214,7 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.EntryError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_correct_header),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=False,
                 progress_bar=False)
@@ -222,7 +222,7 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.EntryError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_incorrect_header_name),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=False,
                 progress_bar=False)
@@ -230,14 +230,14 @@ class TestHeaderChecking(unittest.TestCase):
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
                 io.StringIO(self.csv_incorrect_count),
-                ('open', 'sesame'),
+                'open sesame',
                 self.schema,
                 header=False,
                 progress_bar=False)
 
         out = clk.generate_clk_from_csv(
             io.StringIO(self.csv_no_header),
-            ('open', 'sesame'),
+            'open sesame',
             self.schema,
             header=False,
             progress_bar=False)

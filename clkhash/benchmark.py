@@ -28,7 +28,7 @@ def compute_hash_speed(num, quiet=False):
 
     with open(tmpfile_name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, ('key1', 'key2'), schema, progress_bar=not quiet)
+        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet)
         end = timer()
 
     os.close(os_fd)

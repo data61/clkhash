@@ -14,12 +14,13 @@ from click.testing import CliRunner
 from future.builtins import range
 
 import clkhash.cli
-from clkhash import randomnames, rest_client
+from clkhash import randomnames, rest_client, schema
 from clkhash.rest_client import ServiceError, RestClient
 
 from tests import *
 
 ES_TIMEOUT = os.environ.get("ES_TIMEOUT", 20)
+
 
 class CLITestHelper(unittest.TestCase):
     SAMPLES = 100
@@ -129,6 +130,8 @@ class BasicCLITests(unittest.TestCase):
         assert 'hashes in' in result.output
 
 
+@unittest.skipUnless("INCLUDE_CLI" in os.environ,
+                     "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
 class TestSchemaValidationCommand(unittest.TestCase):
 
     @staticmethod
@@ -162,6 +165,73 @@ class TestSchemaValidationCommand(unittest.TestCase):
         assert result.exit_code == -1
         assert 'schema is not valid.' in result.output
 
+    def test_good_v3_schema(self):
+        result = self.validate_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        assert 'schema is valid' in result.output
+
+    def test_bad_v3_schema(self):
+        result = self.validate_schema(BAD_SCHEMA_V3_PATH)
+        assert result.exit_code == -1
+        assert 'schema is not valid.' in result.output
+
+
+@unittest.skipUnless("INCLUDE_CLI" in os.environ,
+                     "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
+class TestSchemaConversionCommand(unittest.TestCase):
+
+    LATEST_VERSION = max(schema.MASTER_SCHEMA_FILE_NAMES.keys())
+
+    @staticmethod
+    def convert_schema(schema_path):
+        runner = CliRunner()
+        result = runner.invoke(clkhash.cli.cli, [
+            'convert-schema', schema_path, 'out.json'
+        ])
+        return result
+
+    def test_good_v1_schema(self):
+        for schema_path in GOOD_SCHEMA_V1_PATH, SIMPLE_SCHEMA_PATH:
+            result = self.convert_schema(schema_path)
+            assert result.exit_code == 0
+            with open('out.json') as f:
+                json_dict = json.load(f)
+                self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v1_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V1_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+        assert "'l' is a required property" in result.exception.msg
+
+    def test_good_v2_schema(self):
+        for schema_path in GOOD_SCHEMA_V2_PATH, RANDOMNAMES_SCHEMA_PATH:
+            result = self.convert_schema(schema_path)
+            assert result.exit_code == 0
+            with open('out.json') as f:
+                json_dict = json.load(f)
+                self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v2_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V2_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+
+    def test_good_v3_schema(self):
+        result = self.convert_schema(GOOD_SCHEMA_V3_PATH)
+        assert result.exit_code == 0
+        with open('out.json') as f:
+            json_dict = json.load(f)
+            self.assertEqual(json_dict['version'], self.LATEST_VERSION)
+
+    def test_bad_v3_schema(self):
+        result = self.convert_schema(BAD_SCHEMA_V3_PATH)
+        assert result.exit_code == 1
+        self.assertIsInstance(result.exception, schema.SchemaError)
+        assert 'schema is not valid.' in result.exception.msg
+
 
 @unittest.skipUnless("INCLUDE_CLI" in os.environ,
                      "Set envvar INCLUDE_CLI to run. Disabled for jenkins")
@@ -178,10 +248,10 @@ class TestHashCommand(unittest.TestCase):
     def test_hash_help(self):
         runner = CliRunner()
         result = runner.invoke(clkhash.cli.cli, ['hash', '--help'])
-        assert 'keys' in result.output
+        assert 'secret' in result.output
         assert 'schema' in result.output
 
-    def test_hash_requires_keys(self):
+    def test_hash_requires_secret(self):
         runner = self.runner
 
         with runner.isolated_filesystem():
@@ -189,9 +259,9 @@ class TestHashCommand(unittest.TestCase):
                 f.write('Alice, 1967')
 
             result = runner.invoke(clkhash.cli.cli,
-                                   ['hash', 'in.csv', 'out.json'])
+                                   ['hash', 'in.csv'])
             assert result.exit_code != 0
-            self.assertIn('keys', result.output)
+            self.assertIn('Missing argument "SECRET"', result.output)
 
     def test_hash_with_provided_schema(self):
         runner = self.runner
@@ -202,7 +272,7 @@ class TestHashCommand(unittest.TestCase):
 
             result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', 'in.csv', 'a', 'b', SIMPLE_SCHEMA_PATH,
+                ['hash', 'in.csv', 'a', SIMPLE_SCHEMA_PATH,
                  'out.json', '--no-header'])
 
             with open('out.json') as f:
@@ -222,11 +292,11 @@ class TestHashCommand(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', a_pii, 'a', 'b', schema_file, 'out.json'])
+                ['hash', a_pii, 'a', schema_file, 'out.json'])
 
             result_2 = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', a_pii, 'a', 'b', schema_file, 'out-2.json'])
+                ['hash', a_pii, 'a', schema_file, 'out-2.json'])
 
             with open('out.json') as f:
                 hasha = json.load(f)['clks']
@@ -317,7 +387,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
 
             hash_result = runner.invoke(
                 clkhash.cli.cli,
-                ['hash', self.pii_file.name, 'secret', 'key',
+                ['hash', self.pii_file.name, 'secret',
                  'pii-schema.json', 'pii-hashes.json'])
             self.assertEqual(hash_result.exit_code, 0, msg=hash_result.output)
 
@@ -327,7 +397,7 @@ class TestHasherDefaultSchema(unittest.TestCase):
             with open(output_filename, 'wt') as output:
                 cli_result = runner.invoke(
                     clkhash.cli.cli,
-                    ['hash', self.pii_file.name, 'secret', 'key',
+                    ['hash', self.pii_file.name, 'secret',
                      RANDOMNAMES_SCHEMA_PATH, output.name])
             self.assertEqual(cli_result.exit_code, 0, msg=cli_result.output)
 
@@ -352,8 +422,7 @@ class TestHasherSchema(CLITestHelper):
             with open(output_filename) as output:
                 cli_result = runner.invoke(
                     clkhash.cli.cli,
-                    ['hash', pii_file.name, 'secretkey1',
-                     'secretkey2', RANDOMNAMES_SCHEMA_PATH, output.name])
+                    ['hash', pii_file.name, 'secret', RANDOMNAMES_SCHEMA_PATH, output.name])
 
             self.assertEqual(cli_result.exit_code, 0, msg=cli_result.output)
 
@@ -384,8 +453,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file.name,
-                                   'secretkey1',
-                                   'secretkey2',
+                                   'secret',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file.name])
         assert cli_result.exit_code == 0
@@ -393,8 +461,7 @@ class TestCliInteractionWithService(CLITestHelper):
         cli_result = runner.invoke(clkhash.cli.cli,
                                    ['hash',
                                    self.pii_file_2.name,
-                                   'secretkey1',
-                                   'secretkey2',
+                                   'secret',
                                     SIMPLE_SCHEMA_PATH,
                                     self.clk_file_2.name])
         assert cli_result.exit_code == 0

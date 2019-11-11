@@ -94,21 +94,19 @@ class Schema:
         return "<Schema (v3): {} fields>".format(len(self.fields))
 
 
-def convert_v1_to_v2(
-        dict  # type: Dict[str, Any]
-    ):
-    # type: (...) -> Dict[str, Any]
+def _convert_v1_to_v2(schema_dict):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
     """
     Convert v1 schema dict to v2 schema dict.
-    :param dict: v1 schema dict
+    :param schema_dict: v1 schema dict
     :return: v2 schema dict
     """
-    dict = deepcopy(dict)
-    version = dict['version']
+    schema_dict = deepcopy(schema_dict)
+    version = schema_dict['version']
     if version != 1:
         raise ValueError('Version {} not 1'.format(version))
 
-    clk_config = dict['clkConfig']
+    clk_config = schema_dict['clkConfig']
     k = clk_config.pop('k')
     clk_hash = clk_config['hash']
 
@@ -142,26 +140,24 @@ def convert_v1_to_v2(
             'xor_folds': clk_config.get('xor_folds', 0),
             'kdf': clk_config['kdf']
         },
-        'features': list(map(convert_feature, dict['features']))
+        'features': list(map(convert_feature, schema_dict['features']))
     }
     return result
 
 
-def convert_v2_to_v3(
-        dict  # type: Dict[str, Any]
-    ):
-    # type: (...) -> Dict[str, Any]
+def _convert_v2_to_v3(schema_dict):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
     """
     Convert v2 schema dict to v3 schema dict.
-    :param dict: v2 schema dict
+    :param schema_dict: v2 schema dict
     :return: v3 schema dict
     """
-    dict = deepcopy(dict)
-    version = dict['version']
+    schema_dict = deepcopy(schema_dict)
+    version = schema_dict['version']
     if version != 2:
         raise ValueError('Version {} not 2'.format(version))
-    dict['version'] = 3
-    for feature in dict['features']:
+    schema_dict['version'] = 3
+    for feature in schema_dict['features']:
         if feature.get('ignored', False):
             continue
         strategy = feature['hashing']['strategy']
@@ -171,12 +167,38 @@ def convert_v2_to_v3(
             strategy['bitsPerFeature'] = strategy.pop('numBits')
         ngrams = feature['hashing']['ngram']
         feature['hashing']['comparison'] = {'type': 'ngram', 'n': feature['hashing'].pop('ngram'), 'positional': feature['hashing'].pop('positional', False)}
-    return dict
+    return schema_dict
+
+
+def convert_to_latest_version(schema_dict, validate_result=False):
+    # type: (Dict[str, Any], Optional[bool]) -> Dict[str, Any]
+    """ Convert the given schema to latest schema version.
+
+     :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'version'` key
+            containing a master schema version. The rest of the schema dict must conform to the corresponding
+            master schema.
+     :param validate_result: validate converted schema against schema specification
+     :return: schema dict of the latest version
+     raises SchemaError if schema version is not supported"""
+    version = schema_dict.get('version', "'not specified'")
+    if version not in MASTER_SCHEMA_FILE_NAMES.keys():
+        msg = ('Schema version {} is not supported. '
+               'Consider updating clkhash.').format(version)
+        raise SchemaError(msg)
+    if schema_dict['version'] == 1:
+        schema_dict = _convert_v1_to_v2(schema_dict)
+    if schema_dict['version'] == 2:
+        schema_dict = _convert_v2_to_v3(schema_dict)
+    if validate_result:
+        validate_schema_dict(schema_dict)
+    return schema_dict
 
 
 def from_json_dict(dct, validate=True):
     # type: (Dict[str, Any], bool) -> Schema
-    """ Create a Schema for v1 or v2 according to dct
+    """ Create a Schema of the most recent version according to dct
+
+    if the provided schema dict is of an older version, then it will be automatically converted to the latest.
 
     :param dct: This dictionary must have a `'features'`
             key specifying the columns of the dataset. It must have
@@ -192,19 +214,9 @@ def from_json_dict(dct, validate=True):
     if validate:
         # This raises iff the schema is invalid.
         validate_schema_dict(dct)
-
-    version = dct['version']
-    if dct['version'] == 1:
-        dct = convert_v1_to_v2(dct)
-    if dct['version'] == 2:
-        dct = convert_v2_to_v3(dct)
-        if validate:
-            validate_schema_dict(dct)
-    elif version not in MASTER_SCHEMA_FILE_NAMES.keys():
-        msg = ('Schema version {} is not supported. '
-               'Consider updating clkhash.').format(version)
-        raise SchemaError(msg)
-
+    dct = convert_to_latest_version(dct)
+    if validate:
+        validate_schema_dict(dct)
     clk_config = dct['clkConfig']
     l = clk_config['l']
     xor_folds = clk_config.get('xor_folds', 0)
