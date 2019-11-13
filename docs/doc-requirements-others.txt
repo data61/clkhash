@@ -1,5 +1,6 @@
 ipython==7.5.0
 jupyter
+matplotlib==3.1.1
 nbsphinx>=0.3
 numpy
 pandas
@@ -8,4 +9,3 @@ requests
 sphinx>=1.7
 sphinxcontrib-programoutput
 typing>=3.6
-matplotlib==3.1.1
