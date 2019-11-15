@@ -70,13 +70,11 @@ stages:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.8', '3.6', '3.5', '2.7']
-      #    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
       operatingSystems: ['macos-10.13']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.6', '3.5', 'pypy3', 'pypy2']
-      #    operatingSystems: ['ubuntu-16.04', 'macos-10.13', 'vs2017-win2016']
       operatingSystems: ['ubuntu-18.04']
       architectures: ['x64']
   - job:
@@ -111,11 +109,9 @@ stages:
     - script: |
         cd $(Pipeline.Workspace)
         mkdir artifacts
-        mv vs2017-win2016-3.7-x64/*.whl artifacts
         mv vs2017-win2016-3.7-x64/*.exe artifacts
         mv vs2017-win2016-3.7-x86/*.exe artifacts
-        mv macos-10.13-3.7-x86/*.whl artifacts
-        mv ubuntu-18.04-3.7-x86/*.whl artifacts
+        mv ubuntu-18.04-3.7-x64/*.whl artifacts
         mv sdist/* artifacts
         ls artifacts
       displayName: 'List Artifacts'
