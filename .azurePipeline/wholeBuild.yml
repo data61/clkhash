@@ -7,6 +7,8 @@ parameters:
 jobs:
 - job:
   strategy:
+    # We are limiting the parallelism only because of the deployed entity-service slowness. So when
+    # we do not require it, we shouldn't include such limitation.
     ${{ if eq(parameters.fullTests, True) }}:
       maxParallel: 2
     matrix:
@@ -58,29 +60,12 @@ jobs:
         INCLUDE_CLI: 1
         TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
 
-  # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
-  # all the tutorials should be run.
-  # The list of tutorials without anonlink are provided in the file `docs/list_tutorials_without_anonlink.txt`.
-  # The anonlink requirement is in its own dependency file `docs/doc-requirements-anonlink.txt` while all
-  # the other required dependencies are in `docs/doc-requirements-others.txt`.
-  # Note also that with the current requirements,
   - script: |
       pip install -e .
-      python -m pip install -U -r docs/doc-requirements-anonlink.txt -r docs/doc-requirements-others.txt
+      python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
     condition: and(ne(variables['pythonVersion'], '2.7'), eq(variables['fullTests'], True))
-  # This step currently fails. Cf issue #287 https://github.com/data61/clkhash/issues/287
-  #- bash: |
-  #    python -m pip install -U -r docs/doc-requirements-others.txt
-  #    list_file=''
-  #    for file in $(cat docs/list_tutorials_without_anonlink.txt)
-  #    do
-  #      list_file="$list_file docs/$file"
-  #    done
-  #    pytest --nbval -x --sanitize-with docs/tutorial_sanitize.cfg $list_file
-  #  displayName: 'Test notebooks without anonlink'
-  #  condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], '2.7'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
