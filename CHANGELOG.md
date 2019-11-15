@@ -1,16 +1,36 @@
-## 0.14.0 (in development)
+## new version
+
+## 0.15.0
+
+- CLI can handle rate limiting from the entity service #277
+- introduce hypothesis testing #280
+- improvements to Azure CI pipeline #284, #294, #312, #313
+- Added ability to define alternative comparison techniques #286
+- Exact comparison #290
+- improved schema documentation #293
+- update rest client #297
+- renamed the strategies #302
+- Switch to using a fork of `bitarray` that distributes binary wheels. This means installing clkhash no longer 
+  requires a c compiler. #308
+- added new command for schema conversion to clkutil #309
+- update randomnames schema #311
+- addressed warnings in tests #315
+- added numeric comparison #316
+- remove mapping type from tutorials and cli #317
+- tutorial about comparisons #318
+  
+### Breaking Changes
+
+- The cli method `hash` requires only one secret instead of two. #303
+- The clks generated with `clkhash` <= 0.14.0 are not compatible with clks from version 0.15.0 onwards.
+
+
+## 0.14.0
 
 - Fix bug where empty inputs don't generate tokens.
 - CLI commands to delete runs and projects. #265
 - Migrate to Azure DevOps for CI testing. #262
 - Synthetic data generation using distributions. #271, #275
-- Switch to using a fork of `bitarray` that distributes binary wheels. This means installing clkhash no longer 
-  requires a c compiler. #308
-
-### Breaking Changes
-
-- The cli method `hash` requires only one secret instead of two. #303
-- The clks generated with `clkhash` <= 0.14.0 are not compatible with clks from version 0.14.0 onwards.
 
 
 ## 0.13.0
