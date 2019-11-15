@@ -50,14 +50,14 @@ A schema is required to hash this data. You can retrieve the default schema with
 
 or you can make your own.
 
-To hash this data using its schema, with the shared secret keys `horse` and `staple`:
+To hash this data using its schema, with the shared secret key `horse_staple`:
 
-    $ clkutil hash fake-pii-out.csv horse staple fake-pii-schema.json /tmp/fake-clk.json
+    $ clkutil hash fake-pii-out.csv horse_staple fake-pii-schema.json /tmp/fake-clk.json
     CLK data written to /tmp/fake-clk.json
 
 
-Note the keys should only be shared with the other entity - and not with anyone carrying out
-the record linkage.
+Note the secret should only be shared with the other entity - and not with anyone carrying out
+the record linkage. Knowledge of this secret allows reconstruction of the PII from the CLKs.
 
 To use the command line tool without installing `clkhash`, install the dependencies, then run:
 
@@ -70,5 +70,5 @@ To hash a CSV file of entities using the default schema:
 ```python
 from clkhash import clk, randomnames
 fake_pii_schema = randomnames.NameList.SCHEMA
-clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), ('key1', 'key2'), fake_pii_schema)
+clks = clk.generate_clk_from_csv(open('fake-pii-out.csv','r'), 'secret', fake_pii_schema)
 ```
