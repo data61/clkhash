@@ -2,6 +2,10 @@
 
 ## 0.15.0
 
+Introduced linkage schema v3 that permits you to specify different comparison techniques.
+The [hashing schema documentation](http://clkhash.readthedocs.io/en/latest/schema.html) provides more details.
+There is also a [tutorial](https://clkhash.readthedocs.io/en/stable/tutorial_comparisons.html) describing the different comparions techniques.
+
 - CLI can handle rate limiting from the entity service #277
 - introduce hypothesis testing #280
 - improvements to Azure CI pipeline #284, #294, #312, #313
