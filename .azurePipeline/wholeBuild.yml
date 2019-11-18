@@ -60,12 +60,14 @@ jobs:
         INCLUDE_CLI: 1
         TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
 
+# This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
+# The change will come with the future release 0.13. Tracked via issue #321
   - script: |
       pip install -e .
       python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
-    condition: and(ne(variables['pythonVersion'], '2.7'), eq(variables['fullTests'], True))
+    condition: and(ne(variables['pythonVersion'], '2.7'), eq(variables['fullTests'], True), ne(variables['operatingSystem'], 'vs2017-win2016'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
