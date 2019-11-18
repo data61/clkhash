@@ -49,7 +49,7 @@ Python Version       Operating System      Standard pytest  INLCUDE_CLI  ENTITY_
 pypy2                ubuntu-18.04          Yes              No           No                  No
 pypy3                ubuntu-18.04          Yes              No           No                  No
 ------------------   --------------------  ---------------  -----------  ------------------  ---------
-2.7                  ubuntu-18.04          Yes              Yes          Yes                 Yes
+2.7                  ubuntu-18.04          Yes              Yes          Yes                 No
 2.7                  macos-10.13           Yes              No           No                  No
 2.7                  vs2017-win2016 (x64)  Yes              No           No                  No
 2.7                  vs2017-win2016 (x86)  Yes              No           No                  No
