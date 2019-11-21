@@ -2,19 +2,25 @@ parameters:
   pythonVersions: []
   operatingSystems: []
   architectures: []
+  fullTests: False
 
 jobs:
-- job: 'test_and_publish'
+- job:
   strategy:
-    maxParallel: 2
+    # We are limiting the parallelism only because of the deployed entity-service slowness. So when
+    # we do not require it, we shouldn't include such limitation.
+    ${{ if eq(parameters.fullTests, True) }}:
+      maxParallel: 2
     matrix:
       ${{ each py in parameters.pythonVersions }}:
         ${{ each os in parameters.operatingSystems }}:
           ${{ each architecture in parameters.architectures }}:
-            ${{ format('Python {0} on {1} ({2})', py, os, architecture) }}:
+            ${{ format('Python {0} on {1} ({2}), full tests {3}', py, os, architecture, parameters.fullTests) }}:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
+              fullTests: ${{ parameters.fullTests }}
+
   pool:
     vmImage: $(operatingSystem)
   # The stage has the name "Build and Test", and the matrix strategy adds the Python version, Operating System
@@ -50,31 +56,19 @@ jobs:
     displayName: 'Test with pytest'
     timeoutInMinutes: 10 # it should pass in 2.5 minutes, so 10 should be more than enough even if the server is busy.
     env:
-      INCLUDE_CLI: 1
-      TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+      ${{ if eq(parameters.fullTests, True) }}:
+        INCLUDE_CLI: 1
+        TEST_ENTITY_SERVICE: $(ENTITY_SERVICE_URL)
 
-  # If we are running on a Windows machine, only the tutorials which are not using anonlink can be run, otherwise
-  # all the tutorials should be run.
-  # The list of tutorials without anonlink are provided in the file `docs/list_tutorials_without_anonlink.txt`.
-  # The anonlink requirement is in its own dependency file `docs/doc-requirements-anonlink.txt` while all
-  # the other required dependencies are in `docs/doc-requirements-others.txt`.
-  # Note also that with the current requirements,
+# This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
+# The change will come with the future release 0.13. Tracked via issue #321
+# These tutorial tests are not run on Python 2.7 because anonlink is only for Python 3+.
   - script: |
-      python -m pip install -U -r docs/doc-requirements-anonlink.txt -r docs/doc-requirements-others.txt
+      pip install -e .
+      python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
-    condition: and(ne(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], '2.7'))
-  # This step currently fails. Cf issue #287 https://github.com/data61/clkhash/issues/287
-  #- bash: |
-  #    python -m pip install -U -r docs/doc-requirements-others.txt
-  #    list_file=''
-  #    for file in $(cat docs/list_tutorials_without_anonlink.txt)
-  #    do
-  #      list_file="$list_file docs/$file"
-  #    done
-  #    pytest --nbval -x --sanitize-with docs/tutorial_sanitize.cfg $list_file
-  #  displayName: 'Test notebooks without anonlink'
-  #  condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], '2.7'))
+    condition: and(ne(variables['pythonVersion'], '2.7'), eq(variables['fullTests'], True), ne(variables['operatingSystem'], 'vs2017-win2016'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
@@ -95,9 +89,14 @@ jobs:
       failIfCoverageEmpty: true
 
   - bash: |
+        report_name="$(operatingSystem)_$(architecture)_$(pythonVersion)"
+        if [ $(fullTests) == "True" ]
+        then
+          report_name=${report_name}_full_tests
+        fi
         python -m codecov --token $(CODECOV_TOKEN) \
           --file coverageReport.xml \
-          -n $(operatingSystem)_$(architecture)_$(pythonVersion)
+          -n ${report_name}
     displayName: 'Send coverage to codecov'
     condition: succeededOrFailed()
 
@@ -106,11 +105,11 @@ jobs:
       .\dist\clkutil.exe --version
       mv .\dist\clkutil.exe .\dist\clkutil-$(architecture).exe
     displayName: 'Build clkutil-$(architecture).exe'
-    condition: and(eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
+    condition: and(succeeded(), eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish intermediate build artifacts'
     inputs:
       path: 'dist'
-      artifact: '$(pythonVersion)-$(architecture)'
-    condition: and(succeeded(), eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
+      artifact: '$(operatingSystem)-$(pythonVersion)-$(architecture)'
+    condition: and(succeeded(), eq(variables['pythonVersion'], '3.7'))
