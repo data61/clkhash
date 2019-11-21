@@ -62,6 +62,7 @@ jobs:
 
 # This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
 # The change will come with the future release 0.13. Tracked via issue #321
+# These tutorial tests are not run on Python 2.7 because anonlink is only for Python 3+.
   - script: |
       pip install -e .
       python -m pip install -U -r docs/doc-requirements.txt
