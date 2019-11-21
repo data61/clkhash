@@ -19,7 +19,7 @@ jobs:
               pythonVersion: ${{ py }}
               operatingSystem: ${{ os }}
               architecture: ${{ architecture }}
-              fullTests: ${{ parameters.FullTests }}
+              fullTests: ${{ parameters.fullTests }}
 
   pool:
     vmImage: $(operatingSystem)
@@ -58,7 +58,7 @@ jobs:
     env:
       ${{ if eq(parameters.fullTests, True) }}:
         INCLUDE_CLI: 1
-        TEST_ENTITY_SERVICE: https://testing.es.data61.xyz
+        TEST_ENTITY_SERVICE: $(ENTITY_SERVICE_URL)
 
 # This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
 # The change will come with the future release 0.13. Tracked via issue #321
@@ -89,7 +89,7 @@ jobs:
 
   - bash: |
         report_name="$(operatingSystem)_$(architecture)_$(pythonVersion)"
-        if [ $(fullTests) = "True" ]
+        if [ $(fullTests) == "True" ]
         then
           report_name=${report_name}_full_tests
         fi
