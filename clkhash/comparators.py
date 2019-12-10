@@ -90,7 +90,10 @@ class ExactComparison(AbstractComparison):
     """
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
-        return word,
+        if len(word) == 0:
+            return tuple()
+        else:
+            return word,
 
 
 class NumericComparison(AbstractComparison):
@@ -159,6 +162,8 @@ class NumericComparison(AbstractComparison):
         self.fractional_precision = fractional_precision
 
     def tokenize(self, word):  # type: (Text) -> Iterable[Text]
+        if len(word) == 0:
+            return tuple()
         try:
             v = int(word, base=10)  # we try int first, so we don't loose precision
             if self.fractional_precision > 0:
