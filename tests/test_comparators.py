@@ -88,6 +88,10 @@ def test_exact_num_tokens(word):
     assert len(list(ExactComparison().tokenize(word))) == 1
 
 
+def test_exact_empty_input():
+    assert list(ExactComparison().tokenize("")) == []
+
+
 #####
 # testing numeric comparison
 #####
@@ -111,6 +115,7 @@ def test_numeric_exceptions():
 def test_numeric_mix_int_and_floats():
     comp = NumericComparison(1, 20, 3)
     assert comp.tokenize('42') == comp.tokenize('42.000')
+
 
 # we restrict the exponents of the floats such that exponent of number + precision < 308. Otherwise we might get
 # infinity during the tokenization process.
@@ -222,6 +227,11 @@ def test_numeric_overlaps_with_integers(thresh_dist, resolution, candidate):
     assert all(x >= y for x, y in zip(overlaps, overlaps[1:])), 'with increasing distance, the overlap reduces'
 
 
+def test_numeric_empty_input():
+    comp = NumericComparison(1, 20, 3)
+    assert list(comp.tokenize('')) == []
+
+
 #####
 # testing invalid comparison
 #####
@@ -230,3 +240,5 @@ def test_numeric_overlaps_with_integers(thresh_dist, resolution, candidate):
 def test_invalid_comparison():
     with pytest.raises(ValueError):
         comparators.get_comparator({"type": "apples_and_oranges"})
+
+
