@@ -85,7 +85,7 @@ def test_exact_uniqueness(word1, word2):
 
 @given(word=text())
 def test_exact_num_tokens(word):
-    assert len(list(ExactComparison().tokenize(word))) == 1
+    assert len(list(ExactComparison().tokenize(word))) == (1 if len(word) > 0 else 0)
 
 
 def test_exact_empty_input():
