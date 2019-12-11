@@ -1,5 +1,9 @@
 ## new version
 
+## 0.15.1
+
+- fixed issue where NumericComparison couldn't tokenize empty inputs #323
+
 ## 0.15.0
 
 Introduced linkage schema v3 that permits you to specify different comparison techniques.
