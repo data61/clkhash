@@ -12,7 +12,7 @@ nbval==0.9.1
 pyblake2==1.1.2; python_version < '3.6'
 pyinstaller==3.6
 pytest==4.6.3
-pytest-cov==2.7.1
+pytest-cov==2.8.1
 requests==2.22.0
 requests-mock==1.6.0
 retrying>=1.3
