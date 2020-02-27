@@ -154,7 +154,7 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
     futures = []
 
     # Compute Bloom filter from the chunks and then serialise it
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(
                 hash_and_serialize_chunk,
