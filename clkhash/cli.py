@@ -141,8 +141,9 @@ def cli(verbose):
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
+@click.option('--multiprocessing', default=True, type=bool, help="If true, use multiprocessing to generate the keys from the secret")
 @verbose_option
-def hash(pii_csv, secret, schema, clk_json, no_header, check_header, validate, verbose):
+def hash(pii_csv, secret, schema, clk_json, no_header, check_header, validate, multiprocessing, verbose):
     """Process data to create CLKs
 
     Given a file containing CSV data as PII_CSV, and a JSON
@@ -173,7 +174,8 @@ def hash(pii_csv, secret, schema, clk_json, no_header, check_header, validate, v
             pii_csv, secret, schema_object,
             validate=validate,
             header=header,
-            progress_bar=verbose)
+            progress_bar=verbose,
+            use_multiprocessing=multiprocessing)
     except (validate_data.EntryError, validate_data.FormatError) as e:
         msg, = e.args
         log(msg)
@@ -404,8 +406,9 @@ def delete_project(project, apikey, server, retry_multiplier, retry_max_exp, ret
 
 
 @cli.command('benchmark', short_help='carry out a local benchmark')
-def benchmark():
-    bench.compute_hash_speed(10000)
+@click.option('--multiprocessing', default=True, type=bool, help="If true, use multiprocessing to generate the keys from the secret")
+def benchmark(multiprocessing):
+    bench.compute_hash_speed(10000, use_multiprocessing=multiprocessing)
 
 
 @cli.command('describe', short_help='show distribution of clk popcounts')
