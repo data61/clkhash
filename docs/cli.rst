@@ -187,12 +187,7 @@ A corresponding hashing schema can be generated as well::
             "weight": 0
           }
         },
-        {
-          "identifier": "NAME freetext",
-          "format": {
-            "type": "string",
-            "encoding": "utf-8",
-            "case": "mixed",
+        {s
             "minLength": 3
           },
           "hashing": {
@@ -238,8 +233,6 @@ can generate 10000 clks from a simple schema (data as generated :ref:`above <dat
     generating CLKs: 100%                 10.0K/10.0K [00:01<00:00, 7.72Kclk/s, mean=521, std=34.7]
      10000 hashes in 1.350489 seconds. 7.40 KH/s
 
-
-
 As a rule of thumb a single modern core will hash around 1M entities in about 20 minutes.
 
 .. note::
@@ -249,6 +242,16 @@ As a rule of thumb a single modern core will hash around 1M entities in about 20
 
 The output shows a running mean and std deviation of the generated clks' popcounts. This can be used
 as a basic sanity check - ensure the CLK's popcount is not around 0 or 1024.
+
+By default the benchmark uses multiprocessing to generate the clks, the performance difference by switching
+to multi-threading mode can also be determined by passing the command line option ``--multiprocessing 0``.
+
+    python -m clkhash.cli benchmark --multiprocessing 0
+    generating CLKs: 100%                 10.0K/10.0K [00:05<00:00, 1.90Kclk/s, mean=406, std=20.4]
+     10000 hashes in 5.285763 seconds. 1.89 KH/s
+
+The performance reduction in using multithreading mode is significant however it does allo clks to be 
+generated on hardware that does not allow multiprocessing such as AWS Lambda. 
 
 Interaction with Entity Service
 -------------------------------
