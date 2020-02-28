@@ -76,10 +76,9 @@ def generate_clk_from_csv(input_f,  # type: TextIO
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
             bar.
-        :param bool use_multiprocessing: Set to `False` to use threading to
-            generate keys for each identifier from the secret.  By default
-            multiprocessing is used to generate the keys.  Set this flag to
-            `False` if executing on a system that is not capable of spawning
+        :param bool use_multiprocessing: Set to `False` to use threading instead
+            of multiprocessing to generate encodings for each record. Set this flag 
+            to `False` if executing on a system that is not capable of spawning
             subprocesses such as AWS Lambda functions.
         :return: A list of serialized Bloom filters and a list of
             corresponding popcounts.
