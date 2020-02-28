@@ -9,8 +9,8 @@ from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
 
-def compute_hash_speed(num, quiet=False):
-    # type: (int, bool) -> float
+def compute_hash_speed(num, quiet=False, use_multiprocessing=True):
+    # type: (int, bool, bool) -> float
     """ Hash time.
     """
     namelist = NameList(num)
@@ -28,7 +28,7 @@ def compute_hash_speed(num, quiet=False):
 
     with open(tmpfile_name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet)
+        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet, use_multiprocessing=use_multiprocessing)
         end = timer()
 
     os.close(os_fd)

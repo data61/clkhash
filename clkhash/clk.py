@@ -53,7 +53,8 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                           schema,  # type: Schema
                           validate=True,  # type: bool
                           header=True,  # type: Union[bool, AnyStr]
-                          progress_bar=True  # type: bool
+                          progress_bar=True,  # type: bool
+                          use_multiprocessing=True, # type: bool
                           ):
     # type: (...) -> List[str]
     """ Generate Bloom filters from CSV file, then serialise them.
@@ -75,6 +76,11 @@ def generate_clk_from_csv(input_f,  # type: TextIO
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
             bar.
+        :param bool use_multiprocessing: Set to `False` to use threading to
+            generate keys for each identifier from the secret.  By default
+            multiprocessing is used to generate the keys.  Set this flag to
+            `False` if executing on a system that is not capable of spawning
+            subprocesses such as AWS Lambda functions.
         :return: A list of serialized Bloom filters and a list of
             corresponding popcounts.
     """
@@ -114,12 +120,16 @@ def generate_clk_from_csv(input_f,  # type: TextIO
                                     schema,
                                     secret,
                                     validate=validate,
-                                    callback=callback)
+                                    callback=callback,
+                                    use_multiprocessing=use_multiprocessing
+                                    )
     else:
         results = generate_clks(pii_data,
                                 schema,
                                 secret,
-                                validate=validate)
+                                validate=validate,
+                                use_multiprocessing=use_multiprocessing
+                                )
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
@@ -129,7 +139,8 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
                   schema,  # type: Schema
                   secret,  # type: AnyStr
                   validate=True,  # type: bool
-                  callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
+                  callback=None,  # type: Optional[Callable[[int, Sequence[int]], None]]
+                  use_multiprocessing=True # type: bool
                   ):
     # type: (...) -> List[str]
 
@@ -154,7 +165,13 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
     futures = []
 
     # Compute Bloom filter from the chunks and then serialise it
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+
+    if use_multiprocessing:
+        pool_executor = concurrent.futures.ProcessPoolExecutor
+    else:
+        pool_executor = concurrent.futures.ThreadPoolExecutor
+
+    with pool_executor() as executor:
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(
                 hash_and_serialize_chunk,
