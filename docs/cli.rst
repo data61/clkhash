@@ -187,7 +187,7 @@ A corresponding hashing schema can be generated as well::
             "weight": 0
           }
         },
-        {s
+        {
             "minLength": 3
           },
           "hashing": {
