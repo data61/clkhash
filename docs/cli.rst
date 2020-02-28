@@ -250,7 +250,7 @@ to multi-threading mode can also be determined by passing the command line optio
     generating CLKs: 100%                 10.0K/10.0K [00:05<00:00, 1.90Kclk/s, mean=406, std=20.4]
      10000 hashes in 5.285763 seconds. 1.89 KH/s
 
-The performance reduction in using multithreading mode is significant however it does allo clks to be 
+The performance reduction in using multithreading mode is significant however it does allow clks to be 
 generated on hardware that does not allow multiprocessing such as AWS Lambda. 
 
 Interaction with Entity Service

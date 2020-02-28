@@ -141,7 +141,7 @@ def cli(verbose):
 @click.option('--no-header', default=False, is_flag=True, help="Don't skip the first row")
 @click.option('--check-header', default=True, type=bool, help="If true, check the header against the schema")
 @click.option('--validate', default=True, type=bool, help="If true, validate the entries against the schema")
-@click.option('--multiprocessing', default=True, type=bool, help="If true, use multiprocessing to generate the keys from the secret")
+@click.option('--multiprocessing', default=True, type=bool, help="If true, use multiprocessing to generate encodings")
 @verbose_option
 def hash(pii_csv, secret, schema, clk_json, no_header, check_header, validate, multiprocessing, verbose):
     """Process data to create CLKs
