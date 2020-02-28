@@ -38,3 +38,9 @@ nosetests.xml
 
 # Operating system stuff
 .DS_Store
+
+# Hypothesis
+.hypothesis/
+
+# Docs build
+docs/_build/

@@ -2,11 +2,11 @@
 Generate CLK from data.
 """
 
-import concurrent.futures
+from concurrent.futures import (ProcessPoolExecutor, ThreadPoolExecutor)
 import logging
 import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
-                    Sequence, TextIO, Tuple, TypeVar, Union)
+                    Sequence, TextIO, Tuple, TypeVar, Union, Type)
 from future.builtins import range
 from tqdm import tqdm
 
@@ -165,11 +165,8 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
     futures = []
 
     # Compute Bloom filter from the chunks and then serialise it
-
-    if use_multiprocessing:
-        pool_executor = concurrent.futures.ProcessPoolExecutor
-    else:
-        pool_executor = concurrent.futures.ThreadPoolExecutor
+    pool_executor = ProcessPoolExecutor if use_multiprocessing else \
+        ThreadPoolExecutor # type: Union[Type[ProcessPoolExecutor], Type[ThreadPoolExecutor]]
 
     with pool_executor() as executor:
         for chunk in chunks(pii_data, chunk_size):
