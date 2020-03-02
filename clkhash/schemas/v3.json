@@ -72,6 +72,7 @@
       "properties": {
         "identifier": {"type": "string", "description": "semantic meaning of identifier"},
         "description": {"type": "string"},
+        "ignored": {"type": "boolean"},
         "format": {
           "required": ["type"],
           "oneOf": [
