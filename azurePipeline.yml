@@ -70,7 +70,7 @@ stages:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.8', '3.6', '3.5', '2.7']
-      operatingSystems: ['macos-10.13']
+      operatingSystems: ['macos-10.14']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
