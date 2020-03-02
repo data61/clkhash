@@ -188,6 +188,11 @@ A corresponding hashing schema can be generated as well::
           }
         },
         {
+          "identifier": "NAME freetext",
+          "format": {
+            "type": "string",
+            "encoding": "utf-8",
+            "case": "mixed",
             "minLength": 3
           },
           "hashing": {
@@ -221,6 +226,7 @@ A corresponding hashing schema can be generated as well::
         }
       ]
     }
+
 
 
 Benchmark
