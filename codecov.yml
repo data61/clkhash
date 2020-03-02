@@ -15,5 +15,5 @@ comment:
 
 # prevent premature reporting
 codecov:
-    notify:
-        after_n_builds: 5
+  notify:
+    after_n_builds: 5
