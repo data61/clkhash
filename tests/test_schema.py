@@ -138,6 +138,14 @@ class TestSchemaValidation(unittest.TestCase):
         exception = contextmanager.exception
         self.assertIsInstance(exception, SchemaError)
 
+    def test_ignore_definitions(self):
+        # there are several valid ways of specifying the ignored property.
+        with open(_test_data_file_path('ignorant-schema-v3.json'), 'r') as f:
+            s = schema.from_json_file(f, validate=True)
+            self.assertIsInstance(s.fields[0], clkhash.field_formats.Ignore)
+            self.assertIsInstance(s.fields[1], clkhash.field_formats.Ignore)
+            self.assertIsInstance(s.fields[2], clkhash.field_formats.StringSpec)
+
 
 class TestSchemaLoading(unittest.TestCase):
     def test_issue_111(self):

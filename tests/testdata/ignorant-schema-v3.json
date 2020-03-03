@@ -1,0 +1,62 @@
+
+{
+  "version": 3,
+  "clkConfig": {
+    "l": 1024,
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "id",
+      "ignored": true,
+      "description": "whoOOOo are you? O-o"
+    },
+    {
+      "identifier": "firstName",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 30,
+        "case": "upper"
+      },
+      "hashing": {
+        "hash": {"type": "doubleHash"},
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "bitsPerFeature": 200
+        }
+      },
+      "ignored": true
+    },
+    {
+      "identifier": "middleNames",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "maxLength": 50,
+        "case": "upper",
+        "description": "comma separated list of middle names"
+      },
+      "hashing": {
+        "hash": {"type": "blakeHash"},
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "bitsPerToken": 20
+        }
+      },
+      "ignored": false
+    }
+  ]
+}
