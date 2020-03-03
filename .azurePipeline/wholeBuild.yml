@@ -52,7 +52,7 @@ jobs:
   - script: python setup.py bdist_wheel
     displayName: 'Package'
 
-  - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverageReport.xml --cov-report=html:htmlcov
+  - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverage.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
     timeoutInMinutes: 10 # it should pass in 2.5 minutes, so 10 should be more than enough even if the server is busy.
     env:
@@ -85,21 +85,12 @@ jobs:
     condition: succeededOrFailed()
     inputs:
       codeCoverageTool: Cobertura
-      summaryFileLocation: 'coverageReport.xml'
+      summaryFileLocation: 'coverage.xml'
       failIfCoverageEmpty: true
-
   - bash: |
-        report_name="$(operatingSystem)_$(architecture)_$(pythonVersion)"
-        if [ $(fullTests) == "True" ]
-        then
-          report_name=${report_name}_full_tests
-        fi
-        python -m codecov --token $(CODECOV_TOKEN) \
-          --file coverageReport.xml \
-          -n ${report_name}
-    displayName: 'Send coverage to codecov'
+      bash <(curl -s https://codecov.io/bash) -v
+    displayName: 'Upload to codecov.io'
     condition: succeededOrFailed()
-
   - script: |
       pyinstaller cli.spec
       .\dist\clkutil.exe --version

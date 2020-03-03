@@ -57,6 +57,7 @@
     "ignoreFeature": {
       "type": "object",
       "required": ["identifier", "ignored"],
+      "additionalProperties": false,
       "properties": {
         "identifier": {"type": "string", "description":"semantic meaning of identifier"},
         "ignored":  {
@@ -71,6 +72,7 @@
       "properties": {
         "identifier": {"type": "string", "description": "semantic meaning of identifier"},
         "description": {"type": "string"},
+        "ignored": {"type": "boolean"},
         "format": {
           "required": ["type"],
           "oneOf": [

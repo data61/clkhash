@@ -204,6 +204,7 @@ name        type                   optional description
 identifier  string                 no       the name of the feature
 description string                 yes      free text, ignored by clkhash
 hashing     :ref:`schema/hashing`  no       configures feature specific hashing parameters
+ignored     boolean                yes      if set, clkhash will ignore this feature
 format      one of:                no       describes the expected format of the feature values
             :ref:`schema/tfo`,
             :ref:`schema/tpfo`,
