@@ -54,7 +54,7 @@ stages:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.7']
-      operatingSystems: ['ubuntu-18.04', 'macos-10.13', 'vs2017-win2016']
+      operatingSystems: ['ubuntu-18.04', 'macos-10.14', 'vs2017-win2016']
       architectures: ['x64']
       fullTests: True
   - template: .azurePipeline/wholeBuild.yml  # Template reference
@@ -70,7 +70,7 @@ stages:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.8', '3.6', '3.5', '2.7']
-      operatingSystems: ['macos-10.13']
+      operatingSystems: ['macos-10.14']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
