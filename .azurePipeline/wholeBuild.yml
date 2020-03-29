@@ -91,13 +91,6 @@ jobs:
       bash <(curl -s https://codecov.io/bash) -v
     displayName: 'Upload to codecov.io'
     condition: succeededOrFailed()
-  - script: |
-      pyinstaller cli.spec
-      .\dist\clkutil.exe --version
-      mv .\dist\clkutil.exe .\dist\clkutil-$(architecture).exe
-    displayName: 'Build clkutil-$(architecture).exe'
-    condition: and(succeeded(), eq(variables['operatingSystem'], 'vs2017-win2016'), eq(variables['pythonVersion'], '3.7'))
-
   - task: PublishPipelineArtifact@1
     displayName: 'Publish intermediate build artifacts'
     inputs:

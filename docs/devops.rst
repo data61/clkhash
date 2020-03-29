@@ -37,7 +37,7 @@ The *Build & Test* job does:
 
 The build pipeline requires one environment variable provided by Azure environment:
 
- - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
+  - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
 
 Most of the complexity is abstracted into the template in `.azurePipeline/wholeBuild.yml`.
 

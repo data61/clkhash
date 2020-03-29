@@ -15,6 +15,7 @@ def serialize_bitarray(ba):
     """
     return base64.b64encode(ba.tobytes()).decode('utf8')
 
+
 def deserialize_bitarray(ser):
     # type: (str) -> bitarray
     """Deserialize a base 64 encoded string to a bitarray (bloomfilter)

@@ -23,13 +23,12 @@ Now run the unit tests and print out code coverage with `py.test`::
     $ python -m pytest --cov=clkhash
 
 
-Note several tests will be skipped by default. To enable the command
-line tests set the  `INCLUDE_CLI` environment variable. To enable
+Note several tests will be skipped by default. To enable
 the tests which interact with an entity service set the
 `TEST_ENTITY_SERVICE` environment variable to the target service's
 address::
 
-    $ TEST_ENTITY_SERVICE= INCLUDE_CLI= python -m pytest --cov=clkhash
+    $ TEST_ENTITY_SERVICE= python -m pytest --cov=clkhash
 
 
 Type Checking
@@ -42,13 +41,3 @@ Type Checking
     $ mypy clkhash --ignore-missing-imports --strict-optional --no-implicit-optional --disallow-untyped-calls
 
 
-Packaging
----------
-
-The ``clkutil`` command line tool can be frozen into an exe using
-`PyInstaller <https://pyinstaller.readthedocs.io>`_::
-
-    pyinstaller cli.spec
-
-
-Look for `clkutil.exe` in the `dist` directory.
