@@ -7,7 +7,6 @@ if sys.version_info[0] < 3:
 requirements = [
         "bashplotlib>=0.6.5",
         "bitarray-hardbyte>=1.0.0",             # Fork of bitarray distributing binary wheels #153
-        "click>=6.7",
         "cryptography>=2.3",
         "enum34==1.1.6; python_version < '3.4'",
         "future>=0.16",
@@ -15,8 +14,6 @@ requirements = [
         "jsonschema>=3.0.2",
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
-        "requests>=2.20",
-        "retrying>=1.3",
         "tqdm>=4.24",
         "typing>=3.6; python_version < '3.5'"  # Backport from Py3.5
     ]
