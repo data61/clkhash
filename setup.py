@@ -49,11 +49,6 @@ setup(
         'Source': 'https://github.com/data61/clkhash',
         'Tracker': 'https://github.com/data61/clkhash/issues',
     },
-    entry_points={
-        'console_scripts': [
-            'clkutil = clkhash.cli:cli'
-        ],
-    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 2",
