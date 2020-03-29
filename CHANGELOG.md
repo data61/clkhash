@@ -1,5 +1,12 @@
 ## new version
 
+## 0.15.2
+
+- Fixes bug validating linkage schemas with ignored fields. #342
+- Added warnings about upcoming removal of `rest_client` and `cli`. This functionality has
+  been migrated to [anonlink-client](https://github.com/data61/anonlink-client/)
+- Update dependencies
+
 ## 0.15.1
 
 - fixed issue where NumericComparison couldn't tokenize empty inputs #323
