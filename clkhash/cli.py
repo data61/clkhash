@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 from multiprocessing import freeze_support
+import warnings
 
 import click
 
@@ -17,6 +18,11 @@ from clkhash.schema import SchemaError, validate_schema_dict, convert_to_latest_
 from clkhash.backports import raise_from
 
 from typing import List, Callable
+
+deprecation_notice = """
+Note that from version 0.15 the cli module of clkhash is deprecated. This functionality has
+been migrated to https://github.com/data61/anonlink-client
+"""
 
 DEFAULT_SERVICE_URL = 'https://testing.es.data61.xyz'
 
@@ -131,6 +137,7 @@ def cli(verbose):
 
     All rights reserved Confidential Computing 2016.
     """
+    warnings.warn(deprecation_notice, PendingDeprecationWarning)
 
 
 @cli.command('hash', short_help="generate hashes from local PII data")
