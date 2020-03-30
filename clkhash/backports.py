@@ -4,7 +4,7 @@ import sys
 import time
 from datetime import datetime
 
-from typing import AnyStr, Callable, cast, Pattern, Sequence, Text, Union, Iterable, SupportsBytes
+from typing import AnyStr, Callable, cast, Pattern, Sequence, Text, Union, Iterable, Any
 
 from future.utils import raise_from as _raise_from
 from mypy_extensions import Arg, DefaultNamedArg, NoReturn
@@ -43,7 +43,7 @@ except AttributeError:
     # Make this cast since Python 2 doesn't have syntax for default
     # named arguments. Hence, must cast so Mypy thinks it matches the
     # original function.
-    int_from_bytes = cast(Callable[[Arg(Union[Iterable[int], SupportsBytes], 'bytes'),
+    int_from_bytes = cast(Callable[[Arg(Union[Iterable[int], Any], 'bytes'),
                                     Arg(str, 'byteorder'),
                                     DefaultNamedArg(bool, 'signed')],
                                    int],
