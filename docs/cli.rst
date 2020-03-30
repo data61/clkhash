@@ -1,6 +1,12 @@
 Command Line Tool
 =================
 
+.. warning::
+
+   Note that from version ``0.15.2`` the cli module of ``clkhash`` is **deprecated**. This functionality
+   has been migrated to https://github.com/data61/anonlink-client
+
+
 ``clkhash`` includes a command line tool which can be used to interact without writing Python code.
 The primary use case is to encode personally identifiable data from a csv into Cryptographic Longterm Keys.
 
