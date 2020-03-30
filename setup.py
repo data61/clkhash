@@ -30,7 +30,7 @@ else:
 
 setup(
     name="clkhash",
-    version='0.15.2',
+    version='0.16.0a1',
     description='Encoding utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
