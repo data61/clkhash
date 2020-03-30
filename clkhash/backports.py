@@ -3,7 +3,8 @@ import re
 import sys
 import time
 from datetime import datetime
-from typing import AnyStr, Callable, cast, Pattern, Sequence, Text, Union, Iterable
+
+from typing import AnyStr, Callable, cast, Pattern, Sequence, Text, Union, Iterable, SupportsBytes
 
 from future.utils import raise_from as _raise_from
 from mypy_extensions import Arg, DefaultNamedArg, NoReturn
@@ -39,15 +40,10 @@ except AttributeError:
         hex_str = codecs.encode(bytes, 'hex')  # type: ignore
         return int(hex_str, 16)
 
-    try:
-        from typing import SupportsBytes
-        bytes_arg_type = Union[Iterable[int], SupportsBytes]
-    except ImportError:
-        bytes_arg_type = Iterable[int]
     # Make this cast since Python 2 doesn't have syntax for default
     # named arguments. Hence, must cast so Mypy thinks it matches the
     # original function.
-    int_from_bytes = cast(Callable[[Arg(bytes_arg_type, 'bytes'),
+    int_from_bytes = cast(Callable[[Arg(Union[Iterable[int], SupportsBytes], 'bytes'),
                                     Arg(str, 'byteorder'),
                                     DefaultNamedArg(bool, 'signed')],
                                    int],
