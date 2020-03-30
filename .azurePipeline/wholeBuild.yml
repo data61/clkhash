@@ -22,7 +22,6 @@ jobs:
   displayName: ' '
 
   steps:
-
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(pythonVersion)'
@@ -39,7 +38,7 @@ jobs:
 
   - script: python -m pytest --cov=clkhash --junitxml=testResults.xml --cov-report=xml:coverage.xml --cov-report=html:htmlcov
     displayName: 'Test with pytest'
-    timeoutInMinutes: 10 # it should pass in 2.5 minutes, so 10 should be more than enough even if the server is busy.
+    timeoutInMinutes: 2
 
 # This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
 # The change will come with the future release 0.13. Tracked via issue #321
@@ -49,6 +48,7 @@ jobs:
       python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
+    timeoutInMinutes: 5
     condition: and(ne(variables['pythonVersion'], '2.7'), ne(variables['operatingSystem'], 'vs2017-win2016'))
 
   - task: PublishTestResults@2
