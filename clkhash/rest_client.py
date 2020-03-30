@@ -1,4 +1,5 @@
 import time
+import warnings
 
 import requests
 import clkhash
@@ -76,6 +77,9 @@ class RestClient:
             self.client_waiting_configuration = ClientWaitingConfiguration()
         else:
             self.client_waiting_configuration = client_waiting_configuration
+        deprecation_msg = "rest_client is being removed in the next release. " \
+                          "This functionality has been migrated to https://github.com/data61/anonlink-client"
+        warnings.warn(deprecation_msg, PendingDeprecationWarning)
 
     def __request_wrapper(self, request_method, url, **kwargs):
         """
