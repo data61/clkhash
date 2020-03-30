@@ -33,51 +33,47 @@ The *Build & Test* job does:
   - run tests as described in the following table,
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
-  - publish the artifacts from the build using ``Python 3.7`` (i.e. the wheel, the sdist `tar.gz` and an exe for x86 and x64).
+  - publish the artifacts from the build using ``Python 3.7`` (i.e. the wheel for x86 and x64 and the `tar.gz` source distribution).
 
 The build pipeline requires one environment variable provided by Azure environment:
 
- - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
+  - `CODECOV_TOKEN` which is used to publish the coverage to codecov.
 
 Most of the complexity is abstracted into the template in `.azurePipeline/wholeBuild.yml`.
 
 Description of what is tested:
 
-==================   ====================  ===============  ===========  ===================  =========
-Python Version       Operating System      Standard pytest  INLCUDE_CLI  TEST_ENTITY_SERVICE  Notebooks
-==================   ====================  ===============  ===========  ===================  =========
-pypy2                ubuntu-18.04          Yes              No           No                   No
-pypy3                ubuntu-18.04          Yes              No           No                   No
-------------------   --------------------  ---------------  -----------  -------------------  ---------
-2.7                  ubuntu-18.04          Yes              Yes          Yes                  No
-2.7                  macos-10.13           Yes              No           No                   No
-2.7                  vs2017-win2016 (x64)  Yes              No           No                   No
-2.7                  vs2017-win2016 (x86)  Yes              No           No                   No
-------------------   --------------------  ---------------  -----------  -------------------  ---------
-3.5                  ubuntu-18.04          Yes              No           No                   No
-3.5                  macos-10.13           Yes              No           No                   No
-3.5                  vs2017-win2016 (x64)  Yes              No           No                   No
-3.5                  vs2017-win2016 (x86)  Yes              No           No                   No
-------------------   --------------------  ---------------  -----------  -------------------  ---------
-3.6                  ubuntu-18.04          Yes              No           No                   No
-3.6                  macos-10.13           Yes              No           No                   No
-3.6                  vs2017-win2016 (x64)  Yes              No           No                   No
-3.6                  vs2017-win2016 (x86)  Yes              No           No                   No
-------------------   --------------------  ---------------  -----------  -------------------  ---------
-3.7                  ubuntu-18.04          Yes              Yes          Yes                  Yes
-3.7                  macos-10.13           Yes              Yes          Yes                  Yes
-3.7                  vs2017-win2016 (x64)  Yes              Yes          Yes                  No
-3.7                  vs2017-win2016 (x86)  Yes              No           No                   No
-------------------   --------------------  ---------------  -----------  -------------------  ---------
-3.8                  ubuntu-18.04          Yes              Yes          Yes                  Yes
-3.8                  macos-10.13           Yes              No           No                   No
-==================   ====================  ===============  ===========  ===================  =========
+==================   ====================  ===============  =========
+Python Version       Operating System      Standard pytest  Notebooks
+==================   ====================  ===============  =========
+pypy2                ubuntu-18.04          Yes              No
+pypy3                ubuntu-18.04          Yes              No
+------------------   --------------------  ---------------  ---------
+2.7                  ubuntu-18.04          Yes              No
+2.7                  macos-10.14           Yes              No
+2.7                  vs2017-win2016 (x64)  Yes              No
+2.7                  vs2017-win2016 (x86)  Yes              No
+------------------   --------------------  ---------------  ---------
+3.5                  ubuntu-18.04          Yes              No
+3.5                  macos-10.14           Yes              No
+3.5                  vs2017-win2016 (x64)  Yes              No
+3.5                  vs2017-win2016 (x86)  Yes              No
+------------------   --------------------  ---------------  ---------
+3.6                  ubuntu-18.04          Yes              No
+3.6                  macos-10.14           Yes              Yes
+3.6                  vs2017-win2016 (x64)  Yes              No
+3.6                  vs2017-win2016 (x86)  Yes              No
+------------------   --------------------  ---------------  ---------
+3.7                  ubuntu-18.04          Yes              Yes
+3.7                  macos-10.14           Yes              Yes
+3.7                  vs2017-win2016 (x64)  Yes              No
+3.7                  vs2017-win2016 (x86)  Yes              No
+------------------   --------------------  ---------------  ---------
+3.8                  ubuntu-18.04          Yes              Yes
+3.8                  macos-10.14           Yes              Yes
+==================   ====================  ===============  =========
 
-The tests using the environment variable `TEST_ENTITY_SERVICE` will use the URL provided by the Azure pipeline
-variable `ENTITY_SERVICE_URL` (which is by default set to `https://testing.es.data61.xyz`),
-which enables to run manually the pipeline with a different deployed service.
-However, we note that the pipeline will send github updates to the corresponding commit for the chosen deployment, not
-the default one if the variable has been overwritten.
+
 
 Build Artifacts
 ~~~~~~~~~~~~~~~

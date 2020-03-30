@@ -1,4 +1,7 @@
-## new version
+## 0.16.0
+
+Removes `rest_client` and `cli` modules. This functionality has
+been migrated to [anonlink-client](https://github.com/data61/anonlink-client/).
 
 ## 0.15.2
 

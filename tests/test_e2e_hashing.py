@@ -3,6 +3,7 @@ import os
 import unittest
 
 from clkhash import bloomfilter, clk, randomnames, schema
+from clkhash.describe import get_encoding_popcounts
 from clkhash.field_formats import FieldHashingProperties, StringSpec, BitsPerTokenStrategy, BitsPerFeatureStrategy
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
@@ -24,8 +25,7 @@ def _test_schema(file_name):
 
 
 def _test_stats(pii, schema, keys):
-    counts = [deserialize_bitarray(c).count() for c in
-              clk.generate_clks(pii, schema, keys)]
+    counts = get_encoding_popcounts(clk.generate_clks(pii, schema, keys))
     print('_test_stats: counts = ', counts)
     ov = OnlineMeanVariance()
     ov.update(counts)

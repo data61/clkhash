@@ -47,34 +47,17 @@ stages:
   jobs:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.8', '2.7']
-      operatingSystems: ['ubuntu-18.04']
-      architectures: ['x64']
-      fullTests: True
-  - template: .azurePipeline/wholeBuild.yml  # Template reference
-    parameters:
-      pythonVersions: ['3.7']
-      operatingSystems: ['ubuntu-18.04', 'macos-10.14', 'vs2017-win2016']
-      architectures: ['x64']
-      fullTests: True
-  - template: .azurePipeline/wholeBuild.yml  # Template reference
-    parameters:
-      pythonVersions: ['3.7', '3.6', '3.5', '2.7']
+      pythonVersions: ['2.7', '3.5', '3.6', '3.7', '3.8']
       operatingSystems: ['vs2017-win2016']
-      architectures: ['x86']
+      architectures: ['x86', 'x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.6', '3.5', '2.7']
-      operatingSystems: ['vs2017-win2016']
-      architectures: ['x64']
-  - template: .azurePipeline/wholeBuild.yml  # Template reference
-    parameters:
-      pythonVersions: ['3.8', '3.6', '3.5', '2.7']
+      pythonVersions: ['3.8', '3.7', '3.6', '3.5', '2.7']
       operatingSystems: ['macos-10.14']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.6', '3.5', 'pypy3', 'pypy2']
+      pythonVersions: ['2.7', '3.5', '3.6', '3.7', '3.8', 'pypy3', 'pypy2']
       operatingSystems: ['ubuntu-18.04']
       architectures: ['x64']
   - job:
