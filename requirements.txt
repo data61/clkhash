@@ -1,5 +1,5 @@
 bitarray-hardbyte==1.2.2
-cryptography==2.8
+cryptography==2.9
 enum34==1.1.6; python_version < '3.4'
 future==0.18.2
 futures==3.3.0; python_version < '3.2'
