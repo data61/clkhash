@@ -10,7 +10,7 @@ nbval==0.9.5
 pyblake2==1.1.2; python_version < '3.6'
 pyinstaller==3.6
 pytest==4.6.10
-pytest-cov==2.8.1
+pytest-cov==2.9.0
 six==1.14.0
 tqdm==4.46.0
 typing>=3.6.2; python_version < '3.5'
