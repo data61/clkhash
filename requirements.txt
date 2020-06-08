@@ -12,5 +12,5 @@ pyinstaller==3.6
 pytest==4.6.10
 pytest-cov==2.9.0
 six==1.15.0
-tqdm==4.46.0
+tqdm==4.46.1
 typing>=3.6.2; python_version < '3.5'
