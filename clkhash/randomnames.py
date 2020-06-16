@@ -41,7 +41,7 @@ def save_csv(data: Iterable[Tuple[Union[str, int], ...]],
     writer.writerows(data)
 
 
-def random_date(year: int, age_distribution: Optional[Distribution]) -> datetime:
+def random_date(year: int, age_distribution: Optional['Distribution']) -> datetime:
     """ Generate a random datetime between two datetime objects.
 
     :param start: datetime of start

@@ -68,7 +68,7 @@ def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
                                            ks: Sequence[int],
                                            l: int,
                                            encoding: str
-                                           ) -> bitarray.bitarray:
+                                           ) -> bitarray:
     """ computes the double hash encoding of the n-grams with the given keys.
 
         The original construction of [Schnell2011]_ displays an abnormality for
@@ -138,7 +138,7 @@ def blake_encode_ngrams(ngrams: Iterable[str],
                         ks: Sequence[int],
                         l: int,
                         encoding: str
-                        ) -> bitarray.bitarray:
+                        ) -> bitarray:
     """ Computes the encoding of the ngrams using the BLAKE2 hash function.
 
         We deliberately do not use the double hashing scheme as proposed in [

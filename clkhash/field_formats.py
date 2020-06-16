@@ -14,10 +14,11 @@ from clkhash import comparators
 from clkhash.comparators import AbstractComparison
 
 
+
 class InvalidEntryError(ValueError):
     """ An entry in the data file does not conform to the schema.
     """
-    field_spec: Optional[FieldSpec] = None
+    field_spec: Optional['FieldSpec'] = None
 
 
 class InvalidSchemaError(ValueError):
@@ -53,7 +54,7 @@ class MissingValueSpec(object):
                              else sentinel)
 
     @classmethod
-    def from_json_dict(cls, json_dict: Dict[str, Any]) -> MissingValueSpec:
+    def from_json_dict(cls, json_dict: Dict[str, Any]) -> 'MissingValueSpec':
         return cls(
             sentinel=json_dict['sentinel'],
             replace_with=cast(Optional[str], json_dict.get('replaceWith'))
@@ -78,7 +79,7 @@ class StrategySpec(object, metaclass=abc.ABCMeta):
         pass
 
     @classmethod
-    def from_json_dict(cls, json_dict: Dict[str, Union[str, SupportsInt]]) -> StrategySpec:
+    def from_json_dict(cls, json_dict: Dict[str, Union[str, SupportsInt]]) -> 'StrategySpec':
         if 'bitsPerToken' in json_dict:
             return BitsPerTokenStrategy(int(json_dict['bitsPerToken']))
         elif 'bitsPerFeature' in json_dict:
@@ -255,7 +256,7 @@ class FieldSpec(object, metaclass=abc.ABCMeta):
     @classmethod
     def from_json_dict(cls,
                        field_dict: Dict[str, Any]
-                       ) -> FieldSpec:
+                       ) -> 'FieldSpec':
         """ Initialise a :class:`FieldSpec` object from a dictionary of
             properties.
 
@@ -445,7 +446,7 @@ class StringSpec(FieldSpec):
     @classmethod
     def from_json_dict(cls,
                        json_dict: Dict[str, Any]
-                       ) -> StringSpec:
+                       ) -> 'StringSpec':
         """ Make a StringSpec object from a dictionary containing its
             properties.
 
@@ -583,7 +584,7 @@ class IntegerSpec(FieldSpec):
     @classmethod
     def from_json_dict(cls,
                        json_dict: Dict[str, Any]
-                       ) -> IntegerSpec:
+                       ) -> 'IntegerSpec':
         """ Make a IntegerSpec object from a dictionary containing its
             properties.
 
@@ -700,7 +701,7 @@ class DateSpec(FieldSpec):
     @classmethod
     def from_json_dict(cls,
                        json_dict: Dict[str, Any]
-                       ) -> DateSpec:
+                       ) -> 'DateSpec':
         """ Make a DateSpec object from a dictionary containing its
             properties.
 
@@ -790,7 +791,7 @@ class EnumSpec(FieldSpec):
     @classmethod
     def from_json_dict(cls,
                        json_dict: Dict[str, Any]
-                       ) -> EnumSpec:
+                       ) -> 'EnumSpec':
         """ Make a EnumSpec object from a dictionary containing its
             properties.
 
