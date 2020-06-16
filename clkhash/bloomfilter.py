@@ -12,7 +12,6 @@ from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
 from future.builtins import range, zip
 
-import clkhash.backports as bp
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.schema import Schema
 from clkhash.comparators import AbstractComparison, NonComparison
@@ -121,14 +120,14 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
         sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
         md5hm_bytes = hmac.new(key_md5, m_bytes, md5).digest()
 
-        sha1hm = bp.int_from_bytes(sha1hm_bytes, 'big') % l
-        md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
+        sha1hm = int.from_bytes(sha1hm_bytes, 'big') % l
+        md5hm = int.from_bytes(md5hm_bytes, 'big') % l
 
         i = 0
         while md5hm == 0:
             md5hm_bytes = hmac.new(
                 key_md5, m_bytes + chr(i).encode(), md5).digest()
-            md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
+            md5hm = int.from_bytes(md5hm_bytes, 'big') % l
             i += 1
 
         for i in range(k):

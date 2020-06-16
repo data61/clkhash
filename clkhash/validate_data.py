@@ -10,7 +10,6 @@ from typing import cast, Optional, Sequence
 
 from future.builtins import zip
 
-from clkhash.backports import raise_from
 from clkhash.field_formats import (FieldSpec, InvalidEntryError)
 
 
@@ -77,7 +76,7 @@ def validate_entries(fields,  # type: Sequence[FieldSpec]
                 e_invalid_entry = EntryError(msg)
                 e_invalid_entry.field_spec = e.field_spec
                 e_invalid_entry.row_index = i
-                raise_from(e_invalid_entry, e)
+                raise e_invalid_entry from e
 
 
 def validate_header(fields,  # type: Sequence[FieldSpec]

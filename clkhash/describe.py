@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from clkhash.backports import raise_from
 from clkhash.serialization import deserialize_bitarray
 
 
@@ -23,4 +22,4 @@ def get_encoding_popcounts(clks):
     try:
         return [deserialize_bitarray(clk).count() for clk in clks]
     except Exception as e:
-        raise_from(DescribeError("Failed to deserialize encodings"), e)
+        raise DescribeError("Failed to deserialize encodings") from e

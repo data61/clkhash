@@ -14,7 +14,6 @@ from copy import deepcopy
 import jsonschema
 from future.builtins import map
 
-from clkhash.backports import raise_from
 from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
@@ -271,7 +270,7 @@ def from_json_file(schema_file, validate=True):
         # with json.decoder.JSONDecodeError,
         # but that doesn't exist in Python 2.
         msg = 'The schema is not a valid JSON file.'
-        raise_from(SchemaError(msg), e)
+        raise SchemaError(msg) from e
 
     return from_json_dict(schema_dict, validate=validate)
 
@@ -293,7 +292,7 @@ def _get_master_schema(version):
     except (TypeError, KeyError) as e:
         msg = ('Schema version {} is not supported. '
                'Consider updating clkhash.').format(version)
-        raise_from(SchemaError(msg), e)
+        raise SchemaError(msg) from e
 
     try:
         schema_bytes = pkgutil.get_data('clkhash', 'schemas/{}'.format(file_name))
@@ -306,7 +305,7 @@ def _get_master_schema(version):
         # Python 2.
         msg = ('The master schema could not be found. The schema cannot be '
                'validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e
 
     try:
         master_schema = json.loads(schema_bytes.decode('utf-8'))
@@ -317,7 +316,7 @@ def _get_master_schema(version):
         # doesn't exist in Python 2.
         msg = ('The master schema is not a valid JSON file. The schema cannot '
                'be validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e
 
 
 def validate_schema_dict(schema):
@@ -346,8 +345,8 @@ def validate_schema_dict(schema):
     try:
         jsonschema.validate(schema, master_schema)
     except jsonschema.exceptions.ValidationError as e:
-        raise_from(SchemaError('The schema is not valid.\n\n' + str(e)), e)
+        raise SchemaError('The schema is not valid.\n\n' + str(e)) from e
     except jsonschema.exceptions.SchemaError as e:
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e

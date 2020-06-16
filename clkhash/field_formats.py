@@ -16,7 +16,6 @@ from future.builtins import super
 from six import add_metaclass
 
 from clkhash import comparators
-from clkhash.backports import raise_from, re_compile_full, strftime
 from clkhash.comparators import AbstractComparison
 
 
@@ -183,7 +182,7 @@ class FieldHashingProperties(object):
             ''.encode(encoding)
         except LookupError as e:
             msg = '{} is not a valid Python encoding.'
-            raise_from(ValueError(msg.format(encoding)), e)
+            raise ValueError(msg.format(encoding)) from e
 
         if prevent_singularity is not None and hash_type != 'doubleHash':
             raise ValueError("Prevent_singularity must only be specified"
@@ -318,7 +317,7 @@ class FieldSpec(object):
                        .format(self.hashing_properties.encoding, str_in))
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
-                raise_from(e_new, err)
+                raise e_new from err
 
     def is_missing_value(self, str_in):
         # type: (Text) -> bool
@@ -453,13 +452,12 @@ class StringSpec(FieldSpec):
         if regex_based:
             regex_str = cast(str, regex)
             try:
-                compiled_regex = re_compile_full(regex_str)
-                self.regex = compiled_regex
+                self.regex = re.compile(regex_str)
             except (SyntaxError, re.error) as e:
                 msg = "invalid regular expression '{}.'".format(regex_str)
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
-                raise_from(e_new, e)
+                raise e_new from e
         else:
             self.case = case
             self.min_length = min_length
@@ -495,12 +493,12 @@ class StringSpec(FieldSpec):
         if 'pattern' in format_:
             pattern = format_['pattern']
             try:
-                result.regex = re_compile_full(pattern)
+                result.regex = re.compile(pattern)
             except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 e_new = InvalidSchemaError(msg)
                 e_new.json_field_spec = json_dict
-                raise_from(e_new, e)
+                raise e_new from e
             result.regex_based = True
 
         else:
@@ -534,7 +532,7 @@ class StringSpec(FieldSpec):
         super().validate(str_in)  # Validate encoding.
 
         if self.regex_based:
-            match = self.regex.match(str_in)
+            match = self.regex.fullmatch(str_in)
             if match is None:
                 e = InvalidEntryError(
                     'Expected entry that conforms to regular expression '
@@ -658,7 +656,7 @@ class IntegerSpec(FieldSpec):
             msg = "Invalid integer. Read '{}'.".format(str_in)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
             return  # to stop PyCharm thinking that value might be undefined
             #  later
 
@@ -697,7 +695,7 @@ class IntegerSpec(FieldSpec):
             msg = "Invalid integer. Read '{}'.".format(str_in)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
 
 class DateSpec(FieldSpec):
@@ -779,7 +777,7 @@ class DateSpec(FieldSpec):
             msg = "Validation error for date type: {}".format(e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
     def _format_regular_value(self, str_in):
         # type: (Text) -> Text
@@ -791,13 +789,13 @@ class DateSpec(FieldSpec):
         """
         try:
             dt = datetime.strptime(str_in, self.format)
-            return strftime(dt, DateSpec.OUTPUT_FORMAT)
+            return datetime.strftime(dt, DateSpec.OUTPUT_FORMAT)
         except ValueError as e:
             msg = "Unable to format date value '{}'. Reason: {}".format(str_in,
                                                                         e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
 
 class EnumSpec(FieldSpec):
