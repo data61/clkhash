@@ -13,9 +13,9 @@ import jsonschema
 from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
-MASTER_SCHEMA_FILE_NAMES: Dict[Hashable, Text] = {1: 'v1.json',
-                                                  2: 'v2.json',
-                                                  3: 'v3.json'}
+MASTER_SCHEMA_FILE_NAMES = {1: 'v1.json',
+                            2: 'v2.json',
+                            3: 'v3.json'}  # type: Dict[Hashable, Text]
 
 
 class SchemaError(Exception):
