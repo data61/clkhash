@@ -42,7 +42,7 @@ jobs:
 
 # This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
 # The change will come with the future release 0.13. Tracked via issue #321
-# These tutorial tests are not run on Python 2.7 or 3.5 because anonlink is only for Python 3.6+.
+# These tutorial tests are not run on Python 3.5 because anonlink is only for Python 3.6+.
 # Finally PyPy is excluded because the notebooks rely on pandas, which as of March 2020 is still not supported by Pypy
 # http://packages.pypy.org/##pandas
   - script: |
@@ -51,7 +51,7 @@ jobs:
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
     timeoutInMinutes: 5
-    condition: and(ne(variables['pythonVersion'], '2.7'), ne(variables['pythonVersion'], '3.5'), ne(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], 'pypy2'), ne(variables['pythonVersion'], 'pypy3'))
+    condition: and(ne(variables['pythonVersion'], '3.5'), ne(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], 'pypy3'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
