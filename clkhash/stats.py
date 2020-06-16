@@ -4,16 +4,14 @@ from typing import Sequence, Union
 
 class OnlineMeanVariance(object):
 
-    def __init__(self):
-        # type: (...) -> None
-        self.t = 0  # type: Union[int, float]
-        self.n = 0  # type: int
-        self.S = 0  # type: float
+    def __init__(self) -> None:
+        self.t: Union[int, float] = 0
+        self.n: int = 0
+        self.S: float = 0
 
     def update(self,
-               x  # type: Sequence[Union[int, float]]
-               ):
-        # type: (...) -> None
+               x: Sequence[Union[int, float]]
+               ) -> None:
         """
         updates the statistics with the given list of numbers
 
@@ -36,8 +34,7 @@ class OnlineMeanVariance(object):
         self.t = self.t + t
         self.n = self.n + len(x)
 
-    def mean(self):
-        # type: (...) -> float
+    def mean(self) -> float:
         """
         returns the mean
 
@@ -47,8 +44,7 @@ class OnlineMeanVariance(object):
             return 0
         return self.t / float(self.n)
 
-    def variance(self):
-        # type: (...) -> float
+    def variance(self) -> float:
         """
         returns the variance
 
@@ -58,8 +54,7 @@ class OnlineMeanVariance(object):
             return 0
         return self.S / (self.n - 1.)
 
-    def std(self):
-        # type: (...) -> float
+    def std(self) -> float:
         """
         returns the standard deviation
 

@@ -23,11 +23,10 @@ log = logging.getLogger('clkhash.clk')
 CHUNK_SIZE = 1000
 
 
-def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
-                             keys,  # type: Sequence[Sequence[bytes]]
-                             schema  # type: Schema
-                             ):
-    # type: (...) -> Tuple[List[str], Sequence[int]]
+def hash_and_serialize_chunk(chunk_pii_data: Sequence[Sequence[str]],
+                             keys: Sequence[Sequence[bytes]],
+                             schema: Schema
+                             ) -> Tuple[List[str], Sequence[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII then serialize
     the generated Bloom filters. It also computes and outputs the Hamming weight (or popcount) -- the number of bits
@@ -47,14 +46,13 @@ def hash_and_serialize_chunk(chunk_pii_data,  # type: Sequence[Sequence[str]]
     return clk_data, clk_popcounts
 
 
-def generate_clk_from_csv(input_f,  # type: TextIO
-                          secret,  # type: AnyStr
-                          schema,  # type: Schema
-                          validate=True,  # type: bool
-                          header=True,  # type: Union[bool, AnyStr]
-                          progress_bar=True  # type: bool
-                          ):
-    # type: (...) -> List[str]
+def generate_clk_from_csv(input_f: TextIO,
+                          secret: AnyStr,
+                          schema: Schema,
+                          validate: bool = True,
+                          header: Union[bool, AnyStr] = True,
+                          progress_bar: bool = True
+                          ) -> List[str]:
     """ Generate Bloom filters from CSV file, then serialise them.
 
         This function also computes and outputs the Hamming weight
@@ -124,13 +122,12 @@ def generate_clk_from_csv(input_f,  # type: TextIO
     return results
 
 
-def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
-                  schema,  # type: Schema
-                  secret,  # type: AnyStr
-                  validate=True,  # type: bool
-                  callback=None  # type: Optional[Callable[[int, Sequence[int]], None]]
-                  ):
-    # type: (...) -> List[str]
+def generate_clks(pii_data: Sequence[Sequence[str]],
+                  schema: Schema,
+                  secret: AnyStr,
+                  validate: bool = True,
+                  callback: Optional[Callable[[int, Sequence[int]], None]] = None
+                  ) -> List[str]:
 
     # Generate two keys for each identifier from the secret, one key per hashing method used when computing
     # the bloom filters.
@@ -177,8 +174,7 @@ def generate_clks(pii_data,  # type: Sequence[Sequence[str]]
 T = TypeVar('T')  # Declare generic type variable
 
 
-def chunks(seq, chunk_size):
-    # type: (Sequence[T], int) -> Iterable[Sequence[T]]
+def chunks(seq: Sequence[T], chunk_size: int) -> Iterable[Sequence[T]]:
     """ Split seq into chunk_size-sized chunks.
 
         :param seq: A sequence to chunk.
