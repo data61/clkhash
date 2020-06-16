@@ -216,7 +216,7 @@ def blake_encode_ngrams(ngrams: Iterable[str],
     bf.setall(False)
 
     for m, k in zip(ngrams, ks):
-        random_shorts: List[int] = []
+        random_shorts = []  # type: List[int]
         num_macs = (k + 31) // 32
         for i in range(num_macs):
             hash_bytes = blake2b(m.encode(encoding=encoding), key=key,
