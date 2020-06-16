@@ -3,11 +3,8 @@
 import abc
 from typing import Iterable, Text, Dict, Any, Optional
 
-from six import add_metaclass
 
-
-@add_metaclass(abc.ABCMeta)
-class AbstractComparison(object):
+class AbstractComparison(object, metaclass=abc.ABCMeta):
     """ Abstract base class for all comparisons """
 
     @abc.abstractmethod

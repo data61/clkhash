@@ -10,8 +10,6 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Text, cast, List, Union, SupportsInt
 
-from six import add_metaclass
-
 from clkhash import comparators
 from clkhash.comparators import AbstractComparison
 
@@ -64,8 +62,7 @@ class MissingValueSpec(object):
         )
 
 
-@add_metaclass(abc.ABCMeta)
-class StrategySpec(object):
+class StrategySpec(object, metaclass=abc.ABCMeta):
     """ Stores the information about the insertion strategy.
 
     A strategy has to implement the 'bits_per_token' function, which defines how often each token gets inserted into
@@ -241,8 +238,7 @@ def fhp_from_json_dict(
     )
 
 
-@add_metaclass(abc.ABCMeta)
-class FieldSpec(object):
+class FieldSpec(object, metaclass=abc.ABCMeta):
     """ Abstract base class representing the specification of a column
         in the dataset. Subclasses validate entries, and modify the
         `hashing_properties` ivar to customise hashing procedures.

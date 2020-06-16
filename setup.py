@@ -4,7 +4,6 @@ requirements = [
         "bashplotlib>=0.6.5",
         "bitarray-hardbyte>=1.0.0",             # Fork of bitarray distributing binary wheels #153
         "cryptography>=2.3",
-        "future>=0.16",
         "jsonschema>=3.0.2",
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
@@ -19,7 +18,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.16.0a1',
+    version='0.16.0a2',
     description='Encoding utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
