@@ -18,7 +18,7 @@ from clkhash.comparators import AbstractComparison
 class InvalidEntryError(ValueError):
     """ An entry in the data file does not conform to the schema.
     """
-    field_spec: Optional['FieldSpec'] = None
+    field_spec = None  # type: Optional['FieldSpec']
 
 
 class InvalidSchemaError(ValueError):
@@ -27,8 +27,8 @@ class InvalidSchemaError(ValueError):
     For example, a regular expression included in the schema is not
     syntactically correct.
     """
-    json_field_spec: Optional[dict] = None
-    field_spec_index: Optional[int] = None
+    json_field_spec = None  # type: Optional[dict]
+    field_spec_index = None  # type: Optional[int]
 
 
 class MissingValueSpec(object):
