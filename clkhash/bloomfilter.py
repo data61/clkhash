@@ -10,7 +10,6 @@ import struct
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
-from future.builtins import range, zip
 
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.schema import Schema

@@ -3,8 +3,6 @@ from typing import Tuple, Union, Optional, Sequence
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from future.builtins import range, zip
-from future.utils import raise_from
 
 """
 We use the block-size of SHA1 and MD5 as the default key size for HMAC
@@ -69,9 +67,9 @@ def hkdf(secret,  # type: bytes
     """
     try:
         hash_function = _HASH_FUNCTIONS[hash_algo]
-    except KeyError:
+    except KeyError as e:
         msg = "unsupported hash function '{}'".format(hash_algo)
-        raise_from(ValueError(msg), None)
+        raise ValueError(msg) from e
 
     hkdf = HKDF(algorithm=hash_function(),
                 length=num_keys * key_size,

@@ -2,9 +2,6 @@
 
 """ Schema loading and validation.
 """
-
-from __future__ import unicode_literals
-
 import base64
 import json
 import pkgutil
@@ -12,7 +9,6 @@ from typing import Any, Dict, Hashable, Optional, Sequence, Text, TextIO
 from copy import deepcopy
 
 import jsonschema
-from future.builtins import map
 
 from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE

@@ -5,14 +5,11 @@
     perform the hashing.
 """
 
-from __future__ import unicode_literals
-
 import abc
 import re
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Text, cast, List, Union, SupportsInt
 
-from future.builtins import super
 from six import add_metaclass
 
 from clkhash import comparators

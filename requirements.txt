@@ -1,6 +1,5 @@
 bitarray-hardbyte==1.2.2
 cryptography==2.9.2
-future==0.18.2
 jsonschema==3.2.0
 hypothesis==4.57.1
 mypy_extensions==0.4.3

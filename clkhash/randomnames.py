@@ -10,8 +10,6 @@ ClassList class - generate a list of length n of [id, name, dob, gender] lists
 TODO: Generate realistic errors
 TODO: Add RESTful api to generate reasonable name data as requested
 """
-from __future__ import print_function
-
 import bisect
 import csv
 import json
@@ -21,8 +19,6 @@ import random
 from datetime import date, datetime, timedelta
 from typing import (Iterable, List, Optional,
                     Sequence, TextIO, Tuple, Union)
-
-from future.builtins import range
 
 from clkhash.field_formats import FieldSpec
 from clkhash import schema

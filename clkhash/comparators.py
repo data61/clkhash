@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import abc
 from typing import Iterable, Text, Dict, Any, Optional
 
-from future.builtins import range
 from six import add_metaclass
 
 

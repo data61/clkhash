@@ -8,7 +8,6 @@ import logging
 import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
-from future.builtins import range
 from tqdm import tqdm
 
 from clkhash.bloomfilter import stream_bloom_filters
