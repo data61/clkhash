@@ -121,10 +121,10 @@ class NameList:
 
         self.names = [person for person in self.generate_random_person(n)]
 
-        self.all_male_first_names: Optional[Distribution] = None
-        self.all_female_first_names: Optional[Distribution] = None
-        self.all_last_names: Optional[Distribution] = None
-        self.all_ages: Optional[Distribution] = None
+        self.all_male_first_names = None  # type: Optional[Distribution]
+        self.all_female_first_names = None  # type: Optional[Distribution]
+        self.all_last_names = None  # type: Optional[Distribution]
+        self.all_ages = None  # type: Optional[Distribution]
 
     @property
     def schema_types(self) -> Sequence[FieldSpec]:
