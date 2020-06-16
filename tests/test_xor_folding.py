@@ -3,7 +3,6 @@ import random
 import unittest
 
 from bitarray import bitarray
-from future.builtins import zip
 
 from clkhash import randomnames, bloomfilter
 from clkhash.key_derivation import generate_key_lists

@@ -2,8 +2,6 @@ import random
 import unittest
 from copy import copy
 
-from future.builtins import range
-
 from clkhash.bloomfilter import (blake_encode_ngrams,
                                  double_hash_encode_ngrams,
                                  double_hash_encode_ngrams_non_singular,

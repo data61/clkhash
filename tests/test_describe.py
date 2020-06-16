@@ -2,10 +2,7 @@ import unittest
 import json
 import sys
 
-try:
-    from StringIO import StringIO  # Python 2
-except ImportError:
-    from io import StringIO        # Python 3
+from io import StringIO
     
 from clkhash import randomnames
 from clkhash.clk import generate_clks
