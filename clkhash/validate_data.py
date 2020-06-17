@@ -8,9 +8,6 @@
 
 from typing import cast, Optional, Sequence
 
-from future.builtins import zip
-
-from clkhash.backports import raise_from
 from clkhash.field_formats import (FieldSpec, InvalidEntryError)
 
 
@@ -27,10 +24,9 @@ class FormatError(ValueError):
     row_index = None  # type: Optional[int]
 
 
-def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
-                         data  # type: Sequence[Sequence[str]]
-                         ):
-    # type: (...) -> None
+def validate_row_lengths(fields: Sequence[FieldSpec],
+                         data: Sequence[Sequence[str]]
+                         ) -> None:
     """ Validate the `data` row lengths according to the specification
         in `fields`.
 
@@ -47,10 +43,9 @@ def validate_row_lengths(fields,  # type: Sequence[FieldSpec]
             raise FormatError(msg)
 
 
-def validate_entries(fields,  # type: Sequence[FieldSpec]
-                     data  # type: Sequence[Sequence[str]]
-                     ):
-    # type: (...) -> None
+def validate_entries(fields: Sequence[FieldSpec],
+                     data: Sequence[Sequence[str]]
+                     ) -> None:
     """ Validate the `data` entries according to the specification in
         `fields`.
 
@@ -77,13 +72,12 @@ def validate_entries(fields,  # type: Sequence[FieldSpec]
                 e_invalid_entry = EntryError(msg)
                 e_invalid_entry.field_spec = e.field_spec
                 e_invalid_entry.row_index = i
-                raise_from(e_invalid_entry, e)
+                raise e_invalid_entry from e
 
 
-def validate_header(fields,  # type: Sequence[FieldSpec]
-                    column_names  # type: Sequence[str]
-                    ):
-    # type: (...) -> None
+def validate_header(fields: Sequence[FieldSpec],
+                    column_names: Sequence[str]
+                    ) -> None:
     """ Validate the `column_names` according to the specification in
         `fields`.
 

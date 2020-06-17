@@ -1,8 +1,6 @@
 import base64
 import unittest
 
-from future.builtins import zip
-
 from clkhash.bloomfilter import stream_bloom_filters
 from clkhash.field_formats import FieldHashingProperties, StringSpec, BitsPerTokenStrategy
 from clkhash.key_derivation import DEFAULT_KEY_SIZE, DEFAULT_NUM_HASHING_METHODS, generate_key_lists, hkdf

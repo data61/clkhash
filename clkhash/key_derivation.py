@@ -3,8 +3,6 @@ from typing import Tuple, Union, Optional, Sequence
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from future.builtins import range, zip
-from future.utils import raise_from
 
 """
 We use the block-size of SHA1 and MD5 as the default key size for HMAC
@@ -19,14 +17,13 @@ _HASH_FUNCTIONS = {
 }
 
 
-def hkdf(secret,  # type: bytes
-         num_keys,  # type: int
-         hash_algo='SHA256',  # type: str
-         salt=None,  # type: Optional[bytes]
-         info=None,  # type: Optional[bytes]
-         key_size=DEFAULT_KEY_SIZE  # type: int
-         ):
-    # type: (...) -> Tuple[bytes, ...]
+def hkdf(secret: bytes,
+         num_keys: int,
+         hash_algo: str = 'SHA256',
+         salt: Optional[bytes] = None,
+         info: Optional[bytes] = None,
+         key_size: int = DEFAULT_KEY_SIZE
+         ) -> Tuple[bytes, ...]:
     """
     Executes the HKDF key derivation function as described in rfc5869 to
     derive `num_keys` keys of size `key_size` from the secret.
@@ -69,9 +66,9 @@ def hkdf(secret,  # type: bytes
     """
     try:
         hash_function = _HASH_FUNCTIONS[hash_algo]
-    except KeyError:
+    except KeyError as e:
         msg = "unsupported hash function '{}'".format(hash_algo)
-        raise_from(ValueError(msg), None)
+        raise ValueError(msg) from e
 
     hkdf = HKDF(algorithm=hash_function(),
                 length=num_keys * key_size,
@@ -85,16 +82,15 @@ def hkdf(secret,  # type: bytes
     return keys
 
 
-def generate_key_lists(secret,  # type: Union[bytes, str]
-                       num_identifier,  # type: int
-                       num_hashing_methods=DEFAULT_NUM_HASHING_METHODS,  # type: int
-                       key_size=DEFAULT_KEY_SIZE,  # type: int
-                       salt=None,  # type: Optional[bytes]
-                       info=None,  # type: Optional[bytes]
-                       kdf='HKDF',  # type: str
-                       hash_algo='SHA256'  # type: str
-                       ):
-    # type: (...) -> Tuple[Tuple[bytes, ...], ...]
+def generate_key_lists(secret: Union[bytes, str],
+                       num_identifier: int,
+                       num_hashing_methods: int = DEFAULT_NUM_HASHING_METHODS,
+                       key_size: int = DEFAULT_KEY_SIZE,
+                       salt: Optional[bytes] = None,
+                       info: Optional[bytes] = None,
+                       kdf: str = 'HKDF',
+                       hash_algo: str = 'SHA256'
+                       ) -> Tuple[Tuple[bytes, ...], ...]:
     """
     Generates `num_hashing_methods` derived keys for each identifier for the secret using a key derivation
     function (KDF).

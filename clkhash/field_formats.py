@@ -5,25 +5,20 @@
     perform the hashing.
 """
 
-from __future__ import unicode_literals
-
 import abc
 import re
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Text, cast, List, Union, SupportsInt
 
-from future.builtins import super
-from six import add_metaclass
-
 from clkhash import comparators
-from clkhash.backports import raise_from, re_compile_full, strftime
 from clkhash.comparators import AbstractComparison
+
 
 
 class InvalidEntryError(ValueError):
     """ An entry in the data file does not conform to the schema.
     """
-    field_spec = None  # type: Optional[FieldSpec]
+    field_spec = None  # type: Optional['FieldSpec']
 
 
 class InvalidSchemaError(ValueError):
@@ -33,7 +28,7 @@ class InvalidSchemaError(ValueError):
     syntactically correct.
     """
     json_field_spec = None  # type: Optional[dict]
-    field_spec_index = None # type: Optional[int]
+    field_spec_index = None  # type: Optional[int]
 
 
 class MissingValueSpec(object):
@@ -51,25 +46,22 @@ class MissingValueSpec(object):
     """
 
     def __init__(self,
-                 sentinel,  # type: str
-                 replace_with=None  # type: Optional[str]
-                 ):
-        # type: (...) -> None
+                 sentinel: str,
+                 replace_with: Optional[str] = None
+                 ) -> None:
         self.sentinel = sentinel
         self.replace_with = (replace_with if replace_with is not None
                              else sentinel)
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Any]) -> MissingValueSpec
+    def from_json_dict(cls, json_dict: Dict[str, Any]) -> 'MissingValueSpec':
         return cls(
             sentinel=json_dict['sentinel'],
             replace_with=cast(Optional[str], json_dict.get('replaceWith'))
         )
 
 
-@add_metaclass(abc.ABCMeta)
-class StrategySpec(object):
+class StrategySpec(object, metaclass=abc.ABCMeta):
     """ Stores the information about the insertion strategy.
 
     A strategy has to implement the 'bits_per_token' function, which defines how often each token gets inserted into
@@ -77,8 +69,7 @@ class StrategySpec(object):
     """
 
     @abc.abstractmethod
-    def bits_per_token(self, num_tokens):
-        # type: (int) -> List[int]
+    def bits_per_token(self, num_tokens: int) -> List[int]:
         """ Return a list of integers, one for each of the `num_tokens` tokens, defining how often that token gets
         inserted into the Bloom filter.
 
@@ -88,8 +79,7 @@ class StrategySpec(object):
         pass
 
     @classmethod
-    def from_json_dict(cls, json_dict):
-        # type: (Dict[str, Union[str, SupportsInt]]) -> StrategySpec
+    def from_json_dict(cls, json_dict: Dict[str, Union[str, SupportsInt]]) -> 'StrategySpec':
         if 'bitsPerToken' in json_dict:
             return BitsPerTokenStrategy(int(json_dict['bitsPerToken']))
         elif 'bitsPerFeature' in json_dict:
@@ -110,14 +100,13 @@ class BitsPerTokenStrategy(StrategySpec):
 
     :ivar int bits_per_token: how often each token should be inserted into the filter
     """
+
     def __init__(self,
-                 bits_per_token  # type: int
-                 ):
-        # type: (...) -> None
+                 bits_per_token: int
+                 ) -> None:
         self._bits_per_token = bits_per_token
 
-    def bits_per_token(self, num_tokens):
-        # type: (int) -> List[int]
+    def bits_per_token(self, num_tokens: int) -> List[int]:
         return [self._bits_per_token] * num_tokens
 
 
@@ -131,14 +120,13 @@ class BitsPerFeatureStrategy(StrategySpec):
 
     :ivar int bits_per_feature: total number of insertions for this feature, will be spread across all tokens.
     """
+
     def __init__(self,
-                 bits_per_feature  # type: int
-                 ):
-        # type: (...) -> None
+                 bits_per_feature: int
+                 ) -> None:
         self._bits_per_feature = bits_per_feature
 
-    def bits_per_token(self, num_tokens):
-        # type: (int) -> List[int]
+    def bits_per_token(self, num_tokens: int) -> List[int]:
         k = int(self._bits_per_feature / num_tokens)
         residue = self._bits_per_feature % num_tokens
         return ([k + 1] * residue) + ([k] * (num_tokens - residue))
@@ -165,14 +153,13 @@ class FieldHashingProperties(object):
     _DEFAULT_POSITIONAL = False
 
     def __init__(self,
-                 comparator,  # type: AbstractComparison
-                 strategy,  # type: StrategySpec
-                 encoding=_DEFAULT_ENCODING,  # type: str
-                 hash_type='blakeHash',  # type: str
-                 prevent_singularity=None,  # type: Optional[bool]
-                 missing_value=None  # type: Optional[MissingValueSpec]
-                 ):
-        # type: (...) -> None
+                 comparator: AbstractComparison,
+                 strategy: StrategySpec,
+                 encoding: str = _DEFAULT_ENCODING,
+                 hash_type: str = 'blakeHash',
+                 prevent_singularity: Optional[bool] = None,
+                 missing_value: Optional[MissingValueSpec] = None
+                 ) -> None:
         """ Make a :class:`FieldHashingProperties` object, setting it
             attributes to values specified in keyword arguments.
         """
@@ -183,7 +170,7 @@ class FieldHashingProperties(object):
             ''.encode(encoding)
         except LookupError as e:
             msg = '{} is not a valid Python encoding.'
-            raise_from(ValueError(msg.format(encoding)), e)
+            raise ValueError(msg.format(encoding)) from e
 
         if prevent_singularity is not None and hash_type != 'doubleHash':
             raise ValueError("Prevent_singularity must only be specified"
@@ -199,8 +186,7 @@ class FieldHashingProperties(object):
         self.strategy = strategy
         self.missing_value = missing_value
 
-    def replace_missing_value(self, str_in):
-        # type: (Text) -> Text
+    def replace_missing_value(self, str_in: Text) -> Text:
         """ returns 'str_in' if it is not equals to the 'sentinel' as
         defined in the missingValue section of
         the schema. Else it will return the 'replaceWith' value.
@@ -217,9 +203,8 @@ class FieldHashingProperties(object):
 
 
 def fhp_from_json_dict(
-        json_dict  # type: Dict[str, Any]
-    ):
-    # type: (...) -> FieldHashingProperties
+        json_dict: Dict[str, Any]
+) -> FieldHashingProperties:
     """
     Make a :class:`FieldHashingProperties` object from a dictionary.
 
@@ -245,8 +230,7 @@ def fhp_from_json_dict(
     )
 
 
-@add_metaclass(abc.ABCMeta)
-class FieldSpec(object):
+class FieldSpec(object, metaclass=abc.ABCMeta):
     """ Abstract base class representing the specification of a column
         in the dataset. Subclasses validate entries, and modify the
         `hashing_properties` ivar to customise hashing procedures.
@@ -258,11 +242,10 @@ class FieldSpec(object):
     """
 
     def __init__(self,
-                 identifier,  # type: str
-                 hashing_properties,  # type: Optional[FieldHashingProperties]
-                 description=None  # type: Optional[str]
-                 ):
-        # type: (...) -> None
+                 identifier: str,
+                 hashing_properties: Optional[FieldHashingProperties],
+                 description: Optional[str] = None
+                 ) -> None:
         """ Make a FieldSpec object, setting it attributes to values
             specified in keyword arguments.
         """
@@ -272,9 +255,8 @@ class FieldSpec(object):
 
     @classmethod
     def from_json_dict(cls,
-                       field_dict  # type: Dict[str, Any]
-                       ):
-        # type: (...) -> FieldSpec
+                       field_dict: Dict[str, Any]
+                       ) -> 'FieldSpec':
         """ Initialise a :class:`FieldSpec` object from a dictionary of
             properties.
 
@@ -289,7 +271,7 @@ class FieldSpec(object):
         description = field_dict['format'].get('description')
         hashing_properties = fhp_from_json_dict(field_dict['hashing']) if 'hashing' in field_dict else None
 
-        result = cls.__new__(cls)  # type: ignore
+        result = cls.__new__(cls)
         result.identifier = identifier
         result.hashing_properties = hashing_properties
         result.description = description
@@ -297,8 +279,7 @@ class FieldSpec(object):
         return result
 
     @abc.abstractmethod
-    def validate(self, str_in):
-        # type: (Text) -> None
+    def validate(self, str_in: Text) -> None:
         """ Validates an entry in the field.
 
             Raises :class:`InvalidEntryError` iff the entry is invalid.
@@ -318,10 +299,9 @@ class FieldSpec(object):
                        .format(self.hashing_properties.encoding, str_in))
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
-                raise_from(e_new, err)
+                raise e_new from err
 
-    def is_missing_value(self, str_in):
-        # type: (Text) -> bool
+    def is_missing_value(self, str_in: Text) -> bool:
         """ tests if 'str_in' is the sentinel value for this field
 
         :param str str_in: String to test if it stands for missing value
@@ -330,11 +310,10 @@ class FieldSpec(object):
 
         """
         return (self.hashing_properties is not None and
-            self.hashing_properties.missing_value is not None and
-            self.hashing_properties.missing_value.sentinel == str_in)
+                self.hashing_properties.missing_value is not None and
+                self.hashing_properties.missing_value.sentinel == str_in)
 
-    def format_value(self, str_in):
-        # type: (Text) -> Text
+    def format_value(self, str_in: Text) -> Text:
         """ formats the value 'str_in' for hashing according to this field's
         spec.
 
@@ -361,8 +340,7 @@ class FieldSpec(object):
         else:
             return self._format_regular_value(str_in)
 
-    def _format_regular_value(self, str_in):
-        # type: (Text) -> Text
+    def _format_regular_value(self, str_in: Text) -> Text:
         """ overwrite this if you want to modify 'str_in' before hashing.
 
         :param str str_in:
@@ -409,15 +387,14 @@ class StringSpec(FieldSpec):
     _PERMITTED_CASE_STYLES = {'lower', 'upper', 'mixed'}
 
     def __init__(self,
-                 identifier,  # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 description=None,  # type: Optional[str]
-                 regex=None,  # type: Optional[str]
-                 case=_DEFAULT_CASE,  # type: str
-                 min_length=_DEFAULT_MIN_LENGTH,  # type: int
-                 max_length=None  # type: Optional[int]
-                 ):
-        # type: (...) -> None
+                 identifier: str,
+                 hashing_properties: FieldHashingProperties,
+                 description: Optional[str] = None,
+                 regex: Optional[str] = None,
+                 case: str = _DEFAULT_CASE,
+                 min_length: int = _DEFAULT_MIN_LENGTH,
+                 max_length: Optional[int] = None
+                 ) -> None:
         """ Make a StringSpec object, setting it attributes to values
             specified in keyword arguments.
         """
@@ -453,13 +430,12 @@ class StringSpec(FieldSpec):
         if regex_based:
             regex_str = cast(str, regex)
             try:
-                compiled_regex = re_compile_full(regex_str)
-                self.regex = compiled_regex
+                self.regex = re.compile(regex_str)
             except (SyntaxError, re.error) as e:
                 msg = "invalid regular expression '{}.'".format(regex_str)
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
-                raise_from(e_new, e)
+                raise e_new from e
         else:
             self.case = case
             self.min_length = min_length
@@ -469,9 +445,8 @@ class StringSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls,
-                       json_dict  # type: Dict[str, Any]
-                       ):
-        # type: (...) -> StringSpec
+                       json_dict: Dict[str, Any]
+                       ) -> 'StringSpec':
         """ Make a StringSpec object from a dictionary containing its
             properties.
 
@@ -495,12 +470,12 @@ class StringSpec(FieldSpec):
         if 'pattern' in format_:
             pattern = format_['pattern']
             try:
-                result.regex = re_compile_full(pattern)
+                result.regex = re.compile(pattern)
             except (SyntaxError, re.error) as e:
                 msg = "Invalid regular expression '{}.'".format(pattern)
                 e_new = InvalidSchemaError(msg)
                 e_new.json_field_spec = json_dict
-                raise_from(e_new, e)
+                raise e_new from e
             result.regex_based = True
 
         else:
@@ -511,8 +486,7 @@ class StringSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in):
-        # type: (Text) -> None
+    def validate(self, str_in: Text) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -534,7 +508,7 @@ class StringSpec(FieldSpec):
         super().validate(str_in)  # Validate encoding.
 
         if self.regex_based:
-            match = self.regex.match(str_in)
+            match = self.regex.fullmatch(str_in)
             if match is None:
                 e = InvalidEntryError(
                     'Expected entry that conforms to regular expression '
@@ -589,14 +563,13 @@ class IntegerSpec(FieldSpec):
     """
 
     def __init__(self,
-                 identifier,  # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 description=None,  # type: Optional[str]
-                 minimum=None,  # type: Optional[int]
-                 maximum=None,  # type: Optional[int]
-                 **kwargs  # type: Dict[str, Any]
-                 ):
-        # type: (...) -> None
+                 identifier: str,
+                 hashing_properties: FieldHashingProperties,
+                 description: Optional[str] = None,
+                 minimum: Optional[int] = None,
+                 maximum: Optional[int] = None,
+                 **kwargs: Dict[str, Any]
+                 ) -> None:
         """ Make a IntegerSpec object, setting it attributes to values
             specified in keyword arguments.
         """
@@ -610,9 +583,8 @@ class IntegerSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls,
-                       json_dict  # type: Dict[str, Any]
-                       ):
-        # type: (...) -> IntegerSpec
+                       json_dict: Dict[str, Any]
+                       ) -> 'IntegerSpec':
         """ Make a IntegerSpec object from a dictionary containing its
             properties.
 
@@ -633,8 +605,7 @@ class IntegerSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in):
-        # type: (Text) -> None
+    def validate(self, str_in: Text) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -658,9 +629,7 @@ class IntegerSpec(FieldSpec):
             msg = "Invalid integer. Read '{}'.".format(str_in)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
-            return  # to stop PyCharm thinking that value might be undefined
-            #  later
+            raise e_new from e
 
         if self.minimum is not None and value < self.minimum:
             msg = ("Expected integer value of at least {}. Read '{}'."
@@ -676,8 +645,7 @@ class IntegerSpec(FieldSpec):
             e_new.field_spec = self
             raise e_new
 
-    def _format_regular_value(self, str_in):
-        # type: (Text) -> Text
+    def _format_regular_value(self, str_in: Text) -> Text:
         """ we need to reformat integer strings, as there can be different
         strings for the same integer. The
         strategy of unification here is to first parse the integer
@@ -697,7 +665,7 @@ class IntegerSpec(FieldSpec):
             msg = "Invalid integer. Read '{}'.".format(str_in)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
 
 class DateSpec(FieldSpec):
@@ -715,12 +683,11 @@ class DateSpec(FieldSpec):
     OUTPUT_FORMAT = '%Y%m%d'
 
     def __init__(self,
-                 identifier,  # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 format,  # type: str
-                 description=None  # type: Optional[str]
-                 ):
-        # type: (...) -> None
+                 identifier: str,
+                 hashing_properties: FieldHashingProperties,
+                 format: str,
+                 description: Optional[str] = None
+                 ) -> None:
         """ Make a DateSpec object, setting it attributes to values
             specified in keyword arguments.
         """
@@ -733,9 +700,8 @@ class DateSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls,
-                       json_dict  # type: Dict[str, Any]
-    ):
-        # type: (...) -> DateSpec
+                       json_dict: Dict[str, Any]
+                       ) -> 'DateSpec':
         """ Make a DateSpec object from a dictionary containing its
             properties.
 
@@ -755,8 +721,7 @@ class DateSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in):
-        # type: (Text) -> None
+    def validate(self, str_in: Text) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -779,10 +744,9 @@ class DateSpec(FieldSpec):
             msg = "Validation error for date type: {}".format(e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
-    def _format_regular_value(self, str_in):
-        # type: (Text) -> Text
+    def _format_regular_value(self, str_in: Text) -> Text:
         """ we overwrite default behaviour as we want to hash the numbers
         only, no fillers like '-', or '/'
 
@@ -791,13 +755,13 @@ class DateSpec(FieldSpec):
         """
         try:
             dt = datetime.strptime(str_in, self.format)
-            return strftime(dt, DateSpec.OUTPUT_FORMAT)
+            return datetime.strftime(dt, DateSpec.OUTPUT_FORMAT)
         except ValueError as e:
             msg = "Unable to format date value '{}'. Reason: {}".format(str_in,
                                                                         e)
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
-            raise_from(e_new, e)
+            raise e_new from e
 
 
 class EnumSpec(FieldSpec):
@@ -809,12 +773,11 @@ class EnumSpec(FieldSpec):
     """
 
     def __init__(self,
-                 identifier,  # type: str
-                 hashing_properties,  # type: FieldHashingProperties
-                 values,  # type: Iterable[str]
-                 description=None  # type: Optional[str]
-                 ):
-        # type: (...) -> None
+                 identifier: str,
+                 hashing_properties: FieldHashingProperties,
+                 values: Iterable[str],
+                 description: Optional[str] = None
+                 ) -> None:
         """ Make a EnumSpec object, setting it attributes to values
             specified in keyword arguments.
         """
@@ -827,9 +790,8 @@ class EnumSpec(FieldSpec):
 
     @classmethod
     def from_json_dict(cls,
-                       json_dict  # type: Dict[str, Any]
-                       ):
-        # type: (...) -> EnumSpec
+                       json_dict: Dict[str, Any]
+                       ) -> 'EnumSpec':
         """ Make a EnumSpec object from a dictionary containing its
             properties.
 
@@ -847,8 +809,7 @@ class EnumSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in):
-        # type: (Text) -> None
+    def validate(self, str_in: Text) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -878,14 +839,13 @@ class Ignore(FieldSpec):
     """
 
     def __init__(self,
-                 identifier=None  # type: Optional[str]
-                 ):
-        # type: (...) -> None
+                 identifier: Optional[str] = None
+                 ) -> None:
         # noinspection PyCompatibility
         super().__init__('' if identifier is None else identifier,
                          None)
 
-    def validate(self, str_in):
+    def validate(self, str_in: Text):
         pass
 
 
@@ -899,9 +859,8 @@ FIELD_TYPE_MAP = {
 
 
 def spec_from_json_dict(
-        json_dict  # type: Dict[str, Any]
-):
-    # type: (...) -> FieldSpec
+        json_dict: Dict[str, Any]
+) -> FieldSpec:
     """ Turns a dictionary into the appropriate FieldSpec object.
 
         :param dict json_dict: A dictionary with properties.

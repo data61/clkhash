@@ -10,8 +10,6 @@ ClassList class - generate a list of length n of [id, name, dob, gender] lists
 TODO: Generate realistic errors
 TODO: Add RESTful api to generate reasonable name data as requested
 """
-from __future__ import print_function
-
 import bisect
 import csv
 import json
@@ -22,17 +20,14 @@ from datetime import date, datetime, timedelta
 from typing import (Iterable, List, Optional,
                     Sequence, TextIO, Tuple, Union)
 
-from future.builtins import range
-
 from clkhash.field_formats import FieldSpec
 from clkhash import schema
 
 
-def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
-             headers,  # type: Iterable[str]
-             file  # type: TextIO
-             ):
-    # type: (...) -> None
+def save_csv(data: Iterable[Tuple[Union[str, int], ...]],
+             headers: Iterable[str],
+             file: TextIO
+             ) -> None:
     """
     Output generated data to file as CSV with header.
 
@@ -46,8 +41,7 @@ def save_csv(data,  # type: Iterable[Tuple[Union[str, int], ...]]
     writer.writerows(data)
 
 
-def random_date(year, age_distribution):
-    # type: (int, Optional[Distribution]) -> datetime
+def random_date(year: int, age_distribution: Optional['Distribution']) -> datetime:
     """ Generate a random datetime between two datetime objects.
 
     :param start: datetime of start
@@ -74,18 +68,16 @@ class Distribution:
     """Creates a random value generator with a weighted distribution
     """
 
-    def __init__(self, resource_name):
-        # type: (str) -> None
+    def __init__(self, resource_name: str) -> None:
         self.total = 0
         self.indices = []  # type: List[int]
-        self.values = []   # type: List[str]
+        self.values = []  # type: List[str]
         self.load_csv_data(resource_name)
         self.length = len(self.values)
         if not self.length:
             raise ValueError("Distribution table must have a record.")
 
-    def load_csv_data(self, resource_name):
-        # type: (str) -> None
+    def load_csv_data(self, resource_name: str) -> None:
         """ Loads the first two columns of the specified CSV file from package data.
         The first column represents the value and the second column represents the count in the population.
         """
@@ -104,8 +96,7 @@ class Distribution:
             self.indices.append(self.total)
             self.values.append(row[0])
 
-    def generate(self):
-        # type: () -> str
+    def generate(self) -> str:
         """ Generates a random value, weighted by the known distribution
         """
 
@@ -123,8 +114,7 @@ class NameList:
     randomname_schema = json.loads(randomname_schema_bytes.decode())
     SCHEMA = schema.from_json_dict(randomname_schema)
 
-    def __init__(self, n):
-        # type: (int) -> None
+    def __init__(self, n: int) -> None:
         self.load_data()
 
         self.year = date.today().year - 1
@@ -137,12 +127,10 @@ class NameList:
         self.all_ages = None  # type: Optional[Distribution]
 
     @property
-    def schema_types(self):
-        # type: () -> Sequence[FieldSpec]
+    def schema_types(self) -> Sequence[FieldSpec]:
         return self.SCHEMA.fields
 
-    def generate_random_person(self, n):
-        # type: (int) -> Iterable[Tuple[str, str, str, str]]
+    def generate_random_person(self, n: int) -> Iterable[Tuple[str, str, str, str]]:
         """
         Generator that yields details on a person with plausible name, sex and age.
 
@@ -165,8 +153,7 @@ class NameList:
                 sex
             )
 
-    def load_data(self):
-        # type: () -> None
+    def load_data(self) -> None:
         """ Loads databases from package data
 
         Uses data files sourced from
@@ -180,8 +167,7 @@ class NameList:
         self.all_last_names = Distribution('data/last-names.csv')
         self.all_ages = Distribution('data/ages.csv')
 
-    def generate_subsets(self, sz, overlap=0.8, subsets=2):
-        # type: (int, float, int) -> Tuple[List, ...]
+    def generate_subsets(self, sz: int, overlap: float = 0.8, subsets: int = 2) -> Tuple[List, ...]:
         """ Return random subsets with nonempty intersection.
 
         The random subsets are of specified size. If an element is

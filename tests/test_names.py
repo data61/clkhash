@@ -1,8 +1,6 @@
 from datetime import datetime
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
+
+from io import StringIO
 import itertools
 import math
 import unittest
@@ -10,8 +8,6 @@ import unittest
 import pytest
 
 from clkhash import randomnames as rn
-
-__author__ = 'shardy'
 
 
 class TestRandomNames(unittest.TestCase):

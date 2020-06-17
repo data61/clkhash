@@ -1,21 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import abc
 from typing import Iterable, Text, Dict, Any, Optional
 
-from future.builtins import range
-from six import add_metaclass
 
-
-@add_metaclass(abc.ABCMeta)
-class AbstractComparison(object):
+class AbstractComparison(object, metaclass=abc.ABCMeta):
     """ Abstract base class for all comparisons """
 
     @abc.abstractmethod
-    def tokenize(self, word):
-        # type: (Text) -> Iterable[Text]
+    def tokenize(self, word: Text) -> Iterable[Text]:
         """ The tokenization function.
 
         Takes a string and returns an iterable of tokens (as strings). This should be
@@ -48,15 +41,13 @@ class NgramComparison(AbstractComparison):
         :ivar positional: enables positional n-gram tokenization
         """
 
-    def __init__(self, n, positional=False):
-        # type: (int, Optional[bool]) -> None
+    def __init__(self, n: int, positional: Optional[bool] = False) -> None:
         if n < 0:
             raise ValueError('`n` in `n`-gram must be non-negative.')
         self.n = n
         self.positional = positional
 
-    def tokenize(self, word):
-        # type: (Text) -> Iterable[Text]
+    def tokenize(self, word: Text) -> Iterable[Text]:
         """ Produce `n`-grams of `word`.
 
         :param word: The string to tokenize.
@@ -89,7 +80,7 @@ class ExactComparison(AbstractComparison):
     representation in the filter.
     """
 
-    def tokenize(self, word):  # type: (Text) -> Iterable[Text]
+    def tokenize(self, word: Text) -> Iterable[Text]:
         if len(word) == 0:
             return tuple()
         else:
@@ -144,8 +135,7 @@ class NumericComparison(AbstractComparison):
     :ivar fractional_precision: number of digits after the point to be considered
     """
 
-    def __init__(self, threshold_distance, resolution, fractional_precision=0):
-        # type: (float, int, int) -> None
+    def __init__(self, threshold_distance: float, resolution: int, fractional_precision: int = 0) -> None:
         # check that there is enough precision to have non-zero threshold_distance
         if not threshold_distance > 0:
             raise ValueError('threhold_distance has to be positive, but was {}'.format(threshold_distance))
@@ -161,7 +151,7 @@ class NumericComparison(AbstractComparison):
         self.resolution = resolution
         self.fractional_precision = fractional_precision
 
-    def tokenize(self, word):  # type: (Text) -> Iterable[Text]
+    def tokenize(self, word: Text) -> Iterable[Text]:
         if len(word) == 0:
             return tuple()
         try:
@@ -192,8 +182,7 @@ class NonComparison(AbstractComparison):
     Non comparison.
     """
 
-    def tokenize(self, word):
-        # type: (Text) -> Iterable[Text]
+    def tokenize(self, word: Text) -> Iterable[Text]:
         """ Null tokenizer returns empty Iterable.
 
         FieldSpec Ignore has hashing_properties = None
@@ -207,8 +196,7 @@ class NonComparison(AbstractComparison):
         return ('' for i in range(0))
 
 
-def get_comparator(comp_desc):
-    # type: (Dict[str, Any]) -> AbstractComparison
+def get_comparator(comp_desc: Dict[str, Any]) -> AbstractComparison:
     """ Creates the comparator as defined in the schema. A comparator provides a tokenization method suitable for
     that type of comparison.
 

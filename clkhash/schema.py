@@ -2,9 +2,6 @@
 
 """ Schema loading and validation.
 """
-
-from __future__ import unicode_literals
-
 import base64
 import json
 import pkgutil
@@ -12,9 +9,7 @@ from typing import Any, Dict, Hashable, Optional, Sequence, Text, TextIO
 from copy import deepcopy
 
 import jsonschema
-from future.builtins import map
 
-from clkhash.backports import raise_from
 from clkhash.field_formats import FieldSpec, spec_from_json_dict, InvalidSchemaError
 from clkhash.key_derivation import DEFAULT_KEY_SIZE as DEFAULT_KDF_KEY_SIZE
 
@@ -28,15 +23,14 @@ class SchemaError(Exception):
     """
 
     def __init__(self,
-                 msg,                               # type: str
-                 errors=None                        # type: Optional[Sequence[InvalidSchemaError]]
-                 ):
-        # type: (...) -> None
+                 msg: str,
+                 errors: Optional[Sequence[InvalidSchemaError]] = None
+                 ) -> None:
         self.msg = msg
         self.errors = [] if errors is None else errors
         super(SchemaError, self).__init__(msg)
 
-    def __str__(self):
+    def __str__(self) -> str:
         detail = ""
         for i, e in enumerate(self.errors, start=1):
             detail += "Error {} in feature at index {} - {}\n".format(i, e.field_spec_index, str(e))
@@ -69,16 +63,15 @@ class Schema:
     """
 
     def __init__(self,
-                 fields,                            # type: Sequence[FieldSpec]
-                 l,                                 # type: int
-                 xor_folds=0,                       # type: int
-                 kdf_type='HKDF',                   # type: str
-                 kdf_hash='SHA256',                 # type: str
-                 kdf_info=None,                     # type: Optional[bytes]
-                 kdf_salt=None,                     # type: Optional[bytes]
-                 kdf_key_size=DEFAULT_KDF_KEY_SIZE  # type: int
-                 ):
-        # type: (...) -> None
+                 fields: Sequence[FieldSpec],
+                 l: int,
+                 xor_folds: int = 0,
+                 kdf_type: str = 'HKDF',
+                 kdf_hash: str = 'SHA256',
+                 kdf_info: Optional[bytes] = None,
+                 kdf_salt: Optional[bytes] = None,
+                 kdf_key_size: int = DEFAULT_KDF_KEY_SIZE
+                 ) -> None:
         self.fields = fields
         self.l = l
         self.xor_folds = xor_folds
@@ -94,8 +87,7 @@ class Schema:
         return "<Schema (v3): {} fields>".format(len(self.fields))
 
 
-def _convert_v1_to_v2(schema_dict):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+def _convert_v1_to_v2(schema_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert v1 schema dict to v2 schema dict.
     :param schema_dict: v1 schema dict
@@ -145,8 +137,7 @@ def _convert_v1_to_v2(schema_dict):
     return result
 
 
-def _convert_v2_to_v3(schema_dict):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+def _convert_v2_to_v3(schema_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert v2 schema dict to v3 schema dict.
     :param schema_dict: v2 schema dict
@@ -170,8 +161,7 @@ def _convert_v2_to_v3(schema_dict):
     return schema_dict
 
 
-def convert_to_latest_version(schema_dict, validate_result=False):
-    # type: (Dict[str, Any], Optional[bool]) -> Dict[str, Any]
+def convert_to_latest_version(schema_dict: Dict[str, Any], validate_result: Optional[bool] = False) -> Dict[str, Any]:
     """ Convert the given schema to latest schema version.
 
      :param schema_dict: A dictionary describing a linkage schema. This dictionary must have a `'version'` key
@@ -194,8 +184,7 @@ def convert_to_latest_version(schema_dict, validate_result=False):
     return schema_dict
 
 
-def from_json_dict(dct, validate=True):
-    # type: (Dict[str, Any], bool) -> Schema
+def from_json_dict(dct: Dict[str, Any], validate: bool = True) -> Schema:
     """ Create a Schema of the most recent version according to dct
 
     if the provided schema dict is of an older version, then it will be automatically converted to the latest.
@@ -254,8 +243,7 @@ def from_json_dict(dct, validate=True):
                   kdf_type, kdf_hash, kdf_info, kdf_salt, kdf_key_size)
 
 
-def from_json_file(schema_file, validate=True):
-    # type: (TextIO, bool) -> Schema
+def from_json_file(schema_file: TextIO, validate: bool = True) -> Schema:
     """ Load a Schema object from a json file.
 
         :param schema_file: A JSON file containing the schema.
@@ -271,13 +259,12 @@ def from_json_file(schema_file, validate=True):
         # with json.decoder.JSONDecodeError,
         # but that doesn't exist in Python 2.
         msg = 'The schema is not a valid JSON file.'
-        raise_from(SchemaError(msg), e)
+        raise SchemaError(msg) from e
 
     return from_json_dict(schema_dict, validate=validate)
 
 
-def _get_master_schema(version):
-    # type: (Hashable) -> dict
+def _get_master_schema(version: Hashable) -> dict:
     """ Loads the master schema of given version
 
         :param version: The version of the master schema whose path we
@@ -293,7 +280,7 @@ def _get_master_schema(version):
     except (TypeError, KeyError) as e:
         msg = ('Schema version {} is not supported. '
                'Consider updating clkhash.').format(version)
-        raise_from(SchemaError(msg), e)
+        raise SchemaError(msg) from e
 
     try:
         schema_bytes = pkgutil.get_data('clkhash', 'schemas/{}'.format(file_name))
@@ -301,27 +288,21 @@ def _get_master_schema(version):
             msg = ('The master schema could not be loaded. The schema cannot be '
                    'validated. Please file a bug report.')
             raise MasterSchemaError(msg)
-    except IOError as e:  # In Python 3 we can be more specific with
-        # FileNotFoundError, but that doesn't exist in
-        # Python 2.
+    except FileNotFoundError as e:
         msg = ('The master schema could not be found. The schema cannot be '
                'validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e
 
     try:
         master_schema = json.loads(schema_bytes.decode('utf-8'))
         return master_schema
-    except ValueError as e:
-        # In Python 3 we can be more specific with
-        # json.decoder.JSONDecodeError, but that
-        # doesn't exist in Python 2.
+    except json.decoder.JSONDecodeError as e:
         msg = ('The master schema is not a valid JSON file. The schema cannot '
                'be validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e
 
 
-def validate_schema_dict(schema):
-    # type: (Dict[str, Any]) -> None
+def validate_schema_dict(schema: Dict[str, Any]) -> None:
     """ Validate the schema.
 
         This raises iff either the schema or the master schema are
@@ -346,8 +327,8 @@ def validate_schema_dict(schema):
     try:
         jsonschema.validate(schema, master_schema)
     except jsonschema.exceptions.ValidationError as e:
-        raise_from(SchemaError('The schema is not valid.\n\n' + str(e)), e)
+        raise SchemaError('The schema is not valid.\n\n' + str(e)) from e
     except jsonschema.exceptions.SchemaError as e:
         msg = ('The master schema is not valid. The schema cannot be '
                'validated. Please file a bug report.')
-        raise_from(MasterSchemaError(msg), e)
+        raise MasterSchemaError(msg) from e

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import tempfile
 # noinspection PyProtectedMember
@@ -9,8 +7,7 @@ from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
 
-def compute_hash_speed(num, quiet=False):
-    # type: (int, bool) -> float
+def compute_hash_speed(num: int, quiet: bool = False) -> float:
     """ Hash time.
     """
     namelist = NameList(num)

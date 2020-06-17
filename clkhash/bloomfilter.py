@@ -10,9 +10,7 @@ import struct
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
-from future.builtins import range, zip
 
-import clkhash.backports as bp
 from clkhash.field_formats import FieldHashingProperties
 from clkhash.schema import Schema
 from clkhash.comparators import AbstractComparison, NonComparison
@@ -26,13 +24,12 @@ except ImportError:
     # blake2b is already defined.
 
 
-def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
-                              keys,     # type: Sequence[bytes]
-                              ks,       # type: Sequence[int]
-                              l,        # type: int
-                              encoding  # type: str
-                              ):
-    # type: (...) -> bitarray
+def double_hash_encode_ngrams(ngrams: Iterable[str],
+                              keys: Sequence[bytes],
+                              ks: Sequence[int],
+                              l: int,
+                              encoding: str
+                              ) -> bitarray:
     """ Computes the double hash encoding of the ngrams with the given keys.
 
             Using the method from:
@@ -66,13 +63,12 @@ def double_hash_encode_ngrams(ngrams,   # type: Iterable[str]
     return bf
 
 
-def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
-                                           keys,     # type: Sequence[bytes]
-                                           ks,       # type: Sequence[int]
-                                           l,        # type: int
-                                           encoding  # type: str
-                                           ):
-    # type: (...) -> bitarray.bitarray
+def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
+                                           keys: Sequence[bytes],
+                                           ks: Sequence[int],
+                                           l: int,
+                                           encoding: str
+                                           ) -> bitarray:
     """ computes the double hash encoding of the n-grams with the given keys.
 
         The original construction of [Schnell2011]_ displays an abnormality for
@@ -121,14 +117,14 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
         sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
         md5hm_bytes = hmac.new(key_md5, m_bytes, md5).digest()
 
-        sha1hm = bp.int_from_bytes(sha1hm_bytes, 'big') % l
-        md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
+        sha1hm = int.from_bytes(sha1hm_bytes, 'big') % l
+        md5hm = int.from_bytes(md5hm_bytes, 'big') % l
 
         i = 0
         while md5hm == 0:
             md5hm_bytes = hmac.new(
                 key_md5, m_bytes + chr(i).encode(), md5).digest()
-            md5hm = bp.int_from_bytes(md5hm_bytes, 'big') % l
+            md5hm = int.from_bytes(md5hm_bytes, 'big') % l
             i += 1
 
         for i in range(k):
@@ -137,13 +133,12 @@ def double_hash_encode_ngrams_non_singular(ngrams,   # type: Iterable[str]
     return bf
 
 
-def blake_encode_ngrams(ngrams,   # type: Iterable[str]
-                        keys,     # type: Sequence[bytes]
-                        ks,       # type: Sequence[int]
-                        l,        # type: int
-                        encoding  # type: str
-                        ):
-    # type: (...) -> bitarray.bitarray
+def blake_encode_ngrams(ngrams: Iterable[str],
+                        keys: Sequence[bytes],
+                        ks: Sequence[int],
+                        l: int,
+                        encoding: str
+                        ) -> bitarray:
     """ Computes the encoding of the ngrams using the BLAKE2 hash function.
 
         We deliberately do not use the double hashing scheme as proposed in [
@@ -236,9 +231,8 @@ def blake_encode_ngrams(ngrams,   # type: Iterable[str]
 
 
 def hashing_function_from_properties(
-        fhp  # type: FieldHashingProperties
-        ):
-    # type: (...) -> Callable[[Iterable[str], Sequence[bytes], Sequence[int], int, str], bitarray]
+        fhp: FieldHashingProperties
+        ) -> Callable[[Iterable[str], Sequence[bytes], Sequence[int], int, str], bitarray]:
     """ Get the hashing function for this field
         :param fhp: hashing properties for this field
         :return: the hashing function
@@ -255,10 +249,9 @@ def hashing_function_from_properties(
         raise ValueError(msg)
 
 
-def fold_xor(bloomfilter,  # type: bitarray
-             folds         # type: int
-             ):
-    # type: (...) -> bitarray
+def fold_xor(bloomfilter: bitarray,
+             folds: int
+             ) -> bitarray:
     """ Performs XOR folding on a Bloom filter.
 
         If the length of the original Bloom filter is n and we perform
@@ -286,12 +279,11 @@ def fold_xor(bloomfilter,  # type: bitarray
     return bloomfilter
 
 
-def crypto_bloom_filter(record,      # type: Sequence[Text]
-                        comparators,  # type: List[AbstractComparison]
-                        schema,      # type: Schema
-                        keys         # type: Sequence[Sequence[bytes]]
-                        ):
-    # type: (...) -> Tuple[bitarray, Text, int]
+def crypto_bloom_filter(record: Sequence[Text],
+                        comparators: List[AbstractComparison],
+                        schema: Schema,
+                        keys: Sequence[Sequence[bytes]],
+                        ) -> Tuple[bitarray, Text, int]:
     """ Computes the composite Bloom filter encoding of a record.
 
     Using the method from
@@ -325,17 +317,14 @@ def crypto_bloom_filter(record,      # type: Sequence[Text]
                                              fhp.strategy.bits_per_token(len(ngrams)),
                                              hash_l, fhp.encoding)
 
-    c1 = bloomfilter.count()
     bloomfilter = fold_xor(bloomfilter, schema.xor_folds)
-    c2 = bloomfilter.count()
     return bloomfilter, record[0], bloomfilter.count()
 
 
-def stream_bloom_filters(dataset,  # type: Iterable[Sequence[Text]]
-                         keys,     # type: Sequence[Sequence[bytes]]
-                         schema    # type: Schema
-                         ):
-    # type: (...) -> Iterable[Tuple[bitarray, Text, int]]
+def stream_bloom_filters(dataset: Iterable[Sequence[Text]],
+                         keys: Sequence[Sequence[bytes]],
+                         schema: Schema
+                         ) -> Iterable[Tuple[bitarray, Text, int]]:
     """ Compute composite Bloom filters (CLKs) for every record in an
         iterable dataset.
 
