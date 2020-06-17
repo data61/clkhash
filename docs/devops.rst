@@ -46,13 +46,7 @@ Description of what is tested:
 ==================   ====================  ===============  =========
 Python Version       Operating System      Standard pytest  Notebooks
 ==================   ====================  ===============  =========
-pypy2                ubuntu-18.04          Yes              No
 pypy3                ubuntu-18.04          Yes              No
-------------------   --------------------  ---------------  ---------
-2.7                  ubuntu-18.04          Yes              No
-2.7                  macos-10.14           Yes              No
-2.7                  vs2017-win2016 (x64)  Yes              No
-2.7                  vs2017-win2016 (x86)  Yes              No
 ------------------   --------------------  ---------------  ---------
 3.5                  ubuntu-18.04          Yes              No
 3.5                  macos-10.14           Yes              No
