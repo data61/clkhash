@@ -14,14 +14,14 @@ from clkhash.field_formats import (FieldSpec, InvalidEntryError)
 class EntryError(ValueError):
     """ An entry is invalid.
     """
-    row_index: Optional[int] = None
-    field_spec: Optional[FieldSpec] = None
+    row_index = None  # type: Optional[int]
+    field_spec = None  # type: Optional[FieldSpec]
 
 
 class FormatError(ValueError):
     """ The format of the data is invalid.
     """
-    row_index: Optional[int] = None
+    row_index = None  # type: Optional[int]
 
 
 def validate_row_lengths(fields: Sequence[FieldSpec],
