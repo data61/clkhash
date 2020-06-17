@@ -5,9 +5,9 @@ from typing import Sequence, Union
 class OnlineMeanVariance(object):
 
     def __init__(self) -> None:
-        self.t: Union[int, float] = 0
-        self.n: int = 0
-        self.S: float = 0
+        self.t = 0  # type: Union[int, float]
+        self.n = 0  # type: int
+        self.S = 0  # type: float
 
     def update(self,
                x: Sequence[Union[int, float]]
