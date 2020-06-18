@@ -23,7 +23,7 @@ For a command line interface to clkhash see `anonlink-client <https://github.com
    you might want to check out these related projects:
 
    - `anonlink <https://github.com/data61/anonlink>`_
-   - `anonlink <https://github.com/data61/anonlink-client>`_
+   - `anonlink-client <https://github.com/data61/anonlink-client>`_
    - `anonlink-entity-service <https://github.com/data61/anonlink-entity-service>`__
 
 
