@@ -1,7 +1,7 @@
 bitarray-hardbyte==1.2.2
 cryptography==2.9.2
 jsonschema==3.2.0
-hypothesis==5.16.1
+hypothesis==5.16.3
 mypy_extensions==0.4.3
 nbval==0.9.5
 pyblake2==1.1.2; python_version < '3.6'
