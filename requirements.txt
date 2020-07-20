@@ -8,4 +8,4 @@ pyblake2==1.1.2; python_version < '3.6'
 pyinstaller==3.6
 pytest==5.4.3
 pytest-cov==2.10.0
-tqdm==4.47.0
+tqdm==4.48.0
