@@ -8,6 +8,7 @@ import logging
 import time
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
+from bitarray import bitarray
 from tqdm import tqdm
 
 from clkhash.bloomfilter import stream_bloom_filters
@@ -23,25 +24,25 @@ log = logging.getLogger('clkhash.clk')
 CHUNK_SIZE = 1000
 
 
-def hash_and_serialize_chunk(chunk_pii_data: Sequence[Sequence[str]],
-                             keys: Sequence[Sequence[bytes]],
-                             schema: Schema
-                             ) -> Tuple[List[str], Sequence[int]]:
+def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
+               keys: Sequence[Sequence[bytes]],
+               schema: Schema
+               ) -> Tuple[List[bitarray], Sequence[int]]:
     """
-    Generate Bloom filters (ie hash) from chunks of PII then serialize
-    the generated Bloom filters. It also computes and outputs the Hamming weight (or popcount) -- the number of bits
+    Generate Bloom filters (ie hash) from chunks of PII.
+    It also computes and outputs the Hamming weight (or popcount) -- the number of bits
     set to one -- of the generated Bloom filters.
 
     :param chunk_pii_data: An iterable of indexable records.
     :param keys: A tuple of two lists of keys used in the HMAC. Should have been created by `generate_key_lists`.
     :param Schema schema: Schema specifying the entry formats and
             hashing settings.
-    :return: A list of serialized Bloom filters and a list of corresponding popcounts
+    :return: A list of Bloom filters as bitarrays and a list of corresponding popcounts
     """
     clk_data = []
     clk_popcounts = []
     for clk in stream_bloom_filters(chunk_pii_data, keys, schema):
-        clk_data.append(serialize_bitarray(clk[0]).strip())
+        clk_data.append(clk[0])
         clk_popcounts.append(clk[2])
     return clk_data, clk_popcounts
 
@@ -52,7 +53,7 @@ def generate_clk_from_csv(input_f: TextIO,
                           validate: bool = True,
                           header: Union[bool, AnyStr] = True,
                           progress_bar: bool = True
-                          ) -> List[str]:
+                          ) -> List[bitarray]:
     """ Generate Bloom filters from CSV file, then serialise them.
 
         This function also computes and outputs the Hamming weight
@@ -72,7 +73,7 @@ def generate_clk_from_csv(input_f: TextIO,
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
             bar.
-        :return: A list of serialized Bloom filters and a list of
+        :return: A list of Bloom filters as bitarrays and a list of
             corresponding popcounts.
     """
     if header not in {False, True, 'ignore'}:
@@ -127,7 +128,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                   secret: AnyStr,
                   validate: bool = True,
                   callback: Optional[Callable[[int, Sequence[int]], None]] = None
-                  ) -> List[str]:
+                  ) -> List[bitarray]:
 
     # Generate two keys for each identifier from the secret, one key per hashing method used when computing
     # the bloom filters.
@@ -153,7 +154,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for chunk in chunks(pii_data, chunk_size):
             future = executor.submit(
-                hash_and_serialize_chunk,
+                hash_chunk,
                 chunk, key_lists, schema, )
             if callback is not None:
                 unpacked_callback = cast(Callable[[int, Sequence[int]], None],
