@@ -5,6 +5,7 @@ import textwrap
 import unittest
 
 from clkhash import clk, schema, randomnames, validate_data
+from clkhash.serialization import serialize_bitarray
 
 
 class TestChunks(unittest.TestCase):
@@ -114,8 +115,8 @@ class TestComplexSchemaChanges(unittest.TestCase):
             header=True,
             progress_bar=False)
 
-        assert results[0] == 'SU9+/O/Jzzi0sfzH8K2l3+qfhn8Ky3jVI21DVdH9j2fXE++JH8GcQGSeYxDZFxALCAT8CHwYJyQcRT3MhUQOFWcOf5fWdr6ofh6DYy8iv////weyunbMahfV9RMWkRwQmBL3fjreUVOCS9D9kAbQC2XgULidKCTHd9ZpbPJ91eE='
-        assert results[1] == 'Pfl1/d7/31/+9u9x9zv//76/83//0v1Xt/dX/3X/e79XP7vd+Xfkf//2/9Xb/7Fd73e9f/n0f/c7Vb99B/X29d8997Pz/vJ87X/X/vcX9vt1d+/+5bP1fvfevnfX8d/f/j0XPL7f999kc/28/3d4c7t/9b/+Pf411/f2+3z1d/s='
+        assert serialize_bitarray(results[0]) == 'SU9+/O/Jzzi0sfzH8K2l3+qfhn8Ky3jVI21DVdH9j2fXE++JH8GcQGSeYxDZFxALCAT8CHwYJyQcRT3MhUQOFWcOf5fWdr6ofh6DYy8iv////weyunbMahfV9RMWkRwQmBL3fjreUVOCS9D9kAbQC2XgULidKCTHd9ZpbPJ91eE='
+        assert serialize_bitarray(results[1]) == 'Pfl1/d7/31/+9u9x9zv//76/83//0v1Xt/dX/3X/e79XP7vd+Xfkf//2/9Xb/7Fd73e9f/n0f/c7Vb99B/X29d8997Pz/vJ87X/X/vcX9vt1d+/+5bP1fvfevnfX8d/f/j0XPL7f999kc/28/3d4c7t/9b/+Pf411/f2+3z1d/s='
 
 
 class TestHeaderChecking(unittest.TestCase):

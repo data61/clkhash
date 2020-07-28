@@ -2,12 +2,13 @@ import base64
 import os
 import unittest
 
+from bitarray import frozenbitarray
+
 from clkhash import bloomfilter, clk, randomnames, schema
 from clkhash.describe import get_encoding_popcounts
 from clkhash.field_formats import FieldHashingProperties, StringSpec, BitsPerTokenStrategy, BitsPerFeatureStrategy
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
-from clkhash.serialization import deserialize_bitarray
 from clkhash.stats import OnlineMeanVariance
 from clkhash.comparators import get_comparator
 
@@ -118,8 +119,8 @@ class TestNamelistHashable(unittest.TestCase):
         self.assertEqual(len(bf2), 100)
 
         # An "exact match" bloomfilter comparison:
-        set1 = set(bf1)
-        set2 = set(bf2)
+        set1 = set([frozenbitarray(bf) for bf in bf1])
+        set2 = set([frozenbitarray(bf) for bf in bf2])
 
         self.assertGreaterEqual(
             len(set1 & set2), 80,
