@@ -3,6 +3,9 @@
 Removes `rest_client` and `cli` modules. This functionality has
 been migrated to [anonlink-client](https://github.com/data61/anonlink-client/).
 
+### Breaking Changes
+- clkhash continues its metamorphosis from a client to a support library. Clkhash now returns the computed CLKs as bitarrays and not as base64-serialized strings any more. (#370)
+
 ## 0.15.2
 
 - Fixes bug validating linkage schemas with ignored fields. #342
