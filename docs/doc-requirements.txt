@@ -1,5 +1,5 @@
 anonlink==0.13.1
-ipython==7.17.0
+ipython>=7.16.1
 notebook==6.1.1
 matplotlib==3.3.0
 nbsphinx==0.7.1
