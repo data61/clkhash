@@ -356,13 +356,13 @@ numeric comparison
 
 Numerical comparisons of integers or floating point numbers such that the distance between two numbers relate to the similarity of the produced tokens. Also see the `API docs for NumericComparison <clkhash.html#clkhash.comparators.NumericComparison>`_
 
-===========          =====================   ======== ===========
+==================== =====================   ======== ===========
 name                 type                    optional description
-===========          =====================   ======== ===========
+==================== =====================   ======== ===========
 threshold_distance   number                  no       positive number, if distance is not more than this, two values will produce overlapping tokens
 resolution           integer                 no       produce 2 * resolution + 1 tokens
 fractional_precision integer                 yes      quantisation of floats
-===========          =====================   ======== ===========
+==================== =====================   ======== ===========
 
 .. _schema/tfo:
 

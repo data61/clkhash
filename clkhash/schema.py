@@ -169,7 +169,8 @@ def convert_to_latest_version(schema_dict: Dict[str, Any], validate_result: Opti
             master schema.
      :param validate_result: validate converted schema against schema specification
      :return: schema dict of the latest version
-     raises SchemaError if schema version is not supported"""
+     :raises SchemaError: if schema version is not supported
+     """
     version = schema_dict.get('version', "'not specified'")
     if version not in MASTER_SCHEMA_FILE_NAMES.keys():
         msg = ('Schema version {} is not supported. '
