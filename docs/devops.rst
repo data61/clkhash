@@ -72,8 +72,8 @@ pypy3                ubuntu-18.04          Yes              No
 Build Artifacts
 ~~~~~~~~~~~~~~~
 
-A pipeline artifact named **Release** is created by the build pipeline which contains the universal wheel, source
-distribution and Windows executables for x86 and x64 architectures. Other artifacts are created from each build,
+A pipeline artifact named **Release** is created by the build pipeline which contains the universal wheels and the source
+distributions for x86 and x64 architectures. Other artifacts are created from each build,
 including code coverage.
 
 
