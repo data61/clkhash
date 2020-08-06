@@ -91,7 +91,7 @@ class StrategySpec(object, metaclass=abc.ABCMeta):
 class BitsPerTokenStrategy(StrategySpec):
     """ Insert every token the same number of times.
 
-    This is the strategy from the original Schnell paper. The provided value 'bits_per_token' (the 'k' value in the
+    This is the strategy from the original Schnell paper. The provided value `bits_per_token` (the 'k' value in the
     paper) defines the number of hash functions that are used to insert each token into the Bloom filter.
 
     One important property of this strategy is that the total number of inserted bits for a feature relates to the
