@@ -46,7 +46,7 @@ jobs:
 # Finally PyPy is excluded because the notebooks rely on pandas, which as of March 2020 is still not supported by Pypy
 # http://packages.pypy.org/##pandas
   - script: |
-      pip install -e .
+      python -m pip install -U -e .
       python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
