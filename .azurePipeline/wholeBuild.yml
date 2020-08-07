@@ -51,7 +51,7 @@ jobs:
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
     timeoutInMinutes: 5
-    condition: and(ne(variables['pythonVersion'], '3.5'), ne(variables['operatingSystem'], 'vs2017-win2016'), ne(variables['pythonVersion'], 'pypy3'))
+    condition: and(ne(variables['pythonVersion'], '3.5'), ne(variables['pythonVersion'], 'pypy3'))
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
