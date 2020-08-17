@@ -5,7 +5,7 @@ hypothesis==5.23.11
 mypy_extensions==0.4.3
 nbval==0.9.6
 pyblake2==1.1.2; python_version < '3.6'
-pyinstaller==3.6
+pyinstaller==4.0
 pytest==6.0.1
 pytest-cov==2.10.0
 tqdm==4.48.2
