@@ -48,7 +48,7 @@ jobs:
   - script: |
       python -m pip install -U -e .
       python -m pip install -U -r docs/doc-requirements.txt
-      pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg -W "ignore:KernelManager._kernel_spec_manager_changed:DeprecationWarning"
+      pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
     timeoutInMinutes: 5
     condition: and(ne(variables['pythonVersion'], '3.5'), ne(variables['pythonVersion'], 'pypy3'))
