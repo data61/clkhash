@@ -1,9 +1,9 @@
-bitarray-hardbyte==1.2.2
+bitarray-hardbyte==1.5.2
 cryptography==3.0
 jsonschema==3.2.0
-hypothesis==5.23.11
+hypothesis==5.28.0
 mypy_extensions==0.4.3
 pyblake2==1.1.2; python_version < '3.6'
 pytest==6.0.1
-pytest-cov==2.10.0
+pytest-cov==2.10.1
 tqdm==4.48.2
