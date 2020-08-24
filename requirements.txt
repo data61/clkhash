@@ -1,4 +1,4 @@
-bitarray-hardbyte==1.2.2
+bitarray-hardbyte==1.5.2
 cryptography==3.0
 jsonschema==3.2.0
 hypothesis==5.23.11
