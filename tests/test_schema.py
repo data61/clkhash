@@ -1,9 +1,8 @@
 
 import io
 import json
-import os
+import pytest
 import unittest
-from jsonschema import ValidationError
 
 from clkhash import schema
 from clkhash.schema import SchemaError, MasterSchemaError
@@ -244,3 +243,18 @@ class TestSchemaLoading(unittest.TestCase):
 
         # This fails in #111. Now it shouldn't.
         schema.from_json_dict(schema_dict)
+
+    def test_illegal_strategy(self):
+        gschema = _schema_dict(TEST_DATA_DIRECTORY, GOOD_SCHEMA_V3_PATH)
+        for bad_value in 'boom', -1, 4.5:
+            gschema['features'][1]['hashing']['strategy']['bitsPerFeature'] = bad_value
+            with pytest.raises(SchemaError):
+                schema.from_json_dict(gschema)
+        for bad_value in 'four', -4, 4.0:
+            gschema['features'][2]['hashing']['strategy']['bitsPerToken'] = bad_value
+            with pytest.raises(SchemaError):
+                schema.from_json_dict(gschema)
+        # we cannot define both at the same time
+        gschema['features'][1]['hashing']['strategy']['bitsPerToken'] = 12
+        with pytest.raises(SchemaError):
+            schema.from_json_dict(gschema)
