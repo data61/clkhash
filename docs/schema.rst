@@ -359,7 +359,8 @@ Numerical comparisons of integers or floating point numbers such that the distan
 ==================== =====================   ======== ===========
 name                 type                    optional description
 ==================== =====================   ======== ===========
-threshold_distance   number                  no       positive number, if distance is not more than this, two values will produce overlapping tokens
+type                 string                  no       has to be 'numeric'
+thresholdDistance    number                  no       positive number, if distance is not more than this, two values will produce overlapping tokens
 resolution           integer                 no       produce 2 * resolution + 1 tokens
 fractional_precision integer                 yes      quantisation of floats
 ==================== =====================   ======== ===========
