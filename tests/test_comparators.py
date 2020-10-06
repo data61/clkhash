@@ -16,7 +16,7 @@ from clkhash.comparators import NgramComparison, NonComparison, ExactComparison,
 #######
 
 
-@fixture(params=itertools.product((1, 2, 3), (True, False)))
+@fixture(params=itertools.product((1, 2, 3), (True, False)), scope='module')
 def ngram_comparator(request):
     return comparators.NgramComparison(request.param[0], request.param[1])
 
@@ -118,10 +118,10 @@ def test_numeric_mix_int_and_floats():
 
 # we restrict the exponents of the floats such that exponent of number + precision < 308. Otherwise we might get
 # infinity during the tokenization process.
-@given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e287, exclude_min=True),
+@given(thresh_dist=floats(min_value=0.0, allow_nan=False, allow_infinity=False, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
-       candidate=floats(allow_nan=False, allow_infinity=False, max_value=1e288, min_value=-1e287))
+       candidate=floats(allow_nan=False, allow_infinity=False, max_value=1e20, min_value=-1e20))
 def test_numeric_properties(thresh_dist, resolution, precision, candidate):
     adj_dist = thresh_dist * pow(10, precision)
     if int(round(adj_dist)) <= 0:
@@ -135,10 +135,10 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
         assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
-@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287, exclude_min=True),
+@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
-       candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
+       candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e20, min_value=-1e20))
 def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precision, candidate):
     assume(int(round(thresh_dist * pow(10, precision))) > 0)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=precision)
@@ -160,10 +160,10 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
         cand_tokens) - 2, "numbers that are not more than the modulus apart have all or all - 2 tokens in common"
 
 
-@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e287, exclude_min=True),
+@given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
-       candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e287, min_value=-1e287))
+       candidate=floats(allow_infinity=False, allow_nan=False, max_value=1e20, min_value=-1e20))
 def test_numeric_overlaps(thresh_dist, resolution, precision, candidate):
     assume(int(round(thresh_dist * pow(10, precision))) > 0)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=precision)
