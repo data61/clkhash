@@ -143,11 +143,16 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
     assume(int(round(thresh_dist * pow(10, precision))) > 0)
     comp = NumericComparison(threshold_distance=thresh_dist, resolution=resolution, fractional_precision=precision)
     other = candidate + thresh_dist
+    if other - candidate < thresh_dist:  # test for floating point errors
+        other += 2 * (thresh_dist - (other - candidate))  # if dist too small, we will get more than 1 token in common
     cand_tokens = comp.tokenize(str(candidate))
     other_tokens = comp.tokenize(str(other))
     if other != candidate:
-        assert len(set(cand_tokens).intersection(
-            set(other_tokens))) == 1, "numbers exactly thresh_dist apart have 1 token in common"
+        num_common_tokens = len(set(cand_tokens).intersection(set(other_tokens)))
+        if other - candidate == thresh_dist:
+            assert num_common_tokens == 1, "numbers exactly thresh_dist apart have 1 token in common"
+        else:
+            assert 0 <= num_common_tokens <= 2, "numbers close to thresh_dist apart have 0-2 tokens in common"
     other = candidate + thresh_dist * 1.51  # 0.5 because of the modulo operation
     assume((other - candidate) > (1.5 * thresh_dist))  # because of fp precision errors, 'other might not have changed'
     other_tokens = comp.tokenize(str(other))
