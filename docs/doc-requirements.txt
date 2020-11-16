@@ -1,7 +1,7 @@
 anonlink==0.13.1
 ipykernel==5.3.4
 nbval==0.9.6
-notebook==6.1.4
+notebook==6.1.5
 matplotlib==3.3.2
 nbsphinx==0.7.1
 numpy==1.19.2
