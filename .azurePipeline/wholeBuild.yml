@@ -40,18 +40,15 @@ jobs:
     displayName: 'Test with pytest'
     timeoutInMinutes: 5
 
-# This step is currently not working on windows operating system, because anonlink must be compiled to be installed.
-# The change will come with the future release 0.13. Tracked via issue #321
-# These tutorial tests are not run on Python 3.5 because anonlink is only for Python 3.6+.
-# Finally PyPy is excluded because the notebooks rely on pandas, which as of March 2020 is still not supported by Pypy
+#  PyPy is excluded because the notebooks rely on pandas, which as of December 2020 is still not supported by Pypy
 # http://packages.pypy.org/##pandas
   - script: |
       python -m pip install -U -e .
       python -m pip install -U -r docs/doc-requirements.txt
       pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
     displayName: 'Test all notebooks'
-    timeoutInMinutes: 5
-    condition: and(ne(variables['pythonVersion'], '3.5'), ne(variables['pythonVersion'], 'pypy3'))
+    timeoutInMinutes: 10
+    condition: ne(variables['pythonVersion'], 'pypy3')
 
   - task: PublishTestResults@2
     displayName: 'Publish test results in Azure'
