@@ -1,4 +1,4 @@
-anonlink==0.14.0
+anonlink==0.14.1
 ipykernel==5.3.4
 nbval==0.9.6
 notebook==6.1.5
