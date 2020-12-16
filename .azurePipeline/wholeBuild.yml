@@ -69,13 +69,11 @@ jobs:
       failIfCoverageEmpty: true
   - bash: |
       opSysFlag=$(echo $(operatingSystem) | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
-      pyVFlag=$(echo python$( pythonVersion ) | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+      pyVFlag=$(echo python$(pythonVersion) | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+      archFlag=$(architecture)
       echo "codecov flags: $opSysFlag,$pyVFlag"
-      echo $(operatingSystem)
-      echo $(pythonVersion)
-      echo $(architecture)
       bash <(curl -s https://codecov.io/bash) \
-              -F $opSysFlag,$pyVFlag
+              -F $opSysFlag,$pyVFlag,$archFlag
     displayName: 'Upload to codecov.io'
     condition: succeededOrFailed()
   - task: PublishPipelineArtifact@1
