@@ -68,7 +68,11 @@ jobs:
       summaryFileLocation: 'coverage.xml'
       failIfCoverageEmpty: true
   - bash: |
-      bash <(curl -s https://codecov.io/bash) -v
+      opSysFlag=$(echo ${{ parameters.operatingSystem }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+      pyVFlag=$(echo python${{ parameters.pythonVersion }} | sed 's/[[:punct:]]//g' | tr '[:upper:]' '[:lower:]' | head -c30)
+      echo "codecov flags: $opSysFlag,$pyVFlag"
+      bash <(curl -s https://codecov.io/bash) \
+              -F $opSysFlag,$pyVFlag
     displayName: 'Upload to codecov.io'
     condition: succeededOrFailed()
   - task: PublishPipelineArtifact@1
