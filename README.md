@@ -1,6 +1,6 @@
 # CLK Hash
 
-Python implementation of cryptographic longterm key hashing. `clkhash` supports Python versions 2.7+, 3.5+
+Python implementation of cryptographic longterm key hashing. `clkhash` supports Python versions 3.6+
 
 This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 [A Novel Error-Tolerant Anonymous Linking Code](http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf)
