@@ -8,5 +8,5 @@ numpy==1.19.4
 pandas==1.1.5
 recordlinkage==0.14
 requests==2.25.1
-sphinx==3.4.0
+sphinx==3.4.1
 sphinxcontrib-programoutput==0.16
