@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-
+import concurrent.futures
 import io
 import textwrap
 import unittest
@@ -101,6 +101,20 @@ class TestComplexSchemaChanges(unittest.TestCase):
             validate=True,
             header=True,
             progress_bar=False)
+
+        assert len(results) == 3
+
+    def test_generate_encodings_with_thread_executor(self):
+        loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
+        executor = concurrent.futures.ThreadPoolExecutor()
+        results = clk.generate_clk_from_csv(
+            io.StringIO(self.CSV_INPUT),
+            self.SECRET,
+            loaded_schema,
+            validate=True,
+            header=True,
+            progress_bar=False,
+            executor=executor)
 
         assert len(results) == 3
 

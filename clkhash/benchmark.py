@@ -1,17 +1,20 @@
 import os
 import tempfile
 # noinspection PyProtectedMember
+from concurrent.futures.thread import ThreadPoolExecutor
 from timeit import default_timer as timer
 
 from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
 
-def compute_hash_speed(num: int, quiet: bool = False) -> float:
+def compute_hash_speed(num: int, quiet: bool = False, use_multiprocessing=True) -> float:
     """ Hash time.
     """
     namelist = NameList(num)
-
+    executor = None
+    if not use_multiprocessing:
+        executor = ThreadPoolExecutor()
     os_fd, tmpfile_name = tempfile.mkstemp(text=True)
 
     schema = NameList.SCHEMA
@@ -25,7 +28,7 @@ def compute_hash_speed(num: int, quiet: bool = False) -> float:
 
     with open(tmpfile_name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet)
+        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet, executor=executor)
         end = timer()
 
     os.close(os_fd)
@@ -40,3 +43,6 @@ def compute_hash_speed(num: int, quiet: bool = False) -> float:
 if __name__ == '__main__':
     for n in [100, 1000, 10000, 50000, 100000]:
         compute_hash_speed(n, quiet=n <= 10000)
+
+    print("Without multiprocessing")
+    compute_hash_speed(10000, quiet=n <= 10000, use_multiprocessing=False)
