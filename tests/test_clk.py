@@ -132,6 +132,20 @@ class TestComplexSchemaChanges(unittest.TestCase):
 
         assert len(results) == 3
 
+    def test_generate_encodings_with_thread_executor_and_callback(self):
+        loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
+
+        results = clk.generate_clk_from_csv(
+            io.StringIO(self.CSV_INPUT),
+            self.SECRET,
+            loaded_schema,
+            validate=True,
+            header=True,
+            progress_bar=True,
+            max_workers=1)
+
+        assert len(results) == 3
+
     def test_encoding_regression(self):
         loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
 

@@ -6,7 +6,6 @@ import concurrent.futures
 import csv
 import logging
 import time
-from concurrent.futures._base import Executor
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, TextIO, Tuple, TypeVar, Union)
 from bitarray import bitarray
@@ -75,7 +74,7 @@ def generate_clk_from_csv(input_f: TextIO,
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
             bar.
-        :param int max_workers: Passed to ProcessPoolWorker except for the
+        :param int max_workers: Passed to ProcessPoolExecutor except for the
             special case where the value is 1, in which case no processes
             or threads are used. This may be useful or required on platforms
             that are not capable of spawning subprocesses.
