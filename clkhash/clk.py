@@ -54,7 +54,7 @@ def generate_clk_from_csv(input_f: TextIO,
                           validate: bool = True,
                           header: Union[bool, AnyStr] = True,
                           progress_bar: bool = True,
-                          executor: Optional[Executor] = None
+                          max_workers: Optional[int] = None
                           ) -> List[bitarray]:
     """ Generate Bloom filters from CSV file, then serialise them.
 
@@ -75,9 +75,10 @@ def generate_clk_from_csv(input_f: TextIO,
             header but it should not be checked against the schema.
         :param bool progress_bar: Set to `False` to disable the progress
             bar.
-        :param Executor executor: An optional concurrent.futures.Executor
-            instance. Consider using concurrent.futures.ThreadPoolExecutor
-            on platforms that are not capable of spawning subprocesses.
+        :param int max_workers: Passed to ProcessPoolWorker except for the
+            special case where the value is 1, in which case no processes
+            or threads are used. This may be useful or required on platforms
+            that are not capable of spawning subprocesses.
         :return: A list of Bloom filters as bitarrays and a list of
             corresponding popcounts.
     """
@@ -118,13 +119,15 @@ def generate_clk_from_csv(input_f: TextIO,
                                     secret,
                                     validate=validate,
                                     callback=callback,
-                                    executor=executor)
+                                    max_workers=max_workers
+                                    )
     else:
         results = generate_clks(pii_data,
                                 schema,
                                 secret,
                                 validate=validate,
-                                executor=executor)
+                                max_workers=max_workers
+                                )
 
     log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
     return results
@@ -135,11 +138,9 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                   secret: AnyStr,
                   validate: bool = True,
                   callback: Optional[Callable[[int, Sequence[int]], None]] = None,
-                  executor: Optional[Executor] = None
+                  max_workers: Optional[int] = None
                   ) -> List[bitarray]:
 
-    if executor is None:
-        executor = concurrent.futures.ProcessPoolExecutor()
 
     # Generate two keys for each identifier from the secret, one key per hashing method used when computing
     # the bloom filters.
@@ -161,25 +162,33 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
     futures = []
 
-    # Compute Bloom filter from the chunks and then serialise it
-    with executor:
-        for chunk in chunks(pii_data, chunk_size):
-            future = executor.submit(
-                hash_chunk,
-                chunk, key_lists, schema, )
-            if callback is not None:
-                unpacked_callback = cast(Callable[[int, Sequence[int]], None],
-                                         callback)
-                future.add_done_callback(
-                    lambda f: unpacked_callback(len(f.result()[0]),
-                                                f.result()[1]))
-            futures.append(future)
+    if max_workers is None or max_workers > 1:
+        # Compute Bloom filter from the chunks and then serialise it
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            for chunk in chunks(pii_data, chunk_size):
+                future = executor.submit(
+                    hash_chunk,
+                    chunk, key_lists, schema, )
+                if callback is not None:
+                    unpacked_callback = cast(Callable[[int, Sequence[int]], None],
+                                             callback)
+                    future.add_done_callback(
+                        lambda f: unpacked_callback(len(f.result()[0]),
+                                                    f.result()[1]))
+                futures.append(future)
 
+            results = []
+            for future in futures:
+                clks, clk_stats = future.result()
+                results.extend(clks)
+    else:
         results = []
-        for future in futures:
-            clks, clk_stats = future.result()
+        for chunk in chunks(pii_data, chunk_size):
+            clks, clk_stats = hash_chunk(chunk, key_lists, schema)
+            if callback is not None:
+                unpacked_callback = cast(Callable[[int, Sequence[int]], None], callback)
+                unpacked_callback(len(clks), clk_stats)
             results.extend(clks)
-
     return results
 
 
