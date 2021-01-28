@@ -1,17 +1,15 @@
 import os
 import tempfile
-# noinspection PyProtectedMember
 from timeit import default_timer as timer
 
 from clkhash.clk import generate_clk_from_csv
 from clkhash.randomnames import NameList
 
 
-def compute_hash_speed(num: int, quiet: bool = False) -> float:
+def compute_hash_speed(num: int, quiet: bool = False, max_workers=None) -> float:
     """ Hash time.
     """
     namelist = NameList(num)
-
     os_fd, tmpfile_name = tempfile.mkstemp(text=True)
 
     schema = NameList.SCHEMA
@@ -25,7 +23,7 @@ def compute_hash_speed(num: int, quiet: bool = False) -> float:
 
     with open(tmpfile_name, 'rt') as f:
         start = timer()
-        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet)
+        generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet, max_workers=max_workers)
         end = timer()
 
     os.close(os_fd)
@@ -38,5 +36,14 @@ def compute_hash_speed(num: int, quiet: bool = False) -> float:
 
 
 if __name__ == '__main__':
-    for n in [100, 1000, 10000, 50000, 100000]:
-        compute_hash_speed(n, quiet=n <= 10000)
+    for max_workers in [1, 2, 4, 8, 16]:
+        print()
+        if max_workers == 1:
+            print("Without multiprocessing")
+            sizes = [10_000]
+        else:
+            print(f"Using up to {max_workers} workers")
+            sizes = [10_000, 50_000, 100_000]
+
+        for n in sizes:
+            compute_hash_speed(n, max_workers=max_workers)
