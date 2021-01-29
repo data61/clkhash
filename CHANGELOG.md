@@ -1,10 +1,13 @@
-
+## new version
 
 ## 0.16.1
 
-`generate_clk_from_csv` and `generate_clks` now accept an optional `max_workers` argument.
-This means systems that can't create sub-processes such as celery workers and AWS lambda
-jobs can now use `clkhash`.
+- `generate_clk_from_csv` and `generate_clks` now accept an optional `max_workers` argument.
+  This means systems that can't create sub-processes such as celery workers and AWS lambda
+  jobs can now use `clkhash`. #424
+- fixed bug in `strategy` definition in the schema. #383
+- fixed doc for numeric comparison. #385
+- removed support for Python 3.5 #406
 
 ## 0.16.0
 
