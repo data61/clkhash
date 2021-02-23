@@ -1,5 +1,5 @@
 anonlink==0.14.2
-ipykernel==5.4.3
+ipykernel==5.5.0
 nbval==0.9.6
 notebook==6.2.0
 matplotlib==3.3.4
