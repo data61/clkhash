@@ -18,6 +18,8 @@ class TestBenchmark(unittest.TestCase):
 
     @pytest.mark.skipif(IS_APPVEYOR and IS_PY3, reason="Windows benchmarking not working on Python3")
     def test_benchmarking_hash(self):
+        # blind run to give the JIT compiler of PyPy a chance to optimize
+        benchmark.compute_hash_speed(1000, quiet=True)
         speed = benchmark.compute_hash_speed(1000, quiet=True)
         try:
             assert speed > 100, "Hashing at less than 100 H/s"
