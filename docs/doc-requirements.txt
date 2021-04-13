@@ -4,7 +4,7 @@ nbval==0.9.6
 notebook==6.3.0
 matplotlib==3.4.1; python_version >= '3.7'
 matplotlib==3.3.4; python_version < '3.7'
-nbsphinx==0.8.2
+nbsphinx==0.8.3
 numpy==1.20.2; python_version >= '3.7'
 numpy==1.19.5; python_version < '3.7'
 pandas==1.2.3; python_version >= '3.7.1'
