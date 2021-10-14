@@ -141,17 +141,8 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                   ) -> List[bitarray]:
 
 
-    # Generate two keys for each identifier from the secret, one key per hashing method used when computing
-    # the bloom filters.
-    # Otherwise it could create more if required using the parameter `num_hashing_methods` in `generate_key_lists`
-    key_lists = generate_key_lists(
-        secret,
-        len(schema.fields),
-        key_size=schema.kdf_key_size,
-        salt=schema.kdf_salt,
-        info=schema.kdf_info,
-        kdf=schema.kdf_type,
-        hash_algo=schema.kdf_hash)
+
+    key_lists = _create_keys_from_secret(secret, schema)
 
     if validate:
         validate_entries(schema.fields, pii_data)
@@ -177,7 +168,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                                                     f.result()[1]))
                 futures.append(future)
 
-            for future in concurrent.futures.as_completed(futures):
+            for future in futures:
                 clks, clk_stats = future.result()
                 results.extend(clks)
     else:
@@ -188,6 +179,92 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                 unpacked_callback(len(clks), clk_stats)
             results.extend(clks)
     return results
+
+
+def encode(
+        data_to_encode: Sequence[Sequence[str]],
+        schema: Schema,
+        secret: AnyStr,
+        validate: bool = True,
+        callback: Optional[Callable[[int, Sequence[int]], None]] = None,
+        max_workers: Optional[int] = None,
+        batch_size: Optional[int] = None
+) -> Iterable[bytes]:
+    """ Encode data into CLKs.
+
+    :param data_to_encode: Data to hash.
+    :param secret: The encoding secret.
+    :param schema: Schema specifying the record formats and
+        hashing settings.
+    :param validate: Set to `False` to disable validation of
+        data against the schema. Note that this will silence
+        warnings whose aim is to keep the hashes consistent between
+        data sources; this may affect linkage accuracy.
+    :param callback: Called for every batch with the
+        batch size and pop counts for the batch of encodings.
+    :param int max_workers: Passed to ProcessPoolExecutor except for the
+        special case where the value is 1, in which case no processes
+        or threads are used. This may be useful or required on platforms
+        that are not capable of spawning subprocesses.
+    :param batch_size: Number of records to process at once.
+
+    :return: Yields the encodings of the input data in order.
+
+    """
+
+    key_lists = _create_keys_from_secret(secret, schema)
+
+    if validate:
+        validate_entries(schema.fields, data_to_encode)
+
+    log.info("Encoding {} entities".format(len(data_to_encode)))
+    if batch_size is None:
+        batch_size = 200 if len(data_to_encode) <= 10000 else 1000
+
+    if max_workers is None or max_workers > 1:
+        # Compute Bloom filter from the chunks and then serialise it
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for chunk in chunks(data_to_encode, batch_size):
+                future = executor.submit(
+                    hash_chunk,
+                    chunk, key_lists, schema, )
+                if callback is not None:
+                    unpacked_callback = cast(Callable[[int, Sequence[int]], None],
+                                             callback)
+                    future.add_done_callback(
+                        lambda f: unpacked_callback(len(f.result()[0]),
+                                                    f.result()[1]))
+                futures.append(future)
+
+            for future in futures:
+                bitarray_clks, clk_stats = future.result()
+                for output_bitarray in bitarray_clks:
+                    yield output_bitarray.tobytes()
+
+    else:
+        for chunk in chunks(data_to_encode, batch_size):
+            bitarray_clks, clk_stats = hash_chunk(chunk, key_lists, schema)
+            if callback is not None:
+                unpacked_callback = cast(Callable[[int, Sequence[int]], None], callback)
+                unpacked_callback(len(bitarray_clks), clk_stats)
+            for output_bitarray in bitarray_clks:
+                yield output_bitarray.tobytes()
+
+
+def _create_keys_from_secret(secret, schema):
+    # Generate two keys for each identifier from the secret, one key per hashing method used when computing
+    # the bloom filters.
+    # Otherwise it could create more if required using the parameter `num_hashing_methods` in `generate_key_lists`
+    key_lists = generate_key_lists(
+        secret,
+        len(schema.fields),
+        key_size=schema.kdf_key_size,
+        salt=schema.kdf_salt,
+        info=schema.kdf_info,
+        kdf=schema.kdf_type,
+        hash_algo=schema.kdf_hash)
+    return key_lists
 
 
 T = TypeVar('T')  # Declare generic type variable
