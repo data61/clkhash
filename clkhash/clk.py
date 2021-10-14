@@ -159,11 +159,12 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
     # Chunks PII
     log.info("Hashing {} entities".format(len(pii_data)))
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
-    futures = []
 
+    results = []
     if max_workers is None or max_workers > 1:
         # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
             for chunk in chunks(pii_data, chunk_size):
                 future = executor.submit(
                     hash_chunk,
@@ -176,12 +177,10 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                                                     f.result()[1]))
                 futures.append(future)
 
-            results = []
-            for future in futures:
+            for future in concurrent.futures.as_completed(futures):
                 clks, clk_stats = future.result()
                 results.extend(clks)
     else:
-        results = []
         for chunk in chunks(pii_data, chunk_size):
             clks, clk_stats = hash_chunk(chunk, key_lists, schema)
             if callback is not None:

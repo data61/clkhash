@@ -1,5 +1,11 @@
 ## new version
 
+## 0.16.2
+
+- Minor change to `generate_clk_from_csv` and `generate_clks` to process results
+  as they complete.
+
+
 ## 0.16.1
 
 - `generate_clk_from_csv` and `generate_clks` now accept an optional `max_workers` argument.
