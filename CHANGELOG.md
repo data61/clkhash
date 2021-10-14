@@ -2,8 +2,7 @@
 
 ## 0.16.2
 
-- Minor change to `generate_clk_from_csv` and `generate_clks` to process results
-  as they complete.
+- New `clk.encode` API as streaming alternative to `clk.generate_clks`.
 
 
 ## 0.16.1

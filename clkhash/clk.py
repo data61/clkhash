@@ -140,8 +140,6 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                   max_workers: Optional[int] = None
                   ) -> List[bitarray]:
 
-
-
     key_lists = _create_keys_from_secret(secret, schema)
 
     if validate:
@@ -190,7 +188,7 @@ def encode(
         max_workers: Optional[int] = None,
         batch_size: Optional[int] = None
 ) -> Iterable[bytes]:
-    """ Encode data into CLKs.
+    """ Encode data into CLKs, yielding bytes.
 
     :param data_to_encode: Data to hash.
     :param secret: The encoding secret.
@@ -209,7 +207,6 @@ def encode(
     :param batch_size: Number of records to process at once.
 
     :return: Yields the encodings of the input data in order.
-
     """
 
     key_lists = _create_keys_from_secret(secret, schema)
