@@ -18,7 +18,7 @@ stages:
   - job:
     displayName: 'Typechecking'
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -83,7 +83,7 @@ stages:
   - job:
     displayName: 'Package Artifacts'
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
