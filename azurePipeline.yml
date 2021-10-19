@@ -18,7 +18,7 @@ stages:
   - job:
     displayName: 'Typechecking'
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -29,6 +29,7 @@ stages:
       displayName: 'mypy (pinned)'
 
     - script: |
+        python -m pip install types-pkg_resources
         python -m pip install -U mypy
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
       displayName: 'mypy (latest)'
@@ -36,6 +37,8 @@ stages:
 
   - job:
     displayName: "Check Git Tags"
+    pool:
+      vmImage: 'ubuntu-18.04'
     steps:
   # In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
     - script: echo "##vso[build.addbuildtag]Automated"
@@ -62,6 +65,8 @@ stages:
       architectures: ['x64']
   - job:
     displayName: 'Package Source Distribution'
+    pool:
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -83,7 +88,7 @@ stages:
   - job:
     displayName: 'Package Artifacts'
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
