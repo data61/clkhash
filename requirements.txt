@@ -1,5 +1,5 @@
 bitarray-hardbyte==1.6.2
-cryptography==3.4.7
+cryptography==35.0.0
 jsonschema==4.1.0; python_version >= '3.7'
 jsonschema==3.2.0; python_version < '3.7'
 hypothesis==6.23.3
