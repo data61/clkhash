@@ -2,7 +2,7 @@ bitarray-hardbyte==1.6.2
 cryptography==35.0.0
 jsonschema==4.1.2; python_version >= '3.7'
 jsonschema==3.2.0; python_version < '3.7'
-hypothesis==6.23.4
+hypothesis==6.27.0
 mypy_extensions==0.4.3
 pyblake2==1.1.2; python_version < '3.6'
 pytest==6.2.5
