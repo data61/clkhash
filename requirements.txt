@@ -1,4 +1,4 @@
-bitarray-hardbyte==1.6.2
+bitarray==2.4.0
 cryptography==35.0.0
 jsonschema==4.1.2; python_version >= '3.7'
 jsonschema==3.2.0; python_version < '3.7'
