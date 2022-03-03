@@ -18,11 +18,11 @@ stages:
   - job:
     displayName: 'Typechecking'
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.7'
+        versionSpec: '3.9'
     - script: |
         python -m pip install -U mypy==0.730
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
@@ -38,7 +38,7 @@ stages:
   - job:
     displayName: "Check Git Tags"
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
   # In this step, if this build is triggered by a tag, it will add a tag 'Automated' to the current build.
     - script: echo "##vso[build.addbuildtag]Automated"
@@ -51,26 +51,26 @@ stages:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.6', '3.7', '3.8', '3.9']
-      operatingSystems: ['vs2017-win2016']
+      operatingSystems: ['windows-2019']
       architectures: ['x86', 'x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.6', '3.7', '3.8', '3.9']
-      operatingSystems: ['macos-10.14']
+      operatingSystems: ['macOS-10.15']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
       pythonVersions: ['3.6', '3.7', '3.8', '3.9', 'pypy3']
-      operatingSystems: ['ubuntu-18.04']
+      operatingSystems: ['ubuntu-20.04']
       architectures: ['x64']
   - job:
     displayName: 'Package Source Distribution'
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.7'
+        versionSpec: '3.9'
       displayName: 'Init Python'
     - script: |
         python -m pip install -U pip
@@ -80,30 +80,3 @@ stages:
       inputs:
         artifact: 'sdist'
         targetPath: 'dist/'
-
-- stage: package
-  displayName: Package Artifacts
-  dependsOn: ['build_and_test']
-  jobs:
-  - job:
-    displayName: 'Package Artifacts'
-    pool:
-      vmImage: 'ubuntu-18.04'
-    steps:
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        path: $(Pipeline.Workspace)
-
-    - script: |
-        cd $(Pipeline.Workspace)
-        mkdir artifacts
-        mv vs2017-win2016-3.7-x64/*.exe artifacts
-        mv vs2017-win2016-3.7-x86/*.exe artifacts
-        mv ubuntu-18.04-3.7-x64/*.whl artifacts
-        mv sdist/* artifacts
-        ls artifacts
-      displayName: 'List Artifacts'
-    - task: PublishPipelineArtifact@1
-      inputs:
-        artifact: 'release'
-        targetPath: '$(Pipeline.Workspace)/artifacts'

@@ -81,4 +81,4 @@ jobs:
     inputs:
       path: 'dist'
       artifact: '$(operatingSystem)-$(pythonVersion)-$(architecture)'
-    condition: and(succeeded(), eq(variables['pythonVersion'], '3.7'))
+    condition: and(succeeded(), eq(variables['pythonVersion'], '3.9'))
