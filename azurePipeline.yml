@@ -63,7 +63,7 @@ stages:
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.6', '3.7', '3.8', '3.9', 'pypy3']
+      pythonVersions: ['3.7', '3.8', '3.9', '3.10', 'pypy3']
       operatingSystems: ['ubuntu-20.04']
       architectures: ['x64']
   - job:
