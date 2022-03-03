@@ -24,13 +24,14 @@ stages:
       inputs:
         versionSpec: '3.9'
     - script: |
-        python -m pip install -U mypy==0.730
+        python -m pip install -U mypy==0.931
+        mypy --install-types --non-interactive
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
       displayName: 'mypy (pinned)'
 
     - script: |
-        python -m pip install types-pkg_resources
         python -m pip install -U mypy
+        mypy --install-types --non-interactive
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
       displayName: 'mypy (latest)'
       continueOnError: true
