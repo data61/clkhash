@@ -25,12 +25,14 @@ stages:
         versionSpec: '3.9'
     - script: |
         python -m pip install -U mypy==0.931
+        python -m pip install types-setuptools
         mypy --install-types --non-interactive
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
       displayName: 'mypy (pinned)'
 
     - script: |
         python -m pip install -U mypy
+        python -m pip install types-setuptools
         mypy --install-types --non-interactive
         mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
       displayName: 'mypy (latest)'
