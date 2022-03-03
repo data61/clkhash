@@ -53,12 +53,12 @@ stages:
   jobs:
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.6', '3.7', '3.8', '3.9']
+      pythonVersions: ['3.7', '3.8', '3.9', '3.10']
       operatingSystems: ['windows-2019']
       architectures: ['x86', 'x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
     parameters:
-      pythonVersions: ['3.6', '3.7', '3.8', '3.9']
+      pythonVersions: ['3.7', '3.8', '3.9', '3.10']
       operatingSystems: ['macOS-10.15']
       architectures: ['x64']
   - template: .azurePipeline/wholeBuild.yml  # Template reference
