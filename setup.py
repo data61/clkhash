@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 requirements = [
         "bashplotlib>=0.6.5",
-        "bitarray-hardbyte>=1.0.0",             # Fork of bitarray distributing binary wheels #153
+        "bitarray>=1.0.0",             # Fork of bitarray distributing binary wheels #153
         "cryptography>=2.3",
         "jsonschema>=3.0.2",
         "mypy_extensions>=0.3",
