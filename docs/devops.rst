@@ -33,7 +33,7 @@ The *Build & Test* job does:
   - run tests as described in the following table,
   - publish the test results,
   - publish the code coverage (on Azure and codecov),
-  - publish the artifacts from the build using ``Python 3.7`` (i.e. the wheel for x86 and x64 and the `tar.gz` source distribution).
+  - publish the artifacts from the build using ``Python 3.9`` (i.e. the wheel for x86 and x64 and the `tar.gz` source distribution).
 
 The build pipeline requires one environment variable provided by Azure environment:
 
@@ -46,25 +46,15 @@ Description of what is tested:
 ==================   ====================  ===============  =========
 Python Version       Operating System      Standard pytest  Notebooks
 ==================   ====================  ===============  =========
-pypy3                ubuntu-18.04          Yes              No
+pypy3                ubuntu-20.04          Yes              No
 ------------------   --------------------  ---------------  ---------
-3.5                  ubuntu-18.04          Yes              No
-3.5                  macos-10.14           Yes              No
-3.5                  vs2017-win2016 (x64)  Yes              No
-3.5                  vs2017-win2016 (x86)  Yes              No
-------------------   --------------------  ---------------  ---------
-3.6                  ubuntu-18.04          Yes              No
-3.6                  macos-10.14           Yes              Yes
-3.6                  vs2017-win2016 (x64)  Yes              No
-3.6                  vs2017-win2016 (x86)  Yes              No
-------------------   --------------------  ---------------  ---------
-3.7                  ubuntu-18.04          Yes              Yes
-3.7                  macos-10.14           Yes              Yes
+3.7                  ubuntu-20.04          Yes              Yes
+3.7                  macos-10.15           Yes              Yes
 3.7                  vs2017-win2016 (x64)  Yes              No
 3.7                  vs2017-win2016 (x86)  Yes              No
 ------------------   --------------------  ---------------  ---------
-3.8                  ubuntu-18.04          Yes              Yes
-3.8                  macos-10.14           Yes              Yes
+3.8                  ubuntu-20.04          Yes              Yes
+3.8                  macos-10.15           Yes              Yes
 ==================   ====================  ===============  =========
 
 
