@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-18.04, ubuntu-20.04]
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.7", "3.8", "3.9", "3.10", "pypy-3.8"]
 
     steps:
       - uses: actions/checkout@v2
@@ -54,10 +54,9 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: OS,PYTHON
           fail_ci_if_error: false
           files: ./coverage.xml
           flags: unittests
           name: codecov-clkhash
-          verbose: true
+
