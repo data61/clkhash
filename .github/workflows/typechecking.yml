@@ -1,0 +1,31 @@
+name: Typechecking
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+    - name: mypy (pinned)
+      run: |
+        pip install --upgrade pip
+        pip install -U mypy==0.931
+        pip install types-setuptools
+        mypy --install-types --non-interactive
+        mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+    - name: mypy (latest)
+      run: |
+        pip install --upgrade pip
+        pip install -U mypy
+        pip install types-setuptools
+        mypy --install-types --non-interactive
+        mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
