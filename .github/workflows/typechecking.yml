@@ -20,8 +20,7 @@ jobs:
         pip install --upgrade pip
         pip install -U mypy==0.931
         pip install types-setuptools
-        mypy --install-types --non-interactive
-        mypy clkhash --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
+        mypy clkhash --install-types --non-interactive --ignore-missing-imports --no-implicit-optional --disallow-untyped-calls
     - name: mypy (latest)
       run: |
         pip install --upgrade pip
