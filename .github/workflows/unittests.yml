@@ -11,12 +11,17 @@ on:
 
 jobs:
   unittests:
-    name: Unittest clkhash ${{ matrix.python }} ${{ matrix.os }}
+    name: Unittest ${{ matrix.python }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-18.04, ubuntu-20.04]
         python: ["3.7", "3.8", "3.9", "3.10", "pypy-3.8"]
+        exclude:
+          - os: macos-latest
+            python: "pypy-3.8"
+          - os: windows-latest
+            python: "pypy-3.8"
 
     steps:
       - uses: actions/checkout@v2
@@ -62,7 +67,7 @@ jobs:
           name: codecov-clkhash
 
   notebooktests:
-    name: Unittest clkhash ${{ matrix.python }} ${{ matrix.os }}
+    name: Notebook tests ${{ matrix.python }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
