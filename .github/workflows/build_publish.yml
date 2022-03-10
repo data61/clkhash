@@ -3,8 +3,8 @@ name: Build and upload to PyPI
 on:
   release:
     types: [ published ]
-  push:
-    branches: ['*']
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build_dist:
@@ -21,7 +21,8 @@ jobs:
           pip install build
       - name: Build package
         run: python -m build
-      - uses: actions/upload-artifact@v3
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: clkhash-dist
           path: ./dist
@@ -30,7 +31,7 @@ jobs:
     needs: [build_dist]
     runs-on: ubuntu-latest
 
-    # upload to PyPI on every release
+    # upload to PyPI only on release
     if: github.event.release && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v3
