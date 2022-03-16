@@ -2,7 +2,7 @@ bitarray==2.4.0
 cryptography==36.0.1
 jsonschema==4.1.2; python_version >= '3.7'
 jsonschema==3.2.0; python_version < '3.7'
-hypothesis==6.23.4
+hypothesis==6.39.3
 mypy_extensions==0.4.3
 pyblake2==1.1.2; python_version < '3.6'
 pytest==7.0.1
