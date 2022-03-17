@@ -1,6 +1,6 @@
 anonlink==0.14.2
 ipykernel==5.5.5; python_version < '3.7'
-ipykernel==6.4.2; python_version >= '3.7'
+ipykernel==6.9.2; python_version >= '3.7'
 nbval==0.9.6
 notebook==6.4.8
 matplotlib==3.5.1; python_version >= '3.7'
