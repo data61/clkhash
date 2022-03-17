@@ -7,8 +7,8 @@ This is as described by Rainer Schnell, Tobias Bachteler, and Jörg Reiher in
 
 [![codecov](https://codecov.io/gh/data61/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/data61/clkhash)
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/data61/clkhash.svg?branch=master)](https://travis-ci.org/data61/clkhash)
-[![Build Status](https://dev.azure.com/data61/Anonlink/_apis/build/status/data61.clkhash?branchName=master)](https://dev.azure.com/data61/Anonlink/_build/latest?definitionId=2&branchName=master)
+[![Unit Testing](https://github.com/data61/clkhash/actions/workflows/unittests.yml/badge.svg)](https://github.com/data61/clkhash/actions/workflows/unittests.yml)
+[![Typechecking](https://github.com/data61/clkhash/actions/workflows/typechecking.yml/badge.svg)](https://github.com/data61/clkhash/actions/workflows/typechecking.yml)
 [![Requirements Status](https://requires.io/github/data61/clkhash/requirements.svg?branch=master)](https://requires.io/github/data61/clkhash/requirements/?branch=master)
 [![Downloads](https://pepy.tech/badge/clkhash)](https://pepy.tech/project/clkhash)
 
