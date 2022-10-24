@@ -1,5 +1,11 @@
 ## new version
 
+## 0.17.0
+
+- Remove use of bitarray fork as upstream project now publishes wheels. #557, #567, #573
+- Update dependencies
+
+
 ## 0.16.1
 
 - `generate_clk_from_csv` and `generate_clks` now accept an optional `max_workers` argument.

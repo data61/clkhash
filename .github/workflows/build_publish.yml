@@ -4,7 +4,7 @@ on:
   release:
     types: [ published ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
 
 jobs:
   build_dist:
