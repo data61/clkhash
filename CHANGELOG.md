@@ -2,7 +2,7 @@
 
 ## 0.17.0
 
-- Remove use of bitarray fork as upstream project now publishes wheels.
+- Remove use of bitarray fork as upstream project now publishes wheels. #557, #567, #573
 - Update dependencies
 
 
