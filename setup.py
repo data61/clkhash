@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 requirements = [
         "bashplotlib>=0.6.5",
-        "bitarray>=1.0.0",             # Fork of bitarray distributing binary wheels #153
-        "cryptography>=2.3",
-        "jsonschema>=3.0.2",
+        "bitarray>=2.4",
+        "cryptography>=36.0",
+        "jsonschema>=4.8",
         "mypy_extensions>=0.3",
         "pyblake2>=1.1.1; python_version < '3.6'",
         "tqdm>=4.24",
@@ -18,7 +18,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name="clkhash",
-    version='0.16.1',
+    version='0.17.0',
     description='Encoding utility to create Cryptographic Linkage Keys',
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -41,6 +41,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "License :: OSI Approved :: Apache Software License",
