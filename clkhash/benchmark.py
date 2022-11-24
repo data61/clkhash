@@ -15,13 +15,13 @@ def compute_hash_speed(num: int, quiet: bool = False, max_workers=None) -> float
     schema = NameList.SCHEMA
     header_row = ','.join([f.identifier for f in schema.fields])
 
-    with open(tmpfile_name, 'wt') as f:
+    with open(tmpfile_name, 'w') as f:
         f.write(header_row)
         f.write('\n')
         for person in namelist.names:
             print(','.join([str(field) for field in person]), file=f)
 
-    with open(tmpfile_name, 'rt') as f:
+    with open(tmpfile_name) as f:
         start = timer()
         generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet, max_workers=max_workers)
         end = timer()
@@ -31,7 +31,7 @@ def compute_hash_speed(num: int, quiet: bool = False, max_workers=None) -> float
 
     elapsed_time = end - start
     if not quiet:
-        print("{:6d} hashes in {:.6f} seconds. {:.2f} KH/s".format(num, elapsed_time, num / (1000 * elapsed_time)))
+        print(f"{num:6d} hashes in {elapsed_time:.6f} seconds. {num / (1000 * elapsed_time):.2f} KH/s")
     return num / elapsed_time
 
 

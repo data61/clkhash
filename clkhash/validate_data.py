@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Validate data inputs.
 
     Validates individual entries and the overall format against the

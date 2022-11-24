@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Schema loading and validation.
 """
 import base64
@@ -28,13 +26,13 @@ class SchemaError(Exception):
                  ) -> None:
         self.msg = msg
         self.errors = [] if errors is None else errors
-        super(SchemaError, self).__init__(msg)
+        super().__init__(msg)
 
     def __str__(self) -> str:
         detail = ""
         for i, e in enumerate(self.errors, start=1):
-            detail += "Error {} in feature at index {} - {}\n".format(i, e.field_spec_index, str(e))
-            detail += "Invalid spec:\n{}\n---\n".format(e.json_field_spec)
+            detail += f"Error {i} in feature at index {e.field_spec_index} - {str(e)}\n"
+            detail += f"Invalid spec:\n{e.json_field_spec}\n---\n"
 
         return self.msg + '\n\n' + detail
 
@@ -84,7 +82,7 @@ class Schema:
         self.kdf_key_size = kdf_key_size
 
     def __repr__(self):
-        return "<Schema (v3): {} fields>".format(len(self.fields))
+        return f"<Schema (v3): {len(self.fields)} fields>"
 
 
 def _convert_v1_to_v2(schema_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -96,7 +94,7 @@ def _convert_v1_to_v2(schema_dict: Dict[str, Any]) -> Dict[str, Any]:
     schema_dict = deepcopy(schema_dict)
     version = schema_dict['version']
     if version != 1:
-        raise ValueError('Version {} not 1'.format(version))
+        raise ValueError(f'Version {version} not 1')
 
     clk_config = schema_dict['clkConfig']
     k = clk_config.pop('k')
@@ -146,7 +144,7 @@ def _convert_v2_to_v3(schema_dict: Dict[str, Any]) -> Dict[str, Any]:
     schema_dict = deepcopy(schema_dict)
     version = schema_dict['version']
     if version != 2:
-        raise ValueError('Version {} not 2'.format(version))
+        raise ValueError(f'Version {version} not 2')
     schema_dict['version'] = 3
     for feature in schema_dict['features']:
         if feature.get('ignored', False):
@@ -284,7 +282,7 @@ def _get_master_schema(version: Hashable) -> dict:
         raise SchemaError(msg) from e
 
     try:
-        schema_bytes = pkgutil.get_data('clkhash', 'schemas/{}'.format(file_name))
+        schema_bytes = pkgutil.get_data('clkhash', f'schemas/{file_name}')
         if schema_bytes is None:
             msg = ('The master schema could not be loaded. The schema cannot be '
                    'validated. Please file a bug report.')

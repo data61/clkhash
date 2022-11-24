@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 import abc
 from typing import Iterable, Text, Dict, Any, Optional
 
 
-class AbstractComparison(object, metaclass=abc.ABCMeta):
+class AbstractComparison(metaclass=abc.ABCMeta):
     """ Abstract base class for all comparisons """
 
     @abc.abstractmethod
-    def tokenize(self, word: Text) -> Iterable[Text]:
+    def tokenize(self, word: str) -> Iterable[str]:
         """ The tokenization function.
 
         Takes a string and returns an iterable of tokens (as strings). This should be
@@ -47,7 +45,7 @@ class NgramComparison(AbstractComparison):
         self.n = n
         self.positional = positional
 
-    def tokenize(self, word: Text) -> Iterable[Text]:
+    def tokenize(self, word: str) -> Iterable[str]:
         """ Produce `n`-grams of `word`.
 
         :param word: The string to tokenize.
@@ -61,13 +59,13 @@ class NgramComparison(AbstractComparison):
 
         if self.positional:
             # These are 1-indexed.
-            return ('{} {}'.format(i + 1, word[i:i + self.n])
+            return (f'{i + 1} {word[i:i + self.n]}'
                     for i in range(len(word) - self.n + 1))
         else:
             return (word[i:i + self.n] for i in range(len(word) - self.n + 1))
 
     def __repr__(self):
-        return 'NgramComparison(n={}, positional={})'.format(self.n, self.positional)
+        return f'NgramComparison(n={self.n}, positional={self.positional})'
 
 
 class ExactComparison(AbstractComparison):
@@ -80,7 +78,7 @@ class ExactComparison(AbstractComparison):
     representation in the filter.
     """
 
-    def tokenize(self, word: Text) -> Iterable[Text]:
+    def tokenize(self, word: str) -> Iterable[str]:
         if len(word) == 0:
             return tuple()
         else:
@@ -140,11 +138,11 @@ class NumericComparison(AbstractComparison):
     def __init__(self, threshold_distance: float, resolution: int, fractional_precision: int = 0) -> None:
         # check that there is enough precision to have non-zero threshold_distance
         if not threshold_distance > 0:
-            raise ValueError('threhold_distance has to be positive, but was {}'.format(threshold_distance))
+            raise ValueError(f'threhold_distance has to be positive, but was {threshold_distance}')
         if resolution < 1:
-            raise ValueError('resolution has to be greater than zero, but was {}'.format(resolution))
+            raise ValueError(f'resolution has to be greater than zero, but was {resolution}')
         if fractional_precision < 0:
-            raise ValueError('fractional_precision cannot be less than zero, but was {}'.format(fractional_precision))
+            raise ValueError(f'fractional_precision cannot be less than zero, but was {fractional_precision}')
         # instead of dividing threshold distance as in the paper, we rather multiply the inputs by 'resolution' and then
         # use threshold_distance as distance_interval (saves a division which would need more precision)
         self.distance_interval = int(round(threshold_distance * pow(10, fractional_precision)))
@@ -153,7 +151,7 @@ class NumericComparison(AbstractComparison):
         self.resolution = resolution
         self.fractional_precision = fractional_precision
 
-    def tokenize(self, word: Text) -> Iterable[Text]:
+    def tokenize(self, word: str) -> Iterable[str]:
         if len(word) == 0:
             return tuple()
         try:
@@ -184,7 +182,7 @@ class NonComparison(AbstractComparison):
     Non comparison.
     """
 
-    def tokenize(self, word: Text) -> Iterable[Text]:
+    def tokenize(self, word: str) -> Iterable[str]:
         """ Null tokenizer returns empty Iterable.
 
         FieldSpec Ignore has hashing_properties = None
@@ -216,4 +214,4 @@ def get_comparator(comp_desc: Dict[str, Any]) -> AbstractComparison:
                                  resolution=comp_desc.get('resolution', -1),
                                  fractional_precision=comp_desc.get('fractional_precision', 0))
     else:
-        raise ValueError("unsupported comparison strategy: '{}'".format(typ))
+        raise ValueError(f"unsupported comparison strategy: '{typ}'")

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Classes that specify the requirements for each column in a dataset.
     They take care of validation, and produce the settings required to
     perform the hashing.
@@ -31,7 +29,7 @@ class InvalidSchemaError(ValueError):
     field_spec_index = None  # type: Optional[int]
 
 
-class MissingValueSpec(object):
+class MissingValueSpec:
     """ Stores the information about how to find and treat missing
         values.
 
@@ -61,7 +59,7 @@ class MissingValueSpec(object):
         )
 
 
-class StrategySpec(object, metaclass=abc.ABCMeta):
+class StrategySpec(metaclass=abc.ABCMeta):
     """ Stores the information about the insertion strategy.
 
     A strategy has to implement the 'bits_per_token' function, which defines how often each token gets inserted into
@@ -132,7 +130,7 @@ class BitsPerFeatureStrategy(StrategySpec):
         return ([k + 1] * residue) + ([k] * (num_tokens - residue))
 
 
-class FieldHashingProperties(object):
+class FieldHashingProperties:
     """
     Stores the settings used to hash a field.
 
@@ -186,7 +184,7 @@ class FieldHashingProperties(object):
         self.strategy = strategy
         self.missing_value = missing_value
 
-    def replace_missing_value(self, str_in: Text) -> Text:
+    def replace_missing_value(self, str_in: str) -> str:
         """ returns 'str_in' if it is not equals to the 'sentinel' as
         defined in the missingValue section of
         the schema. Else it will return the 'replaceWith' value.
@@ -230,7 +228,7 @@ def fhp_from_json_dict(
     )
 
 
-class FieldSpec(object, metaclass=abc.ABCMeta):
+class FieldSpec(metaclass=abc.ABCMeta):
     """ Abstract base class representing the specification of a column
         in the dataset. Subclasses validate entries, and modify the
         `hashing_properties` ivar to customise hashing procedures.
@@ -279,7 +277,7 @@ class FieldSpec(object, metaclass=abc.ABCMeta):
         return result
 
     @abc.abstractmethod
-    def validate(self, str_in: Text) -> None:
+    def validate(self, str_in: str) -> None:
         """ Validates an entry in the field.
 
             Raises :class:`InvalidEntryError` iff the entry is invalid.
@@ -301,7 +299,7 @@ class FieldSpec(object, metaclass=abc.ABCMeta):
                 e_new.field_spec = self
                 raise e_new from err
 
-    def is_missing_value(self, str_in: Text) -> bool:
+    def is_missing_value(self, str_in: str) -> bool:
         """ tests if 'str_in' is the sentinel value for this field
 
         :param str str_in: String to test if it stands for missing value
@@ -313,7 +311,7 @@ class FieldSpec(object, metaclass=abc.ABCMeta):
                 self.hashing_properties.missing_value is not None and
                 self.hashing_properties.missing_value.sentinel == str_in)
 
-    def format_value(self, str_in: Text) -> Text:
+    def format_value(self, str_in: str) -> str:
         """ formats the value 'str_in' for hashing according to this field's
         spec.
 
@@ -340,7 +338,7 @@ class FieldSpec(object, metaclass=abc.ABCMeta):
         else:
             return self._format_regular_value(str_in)
 
-    def _format_regular_value(self, str_in: Text) -> Text:
+    def _format_regular_value(self, str_in: str) -> str:
         """ overwrite this if you want to modify 'str_in' before hashing.
 
         :param str str_in:
@@ -432,7 +430,7 @@ class StringSpec(FieldSpec):
             try:
                 self.regex = re.compile(regex_str)
             except (SyntaxError, re.error) as e:
-                msg = "invalid regular expression '{}.'".format(regex_str)
+                msg = f"invalid regular expression '{regex_str}.'"
                 e_new = InvalidEntryError(msg)
                 e_new.field_spec = self
                 raise e_new from e
@@ -472,7 +470,7 @@ class StringSpec(FieldSpec):
             try:
                 result.regex = re.compile(pattern)
             except (SyntaxError, re.error) as e:
-                msg = "Invalid regular expression '{}.'".format(pattern)
+                msg = f"Invalid regular expression '{pattern}.'"
                 e_new = InvalidSchemaError(msg)
                 e_new.json_field_spec = json_dict
                 raise e_new from e
@@ -486,7 +484,7 @@ class StringSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in: Text) -> None:
+    def validate(self, str_in: str) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -550,7 +548,7 @@ class StringSpec(FieldSpec):
                 pass
             else:
                 raise ValueError(
-                    'Invalid case property {}.'.format(self.case))
+                    f'Invalid case property {self.case}.')
 
 
 class IntegerSpec(FieldSpec):
@@ -605,7 +603,7 @@ class IntegerSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in: Text) -> None:
+    def validate(self, str_in: str) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -626,7 +624,7 @@ class IntegerSpec(FieldSpec):
         try:
             value = int(str_in, base=10)
         except ValueError as e:
-            msg = "Invalid integer. Read '{}'.".format(str_in)
+            msg = f"Invalid integer. Read '{str_in}'."
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise e_new from e
@@ -645,7 +643,7 @@ class IntegerSpec(FieldSpec):
             e_new.field_spec = self
             raise e_new
 
-    def _format_regular_value(self, str_in: Text) -> Text:
+    def _format_regular_value(self, str_in: str) -> str:
         """ we need to reformat integer strings, as there can be different
         strings for the same integer. The
         strategy of unification here is to first parse the integer
@@ -662,7 +660,7 @@ class IntegerSpec(FieldSpec):
             value = int(str_in, base=10)
             return str(value)
         except ValueError as e:
-            msg = "Invalid integer. Read '{}'.".format(str_in)
+            msg = f"Invalid integer. Read '{str_in}'."
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise e_new from e
@@ -721,7 +719,7 @@ class DateSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in: Text) -> None:
+    def validate(self, str_in: str) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -741,12 +739,12 @@ class DateSpec(FieldSpec):
         try:
             datetime.strptime(str_in, self.format)
         except ValueError as e:
-            msg = "Validation error for date type: {}".format(e)
+            msg = f"Validation error for date type: {e}"
             e_new = InvalidEntryError(msg)
             e_new.field_spec = self
             raise e_new from e
 
-    def _format_regular_value(self, str_in: Text) -> Text:
+    def _format_regular_value(self, str_in: str) -> str:
         """ we overwrite default behaviour as we want to hash the numbers
         only, no fillers like '-', or '/'
 
@@ -809,7 +807,7 @@ class EnumSpec(FieldSpec):
 
         return result
 
-    def validate(self, str_in: Text) -> None:
+    def validate(self, str_in: str) -> None:
         """ Validates an entry in the field.
 
             Raises `InvalidEntryError` iff the entry is invalid.
@@ -845,7 +843,7 @@ class Ignore(FieldSpec):
         super().__init__('' if identifier is None else identifier,
                          None)
 
-    def validate(self, str_in: Text):
+    def validate(self, str_in: str):
         pass
 
 
@@ -874,5 +872,5 @@ def spec_from_json_dict(
         type_str = json_dict['format']['type']
         spec_type = cast(FieldSpec, FIELD_TYPE_MAP[type_str])
     except KeyError as e:
-        raise InvalidSchemaError("the feature definition {} is incomplete. Must contain: {}".format(json_dict, e))
+        raise InvalidSchemaError(f"the feature definition {json_dict} is incomplete. Must contain: {e}")
     return spec_type.from_json_dict(json_dict)

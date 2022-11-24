@@ -82,9 +82,9 @@ class Distribution:
         The first column represents the value and the second column represents the count in the population.
         """
 
-        data_bytes = pkgutil.get_data('clkhash', '{}'.format(resource_name))
+        data_bytes = pkgutil.get_data('clkhash', f'{resource_name}')
         if not data_bytes:
-            raise ValueError("No data resource found with name {}".format(resource_name))
+            raise ValueError(f"No data resource found with name {resource_name}")
         data = data_bytes.decode('utf8')
         reader = csv.reader(data.splitlines())
         next(reader, None)  # skip the headers

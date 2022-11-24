@@ -2,7 +2,7 @@ import math
 from typing import Sequence, Union
 
 
-class OnlineMeanVariance(object):
+class OnlineMeanVariance:
 
     def __init__(self) -> None:
         self.t = 0  # type: Union[int, float]

@@ -67,7 +67,7 @@ def hkdf(secret: bytes,
     try:
         hash_function = _HASH_FUNCTIONS[hash_algo]
     except KeyError as e:
-        msg = "unsupported hash function '{}'".format(hash_algo)
+        msg = f"unsupported hash function '{hash_algo}'"
         raise ValueError(msg) from e
 
     hkdf = HKDF(algorithm=hash_function(),
@@ -133,4 +133,4 @@ def generate_key_lists(secret: Union[bytes, str],
         return tuple(split_list)
     if kdf == 'legacy':
         return tuple(tuple([secret_bytes] * num_hashing_methods) for _ in range(num_identifier))
-    raise ValueError('kdf: "{}" is not supported.'.format(kdf))
+    raise ValueError(f'kdf: "{kdf}" is not supported.')

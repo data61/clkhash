@@ -245,7 +245,7 @@ def hashing_function_from_properties(
     elif fhp.hash_type == 'blakeHash':
         return blake_encode_ngrams
     else:
-        msg = "Unsupported hash type '{}'".format(fhp.hash_type)
+        msg = f"Unsupported hash type '{fhp.hash_type}'"
         raise ValueError(msg)
 
 
@@ -279,11 +279,11 @@ def fold_xor(bloomfilter: bitarray,
     return bloomfilter
 
 
-def crypto_bloom_filter(record: Sequence[Text],
+def crypto_bloom_filter(record: Sequence[str],
                         comparators: List[AbstractComparison],
                         schema: Schema,
                         keys: Sequence[Sequence[bytes]],
-                        ) -> Tuple[bitarray, Text, int]:
+                        ) -> Tuple[bitarray, str, int]:
     """ Computes the composite Bloom filter encoding of a record.
 
     Using the method from
@@ -321,10 +321,10 @@ def crypto_bloom_filter(record: Sequence[Text],
     return bloomfilter, record[0], bloomfilter.count()
 
 
-def stream_bloom_filters(dataset: Iterable[Sequence[Text]],
+def stream_bloom_filters(dataset: Iterable[Sequence[str]],
                          keys: Sequence[Sequence[bytes]],
                          schema: Schema
-                         ) -> Iterable[Tuple[bitarray, Text, int]]:
+                         ) -> Iterable[Tuple[bitarray, str, int]]:
     """ Compute composite Bloom filters (CLKs) for every record in an
         iterable dataset.
 
