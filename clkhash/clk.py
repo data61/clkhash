@@ -128,7 +128,7 @@ def generate_clk_from_csv(input_f: TextIO,
                                 max_workers=max_workers
                                 )
 
-    log.info("Hashing took {:.2f} seconds".format(time.time() - start_time))
+    log.info(f"Hashing took {time.time() - start_time:.2f} seconds")
     return results
 
 
@@ -157,7 +157,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
         validate_entries(schema.fields, pii_data)
 
     # Chunks PII
-    log.info("Hashing {} entities".format(len(pii_data)))
+    log.info(f"Hashing {len(pii_data)} entities")
     chunk_size = 200 if len(pii_data) <= 10000 else 1000
     futures = []
 

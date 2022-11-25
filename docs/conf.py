@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # CLK hash documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan 23 13:22:28 2018.

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 class DescribeError(Exception):
     """ The user provided CLK data is invalid.
     """
