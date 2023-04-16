@@ -68,7 +68,9 @@ jobs:
       matrix:
         os: [ macos-latest, windows-latest, ubuntu-latest ]
         python: ["3.10"]
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python }}
@@ -81,11 +83,8 @@ jobs:
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
-
       - name: Install dependencies
         run: |
           poetry install --no-interaction --with docs
-
       - name: Test notebooks
-        shell: bash
         run: poetry run pytest --nbval docs -x --sanitize-with docs/tutorial_sanitize.cfg
