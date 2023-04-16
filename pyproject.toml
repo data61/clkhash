@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "clkhash"
+version = "0.17.1"
+description = "Encoding utility to create Cryptographic Linkage Keys"
+license = "Apache"
+authors = ["Brian Thorne", "Wilko Henecka", "Guillaume Smith"]
+readme = "README.md"
+homepage = "https://github.com/data61/clkhash"
+repository = "https://github.com/data61/clkhash"
+documentation = "http://clkhash.readthedocs.io/"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Security :: Cryptography",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+bitarray = "2.6.0"
+cryptography = "38.0.1"
+mypy_extensions = "0.4.3"
+tqdm = "4.64.1"
+pyblake2 = { version = "1.1.2", python = "<3.6" }
+
+[[tool.poetry.dependencies.jsonschema]]
+version = "4.16.0"
+python = ">=3.7"
+
+[[tool.poetry.dependencies.jsonschema]]
+version = "3.2.0"
+python = "<3.7"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "7.1.2"
+pytest-cov = "3.0.0"
+pytest-runner = "^6.0.0"
+nbval = "^0.10.0"
+requests-mock = "^1.10.0"
+hypothesis = "6.43.3"
+bashplotlib = "^0.6.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
