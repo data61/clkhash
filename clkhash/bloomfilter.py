@@ -7,9 +7,9 @@ Generate a Bloom filter
 import hmac
 import math
 import struct
-from functools import cache, lru_cache
+from functools import lru_cache
 from hashlib import md5, sha1
-from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
+from typing import Callable, Iterable, List, Sequence, Tuple
 from bitarray import bitarray
 
 from clkhash.field_formats import FieldHashingProperties
