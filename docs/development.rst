@@ -15,7 +15,7 @@ Make sure you have all the required modules before running the tests
 installation)::
 
 
-    $ pip install -r requirements.txt
+    $ poetry install
 
 
 Now run the unit tests and print out code coverage with `py.test`::
