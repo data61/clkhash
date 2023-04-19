@@ -21,7 +21,6 @@ from clkhash.validate_data import (validate_entries, validate_header,
 
 log = logging.getLogger('clkhash.clk')
 
-CHUNK_SIZE = 1000
 
 
 def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
@@ -143,7 +142,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
 
     # Generate two keys for each identifier from the secret, one key per hashing method used when computing
     # the bloom filters.
-    # Otherwise it could create more if required using the parameter `num_hashing_methods` in `generate_key_lists`
+    # Otherwise, it could create more if required using the parameter `num_hashing_methods` in `generate_key_lists`
     key_lists = generate_key_lists(
         secret,
         len(schema.fields),
@@ -158,7 +157,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
 
     # Chunks PII
     log.info(f"Hashing {len(pii_data)} entities")
-    chunk_size = 200 if len(pii_data) <= 10000 else 1000
+    chunk_size = 200 if len(pii_data) <= 10_000 else 1000
     futures = []
 
     if max_workers is None or max_workers > 1:
