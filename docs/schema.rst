@@ -229,7 +229,7 @@ comparison    one of:                              no       specifies the compar
 strategy      one of:                              no       the strategy for assigning bits to the encoding.
               :ref:`schema/bitsPerTokenStrategy`,
               :ref:`schema/bitsPerFeatureStrategy`
-hash          one of:                              yes      specifies the hash function for inserting bits into the Bloom filter, defaults to bake hash
+hash          one of:                              yes      specifies the hash function for inserting bits into the Bloom filter, defaults to blake hash
               :ref:`schema/doubleHash`
               :ref:`schema/blakeHash`
 missingValue  :ref:`schema/missingV`               yes      allows to define how missing values are handled
