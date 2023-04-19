@@ -18,8 +18,8 @@ class TestEncoding(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ngrams = ['a', 'b', 'c', 'd', 'e']
-        cls.key_sha1 = bytearray(random.getrandbits(8) for _ in range(32))
-        cls.key_md5 = bytearray(random.getrandbits(8) for _ in range(32))
+        cls.key_sha1 = bytes(bytearray(random.getrandbits(8) for _ in range(32)))
+        cls.key_md5 = bytes(bytearray(random.getrandbits(8) for _ in range(32)))
         cls.k = 10
         cls.ks = [ cls.k ] * len(cls.ngrams)
 
