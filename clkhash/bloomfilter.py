@@ -59,7 +59,7 @@ def double_hash_encode_ngrams(ngrams: Iterable[str],
     return bf
 
 
-@lru_cache(maxsize=1_000_000, typed=True)
+@lru_cache(maxsize=32768, typed=False)
 def _double_hash_token(m: bytes, l, key_sha1, key_md5):
     sha1hm = int(
         hmac.new(key_sha1, m, sha1).hexdigest(),
@@ -129,7 +129,7 @@ def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
     return bf
 
 
-@lru_cache(maxsize=1_000_000, typed=True)
+@lru_cache(maxsize=32768, typed=False)
 def _double_hash_token_non_singular(key_md5, key_sha1, l, m_bytes):
     sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
     md5hm_bytes = hmac.new(key_md5, m_bytes, md5).digest()
