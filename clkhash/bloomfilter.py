@@ -25,6 +25,10 @@ except ImportError:
     # blake2b is already defined.
 
 
+TOKEN_CACHE_SIZE = 2 ** 15
+NGRAM_CACHE_SIZE = 2 ** 17
+
+
 def double_hash_encode_ngrams(ngrams: Iterable[str],
                               keys: Sequence[bytes],
                               ks: Sequence[int],
@@ -47,27 +51,7 @@ def double_hash_encode_ngrams(ngrams: Iterable[str],
         :return: bitarray of length l with the bits set which correspond to
                  the encoding of the ngrams
     """
-    key_sha1, key_md5 = keys
-    bf = bitarray(l)
-    bf.setall(False)
-
-    for m, k in zip(ngrams, ks):
-        md5hm, sha1hm = _double_hash_token(m.encode(encoding=encoding), l, key_sha1, key_md5)
-        for i in range(k):
-            gi = (sha1hm + i * md5hm) % l
-            bf[gi] = 1
-    return bf
-
-
-@lru_cache(maxsize=32768, typed=False)
-def _double_hash_token(m: bytes, l, key_sha1, key_md5):
-    sha1hm = int(
-        hmac.new(key_sha1, m, sha1).hexdigest(),
-        16) % l
-    md5hm = int(
-        hmac.new(key_md5, m, md5).hexdigest(),
-        16) % l
-    return md5hm, sha1hm
+    return _double_hash_encode_ngrams(tuple(ngrams), (keys[0], keys[1]), tuple(ks), l, encoding, non_singular=False)
 
 
 def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
@@ -115,22 +99,46 @@ def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
         :return: bitarray of length l with the bits set which correspond to the
                  encoding of the ngrams
     """
+    return _double_hash_encode_ngrams(tuple(ngrams), (keys[0], keys[1]), tuple(ks), l, encoding, non_singular=True)
+
+
+@lru_cache(maxsize=NGRAM_CACHE_SIZE)
+def _double_hash_encode_ngrams(ngrams: Tuple[str, ...],
+                               keys: Tuple[bytes, bytes],
+                               ks: Tuple[int, ...],
+                               l: int,
+                               encoding: str,
+                               non_singular
+                              ) -> bitarray:
     key_sha1, key_md5 = keys
     bf = bitarray(l)
     bf.setall(False)
+
     for m, k in zip(ngrams, ks):
         m_bytes = m.encode(encoding=encoding)
-
-        md5hm, sha1hm = _double_hash_token_non_singular(key_md5, key_sha1, l, m_bytes)
-
+        if non_singular:
+            md5hm, sha1hm = _double_hash_token_non_singular(m.encode(encoding=encoding), l, key_sha1, key_md5)
+        else:
+            md5hm, sha1hm = _double_hash_token(m.encode(encoding=encoding), l, key_sha1, key_md5)
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
-            bf[gi] = True
+            bf[gi] = 1
     return bf
 
 
-@lru_cache(maxsize=32768, typed=False)
-def _double_hash_token_non_singular(key_md5, key_sha1, l, m_bytes):
+@lru_cache(maxsize=TOKEN_CACHE_SIZE)
+def _double_hash_token(m: bytes, l: int, key_sha1: bytes, key_md5: bytes):
+    sha1hm = int(
+        hmac.new(key_sha1, m, sha1).hexdigest(),
+        16) % l
+    md5hm = int(
+        hmac.new(key_md5, m, md5).hexdigest(),
+        16) % l
+    return md5hm, sha1hm
+
+
+@lru_cache(maxsize=TOKEN_CACHE_SIZE)
+def _double_hash_token_non_singular(m_bytes: bytes, l: int, key_sha1: bytes, key_md5: bytes):
     sha1hm_bytes = hmac.new(key_sha1, m_bytes, sha1).digest()
     md5hm_bytes = hmac.new(key_md5, m_bytes, md5).digest()
     sha1hm = int.from_bytes(sha1hm_bytes, 'big') % l
@@ -143,18 +151,12 @@ def _double_hash_token_non_singular(key_md5, key_sha1, l, m_bytes):
         i += 1
     return md5hm, sha1hm
 
-@lru_cache(maxsize=1_000_000, typed=False)
-def blake_hash(m: bytes, key: bytes, salt: bytes, l: int) -> List[int]:
-    hash_bytes = blake2b(m, key=key, salt=salt).digest()
-    return [i % l for i in struct.unpack('32H', hash_bytes)]
-
 
 def blake_encode_ngrams(ngrams: Iterable[str],
                         keys: Sequence[bytes],
                         ks: Sequence[int],
                         l: int,
                         encoding: str,
-                        max_cache_size: int = 1_000_000
                         ) -> bitarray:
     """ Computes the encoding of the ngrams using the BLAKE2 hash function.
 
@@ -222,7 +224,16 @@ def blake_encode_ngrams(ngrams: Iterable[str],
                  encoding of the ngrams
     """
     key = bytes(keys[0])  # We only need the first key
+    return _blake_encode_ngrams(tuple(ngrams), key, tuple(ks), l, encoding)
 
+
+@lru_cache(maxsize=NGRAM_CACHE_SIZE)
+def _blake_encode_ngrams(ngrams: Tuple[str, ...],
+                         key: bytes,
+                         ks: Tuple[int, ...],
+                         l: int,
+                         encoding: str,
+                         ) -> bitarray:
     log_l = int(math.log(l, 2))
     if not 2 ** log_l == l:
         raise ValueError(
@@ -232,19 +243,23 @@ def blake_encode_ngrams(ngrams: Iterable[str],
     bf = bitarray(l)
     bf.setall(False)
 
-
-
     for m, k in zip(ngrams, ks):
-        random_shorts = []  # type: List[int]
-        num_macs = (k + 31) // 32
-        for i in range(num_macs):
-            hash_indicies = blake_hash(m.encode(encoding=encoding), key, salt=str(i).encode(), l=l)
-            random_shorts.extend(hash_indicies)  # interpret
-            # hash bytes as 32 unsigned shorts.
-        for i in range(k):
-            idx = random_shorts[i]
+        for idx in blake_hash_token(m.encode(encoding=encoding), k, key, l):
             bf[idx] = 1
     return bf
+
+
+@lru_cache(maxsize=TOKEN_CACHE_SIZE)
+def blake_hash_token(token: bytes, k: int, key: bytes, l: int):
+    random_shorts = []  # type: List[int]
+    num_macs = (k + 31) // 32
+    for i in range(num_macs):
+        hash_bytes = blake2b(token, key=key,
+                             salt=str(i).encode()).digest()
+        random_shorts.extend(struct.unpack('32H',
+                                           hash_bytes))  # interpret
+        # hash bytes as 32 unsigned shorts.
+    return [random_shorts[i] % l for i in range(k)]
 
 
 def hashing_function_from_properties(
@@ -331,7 +346,7 @@ def crypto_bloom_filter(record: Sequence[str],
             hash_function = hashing_function_from_properties(fhp)
 
             if ngrams:
-                bloomfilter |= hash_function(ngrams, key,
+                bloomfilter |= hash_function(tuple(ngrams), key,
                                              fhp.strategy.bits_per_token(len(ngrams)),
                                              hash_l, fhp.encoding)
 
