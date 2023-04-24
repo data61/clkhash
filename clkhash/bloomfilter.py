@@ -143,6 +143,11 @@ def _double_hash_token_non_singular(key_md5, key_sha1, l, m_bytes):
         i += 1
     return md5hm, sha1hm
 
+@lru_cache(maxsize=1_000_000, typed=False)
+def blake_hash(m: bytes, key: bytes, salt: bytes, l: int) -> List[int]:
+    hash_bytes = blake2b(m, key=key, salt=salt).digest()
+    return [i % l for i in struct.unpack('32H', hash_bytes)]
+
 
 def blake_encode_ngrams(ngrams: Iterable[str],
                         keys: Sequence[bytes],
@@ -227,17 +232,13 @@ def blake_encode_ngrams(ngrams: Iterable[str],
     bf = bitarray(l)
     bf.setall(False)
 
-    @lru_cache(maxsize=max_cache_size, typed=False)
-    def blake_hash(m: bytes, key: bytes, salt: bytes) -> List[int]:
-        hash_bytes = blake2b(m, key=key, salt=salt).digest()
-        return [i % l for i in struct.unpack('32H', hash_bytes)]
 
 
     for m, k in zip(ngrams, ks):
         random_shorts = []  # type: List[int]
         num_macs = (k + 31) // 32
         for i in range(num_macs):
-            hash_indicies = blake_hash(m.encode(encoding=encoding), key, salt=str(i).encode())
+            hash_indicies = blake_hash(m.encode(encoding=encoding), key, salt=str(i).encode(), l=l)
             random_shorts.extend(hash_indicies)  # interpret
             # hash bytes as 32 unsigned shorts.
         for i in range(k):
