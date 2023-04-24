@@ -1,0 +1,74 @@
+{
+  "version": 3,
+  "clkConfig": {
+    "l": 1024,
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "salt": "SCbL2zHNnmsckfzchsNkZY9XoHk96P/G5nUBrM7ybymlEFsMV6PAeDZCNp3rfNUPCtLDMOGQHG4pCQpfhiHCyA==",
+      "info": "c2NoZW1hX2V4YW1wbGU=",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "INDEX",
+      "ignored": true
+    },
+    {
+      "identifier": "NAME freetext",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed",
+        "minLength": 3
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 2
+        },
+        "strategy": {
+          "bitsPerToken": 15
+        },
+        "hash": {"type": "blakeHash"}
+      }
+    },
+    {
+      "identifier": "DOB YYYY/MM/DD",
+      "format": {
+        "type": "date",
+        "description": "Numbers separated by slashes, in the year, month, day order",
+        "format": "%Y/%m/%d"
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": true
+        },
+        "strategy": {
+          "bitsPerToken": 30
+        },
+        "hash": {"type": "blakeHash"}
+      }
+    },
+    {
+      "identifier": "GENDER M or F",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F"]
+      },
+      "hashing": {
+        "comparison": {
+          "type": "ngram",
+          "n": 1
+        },
+        "strategy": {
+          "bitsPerToken": 60
+        },
+        "hash": {"type": "blakeHash"}
+      }
+    }
+  ]
+}

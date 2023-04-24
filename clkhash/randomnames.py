@@ -108,7 +108,7 @@ class NameList:
     """ Randomly generated PII records.
     """
 
-    randomname_schema_bytes = pkgutil.get_data('clkhash', 'data/randomnames-schema.json')
+    randomname_schema_bytes = pkgutil.get_data('clkhash', 'data/randomnames-schema-v2.json')
     if randomname_schema_bytes is None:
         raise Exception("Couldn't locate package data. Please file a bug report.")
     randomname_schema = json.loads(randomname_schema_bytes.decode())
