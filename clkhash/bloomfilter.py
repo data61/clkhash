@@ -37,10 +37,7 @@ def double_hash_encode_ngrams(ngrams: Iterable[str],
                               ) -> bitarray:
     """ Computes the double hash encoding of the ngrams with the given keys.
 
-            Using the method from:
-            Schnell, R., Bachteler, T., & Reiher, J. (2011).
-            A Novel Error-Tolerant Anonymous Linking Code.
-            http://grlc.german-microsimulation.de/wp-content/uploads/2017/05/downloadwp-grlc-2011-02.pdf
+        Using the method from [Schnell2011]_.
 
         :param ngrams: list of n-grams to be encoded
         :param keys: hmac secret keys for md5 and sha1 as bytes
@@ -60,7 +57,7 @@ def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
                                            l: int,
                                            encoding: str
                                            ) -> bitarray:
-    """ computes the double hash encoding of the n-grams with the given keys.
+    """ Computes the double hash encoding of the n-grams with the given keys.
 
         The original construction of [Schnell2011]_ displays an abnormality for
         certain inputs:
@@ -108,7 +105,7 @@ def _double_hash_encode_ngrams(ngrams: Tuple[str, ...],
                                ks: Tuple[int, ...],
                                l: int,
                                encoding: str,
-                               non_singular
+                               non_singular: bool
                               ) -> bitarray:
     key_sha1, key_md5 = keys
     bf = bitarray(l)
@@ -117,9 +114,9 @@ def _double_hash_encode_ngrams(ngrams: Tuple[str, ...],
     for m, k in zip(ngrams, ks):
         m_bytes = m.encode(encoding=encoding)
         if non_singular:
-            md5hm, sha1hm = _double_hash_token_non_singular(m.encode(encoding=encoding), l, key_sha1, key_md5)
+            md5hm, sha1hm = _double_hash_token_non_singular(m_bytes, l, key_sha1, key_md5)
         else:
-            md5hm, sha1hm = _double_hash_token(m.encode(encoding=encoding), l, key_sha1, key_md5)
+            md5hm, sha1hm = _double_hash_token(m_bytes, l, key_sha1, key_md5)
         for i in range(k):
             gi = (sha1hm + i * md5hm) % l
             bf[gi] = 1
@@ -160,11 +157,9 @@ def blake_encode_ngrams(ngrams: Iterable[str],
                         ) -> bitarray:
     """ Computes the encoding of the ngrams using the BLAKE2 hash function.
 
-        We deliberately do not use the double hashing scheme as proposed in [
-        Schnell2011]_, because this
-        would introduce an exploitable structure into the Bloom filter. For more
-        details on the
-        weakness, see [Kroll2015]_.
+        We deliberately do not use the double hashing scheme as proposed in
+        [Schnell2011]_, because this would introduce an exploitable structure
+        into the Bloom filter. For more details on the weakness, see [Kroll2015]_.
 
         In short, the double hashing scheme only allows for :math:`l^2`
         different encodings for any possible n-gram,
@@ -318,13 +313,12 @@ def crypto_bloom_filter(record: Sequence[str],
                         ) -> Tuple[bitarray, str, int]:
     """ Computes the composite Bloom filter encoding of a record.
 
-    Using the method from
-    http://www.record-linkage.de/-download=wp-grlc-2011-02.pdf
+    Based on the method from [Schnell2011]_.
 
     :param record: plaintext record tuple. E.g. (index, name, dob, gender)
     :param comparators: A list of comparators. They provide a 'tokenize' function to turn string into
         appropriate tokens.
-    :param schema: Schema
+    :param schema: The Linkage Schema describing how to encode plaintext identifiers.
     :param keys: Keys for the hash functions as a tuple of lists of bytes.
 
     :return: 3-tuple:

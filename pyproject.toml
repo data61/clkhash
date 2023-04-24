@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "clkhash"
-version = "0.17.1"
+version = "0.18.0"
 description = "Encoding utility to create Cryptographic Linkage Keys"
 license = "Apache"
 authors = ["Brian Thorne", "Wilko Henecka", "Guillaume Smith"]
