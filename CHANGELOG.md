@@ -1,5 +1,12 @@
 ## new version
 
+## 0.18.0
+
+- Performance improvements by caching hashes of tokens. #664 
+- Switch to using `blakeHash` for benchmarking. #664 
+- Remove implicit dependency on `setuptools`. #663
+- Migrate to pyproject.toml for dependency management and packaging. #659
+
 ## 0.17.0
 
 - Remove use of bitarray fork as upstream project now publishes wheels. #557, #567, #573

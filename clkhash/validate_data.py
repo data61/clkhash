@@ -12,8 +12,8 @@ from clkhash.field_formats import (FieldSpec, InvalidEntryError)
 class EntryError(ValueError):
     """ An entry is invalid.
     """
-    row_index = None  # type: Optional[int]
-    field_spec = None  # type: Optional[FieldSpec]
+    row_index: Optional[int] = None
+    field_spec: Optional[FieldSpec] = None
 
 
 class FormatError(ValueError):
