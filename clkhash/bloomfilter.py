@@ -7,6 +7,7 @@ Generate a Bloom filter
 import hmac
 import math
 import struct
+from functools import lru_cache
 from hashlib import md5, sha1
 from typing import Callable, Iterable, List, Optional, Sequence, Text, Tuple
 from bitarray import bitarray
@@ -23,7 +24,10 @@ except ImportError:
     # Ignore because otherwise Mypy raises errors, thinking that
     # blake2b is already defined.
 
+CACHE_SIZE = 2 ** 15
 
+
+@lru_cache(maxsize=CACHE_SIZE)
 def double_hash_encode_ngrams(ngrams: Iterable[str],
                               keys: Sequence[bytes],
                               ks: Sequence[int],
@@ -63,6 +67,7 @@ def double_hash_encode_ngrams(ngrams: Iterable[str],
     return bf
 
 
+@lru_cache(maxsize=CACHE_SIZE)
 def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
                                            keys: Sequence[bytes],
                                            ks: Sequence[int],
@@ -133,6 +138,7 @@ def double_hash_encode_ngrams_non_singular(ngrams: Iterable[str],
     return bf
 
 
+@lru_cache(maxsize=CACHE_SIZE)
 def blake_encode_ngrams(ngrams: Iterable[str],
                         keys: Sequence[bytes],
                         ks: Sequence[int],
@@ -216,18 +222,33 @@ def blake_encode_ngrams(ngrams: Iterable[str],
     bf.setall(False)
 
     for m, k in zip(ngrams, ks):
-        random_shorts = []  # type: List[int]
-        num_macs = (k + 31) // 32
-        for i in range(num_macs):
-            hash_bytes = blake2b(m.encode(encoding=encoding), key=key,
-                                 salt=str(i).encode()).digest()
-            random_shorts.extend(struct.unpack('32H',
-                                               hash_bytes))  # interpret
-            # hash bytes as 32 unsigned shorts.
-        for i in range(k):
-            idx = random_shorts[i] % l
+        for idx in blake_encode_token(m.encode(encoding=encoding), k, key, l):
             bf[idx] = 1
+        # random_shorts = []  # type: List[int]
+        # num_macs = (k + 31) // 32
+        # for i in range(num_macs):
+        #     hash_bytes = blake2b(m.encode(encoding=encoding), key=key,
+        #                          salt=str(i).encode()).digest()
+        #     random_shorts.extend(struct.unpack('32H',
+        #                                        hash_bytes))  # interpret
+        #     # hash bytes as 32 unsigned shorts.
+        # for i in range(k):
+        #     idx = random_shorts[i] % l
+        #     bf[idx] = 1
     return bf
+
+
+@lru_cache(maxsize=32768)
+def blake_encode_token(token: bytes, k: int, key: bytes, l: int):
+    random_shorts = []  # type: List[int]
+    num_macs = (k + 31) // 32
+    for i in range(num_macs):
+        hash_bytes = blake2b(token, key=key,
+                             salt=str(i).encode()).digest()
+        random_shorts.extend(struct.unpack('32H',
+                                           hash_bytes))  # interpret
+        # hash bytes as 32 unsigned shorts.
+    return [random_shorts[i] % l for i in range(k)]
 
 
 def hashing_function_from_properties(
@@ -310,7 +331,7 @@ def crypto_bloom_filter(record: Sequence[str],
             in zip(record, comparators, schema.fields, keys):
         fhp = field.hashing_properties
         if fhp:
-            ngrams = list(comparator.tokenize(field.format_value(entry)))
+            ngrams = tuple(comparator.tokenize(field.format_value(entry)))
             hash_function = hashing_function_from_properties(fhp)
             if ngrams:
                 bloomfilter |= hash_function(ngrams, key,

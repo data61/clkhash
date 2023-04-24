@@ -129,7 +129,7 @@ def generate_key_lists(secret: Union[bytes, str],
                           hash_algo=hash_algo, salt=salt,
                           info=info, key_size=key_size)
         # regroup such that we get a tuple of keys for each identifier
-        split_list = [key_tuples[(i*num_hashing_methods):((i+1)*num_hashing_methods)] for i in range(num_identifier)]
+        split_list = [tuple(key_tuples[(i*num_hashing_methods):((i+1)*num_hashing_methods)]) for i in range(num_identifier)]
         return tuple(split_list)
     if kdf == 'legacy':
         return tuple(tuple([secret_bytes] * num_hashing_methods) for _ in range(num_identifier))
