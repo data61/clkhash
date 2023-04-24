@@ -38,7 +38,7 @@ class TestV2(unittest.TestCase):
     def test_compare_v1_v2_and_v3(self):
         pii = randomnames.NameList(100).names
         schema_v3 = randomnames.NameList.SCHEMA
-        # this v2 schema should be equivalent to the above v3 schema
+        # this v2 schema is no longer equivalent to the v3 schema as the hash type changed to blakeHash
         schema_v2 = _test_schema('randomnames-schema-v2.json')
         schema_v1 = _test_schema('randomnames-schema-v1.json')
         secret = 'secret'
@@ -46,7 +46,7 @@ class TestV2(unittest.TestCase):
                                        clk.generate_clks(pii, schema_v2, secret),
                                        clk.generate_clks(pii, schema_v3, secret)):
             self.assertEqual(clkv1, clkv2)
-            self.assertEqual(clkv1, clkv3)
+            self.assertNotEqual(clkv1, clkv3)
 
     def test_compare_strategies(self):
         def mkSchema(hashing_properties):
