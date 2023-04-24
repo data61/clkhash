@@ -346,7 +346,7 @@ def crypto_bloom_filter(record: Sequence[str],
             hash_function = hashing_function_from_properties(fhp)
 
             if ngrams:
-                bloomfilter |= hash_function(tuple(ngrams), key,
+                bloomfilter |= hash_function(ngrams, key,
                                              fhp.strategy.bits_per_token(len(ngrams)),
                                              hash_l, fhp.encoding)
 
