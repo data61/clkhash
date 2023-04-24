@@ -6,7 +6,7 @@
 import abc
 import re
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Text, cast, List, Union, SupportsInt
+from typing import Any, Dict, Iterable, Optional, cast, Union, SupportsInt, Tuple
 
 from clkhash import comparators
 from clkhash.comparators import AbstractComparison
@@ -67,7 +67,7 @@ class StrategySpec(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def bits_per_token(self, num_tokens: int) -> List[int]:
+    def bits_per_token(self, num_tokens: int) -> Tuple[int]:
         """ Return a list of integers, one for each of the `num_tokens` tokens, defining how often that token gets
         inserted into the Bloom filter.
 
@@ -104,8 +104,8 @@ class BitsPerTokenStrategy(StrategySpec):
                  ) -> None:
         self._bits_per_token = bits_per_token
 
-    def bits_per_token(self, num_tokens: int) -> List[int]:
-        return [self._bits_per_token] * num_tokens
+    def bits_per_token(self, num_tokens: int) -> Tuple[int]:
+        return tuple([self._bits_per_token] * num_tokens)
 
 
 class BitsPerFeatureStrategy(StrategySpec):
@@ -124,10 +124,10 @@ class BitsPerFeatureStrategy(StrategySpec):
                  ) -> None:
         self._bits_per_feature = bits_per_feature
 
-    def bits_per_token(self, num_tokens: int) -> List[int]:
+    def bits_per_token(self, num_tokens: int) -> Tuple[int]:
         k = int(self._bits_per_feature / num_tokens)
         residue = self._bits_per_feature % num_tokens
-        return ([k + 1] * residue) + ([k] * (num_tokens - residue))
+        return tuple(([k + 1] * residue) + ([k] * (num_tokens - residue)))
 
 
 class FieldHashingProperties:
