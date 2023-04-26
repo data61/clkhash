@@ -37,7 +37,7 @@ jsonschema = "^4.16.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
-pytest-cov = "^3.0.0"
+pytest-cov = ">=3,<5"
 pytest-runner = "^6.0.0"
 nbval = "^0.10.0"
 requests-mock = "^1.10.0"
