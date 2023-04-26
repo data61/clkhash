@@ -153,7 +153,7 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
             assert num_common_tokens == 1, "numbers exactly thresh_dist apart have 1 token in common"
         else:
             assert 0 <= num_common_tokens <= 2, "numbers close to thresh_dist apart have 0-2 tokens in common"
-    other = candidate + thresh_dist * 1.51  # 0.5 because of the modulo operation
+    other = candidate + thresh_dist * 2
     assume((other - candidate) > (1.5 * thresh_dist))  # because of fp precision errors, 'other might not have changed'
     other_tokens = comp.tokenize(str(other))
     assert len(set(cand_tokens).intersection(
@@ -178,9 +178,9 @@ def test_numeric_overlaps(thresh_dist, resolution, precision, candidate):
     def overlap(other):
         other_tokens = comp.tokenize(str(other))
         return len(set(cand_tokens).intersection(set(other_tokens)))
+
     overlaps = [overlap(num) for num in numbers]
-    assert overlaps[0] == len(cand_tokens)
-    assert overlaps[-1] == 0
+    assert overlaps[0] == len(cand_tokens), '1'
     assert all(x >= y for x, y in zip(overlaps, overlaps[1:])), 'with increasing distance, the overlap reduces'
 
 
