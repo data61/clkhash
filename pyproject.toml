@@ -28,12 +28,12 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-bitarray = "2.6.0"
-cryptography = "40.0.2"
-mypy_extensions = "0.4.3"
-tqdm = "4.64.1"
-pyblake2 = { version = "1.1.2", python = "<3.6" }
-jsonschema = "4.16.0"
+bitarray = "^2.6"
+cryptography = "^40.0"
+mypy_extensions = "^1.0"
+tqdm = "^4.64"
+pyblake2 = { version = "^1.1", python = "<3.6" }
+jsonschema = "^4.16"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "7.1.2"
