@@ -71,7 +71,7 @@ Release Pipeline
 ~~~~~~~~~~~~~~~~
 
 The release pipeline can either be triggered manually, or automatically from
-a successful build on master where the build is tagged `Automated`
+a successful build on `main` where the build is tagged `Automated`
 (i.e. if the commit is tagged, cf previous paragraph). 
 
 The release pipeline consists of two steps: 
