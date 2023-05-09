@@ -42,7 +42,6 @@ pytest-runner = "^6.0.0"
 nbval = "^0.10.0"
 requests-mock = "^1.10.0"
 hypothesis = "6.43.3"
-bashplotlib = "^0.6.5"
 matplotlib = "^3.7.1"
 
 [build-system]
