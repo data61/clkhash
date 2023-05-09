@@ -244,6 +244,7 @@ def generate_clks_from_csv_as_stream(filename: str,
     if max_workers is None or max_workers > 1:
 
         with multiprocessing.Manager() as manager:
+            manager = cast(multiprocessing.managers.SyncManager, manager)
             queue_size = max_workers * 2 if max_workers is not None else multiprocessing.cpu_count() * 2
             chunks_queue = manager.Queue(queue_size)
             # create process that fills queue with chunks
