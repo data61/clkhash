@@ -132,6 +132,7 @@ def generate_clk_from_csv(filename: str,
                                                        schema,
                                                        secret,
                                                        validate=validate,
+                                                       header=header,
                                                        callback=callback,
                                                        max_workers=max_workers
                                                        )
