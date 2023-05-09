@@ -172,33 +172,36 @@ class TestComplexSchemaChanges(unittest.TestCase):
 
 
 class TestHeaderChecking(unittest.TestCase):
-    def setUp(self):
-        self.schema = randomnames.NameList.SCHEMA
-        self.csv_correct_header = tempfile_from_content(''.join(
+
+    @classmethod
+    def setUpClass(cls):
+        cls.schema = randomnames.NameList.SCHEMA
+        cls.csv_correct_header = tempfile_from_content(''.join(
             'INDEX,NAME freetext,DOB YYYY/MM/DD,GENDER M or F\n'
             '0,Jane Austen,1775/12/16,F\n'
             '1,Bob Hawke,1929/12/09,M\n'
             '2,Tivadar Kanizsa,1933/04/04,M\n'))
-        self.csv_incorrect_header_name = tempfile_from_content(''.join(
+        cls.csv_incorrect_header_name = tempfile_from_content(''.join(
             'INDEX,THIS IS INCORRECT,DOB YYYY/MM/DD,GENDER M or F\n'
             '0,Jane Austen,1775/12/16,F\n'
             '1,Bob Hawke,1929/12/09,M\n'
             '2,Tivadar Kanizsa,1933/04/04,M\n'))
-        self.csv_incorrect_count = tempfile_from_content(''.join(
+        cls.csv_incorrect_count = tempfile_from_content(''.join(
             'INDEX,THIS IS INCORRECT,DOB YYYY/MM/DD\n'
             '0,Jane Austen,1775/12/16,F\n'
             '1,Bob Hawke,1929/12/09,M\n'
             '2,Tivadar Kanizsa,1933/04/04,M\n'))
-        self.csv_no_header = tempfile_from_content(''.join(
+        cls.csv_no_header = tempfile_from_content(''.join(
             '0,Jane Austen,1775/12/16,F\n'
             '1,Bob Hawke,1929/12/09,M\n'
             '2,Tivadar Kanizsa,1933/04/04,M\n'))
 
-    def tearDown(self) -> None:
-        os.remove(self.csv_correct_header)
-        os.remove(self.csv_incorrect_header_name)
-        os.remove(self.csv_incorrect_count)
-        os.remove(self.csv_no_header)
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.remove(cls.csv_correct_header)
+        os.remove(cls.csv_incorrect_header_name)
+        os.remove(cls.csv_incorrect_count)
+        os.remove(cls.csv_no_header)
 
     def test_header(self):
         out = clk.generate_clk_from_csv(
