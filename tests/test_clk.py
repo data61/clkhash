@@ -109,8 +109,8 @@ class TestComplexSchemaChanges(unittest.TestCase):
     def tearDown(self):
         try:
             os.remove(self.CSV_FILE)
-        finally:
-            os.remove(self.CSV_FILE)
+        except Exception:
+            pass
 
     def test_expected_number_of_encodings_returned(self):
         loaded_schema = schema.from_json_dict(self.SCHEMA_DICT)
@@ -206,11 +206,8 @@ class TestHeaderChecking(unittest.TestCase):
             os.remove(cls.csv_incorrect_header_name)
             os.remove(cls.csv_incorrect_count)
             os.remove(cls.csv_no_header)
-        finally:
-            os.remove(cls.csv_correct_header)
-            os.remove(cls.csv_incorrect_header_name)
-            os.remove(cls.csv_incorrect_count)
-            os.remove(cls.csv_no_header)
+        except Exception:
+            pass
 
     def test_header(self):
         out = clk.generate_clk_from_csv(
