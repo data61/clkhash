@@ -7,10 +7,11 @@ import csv
 import logging
 import math
 import multiprocessing
+import queue
 from itertools import islice, chain
 from pathlib import Path
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
-                    Sequence, Tuple, TypeVar, Union, Iterator)
+                    Sequence, Tuple, TypeVar, Union, Iterator, TextIO)
 from bitarray import bitarray
 from tqdm import tqdm
 
@@ -53,7 +54,7 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     return clk_data, clk_popcounts
 
 
-def hash_chunk_from_queue(pii_chunks_queue: multiprocessing.Queue,
+def hash_chunk_from_queue(pii_chunks_queue: queue.Queue[Tuple[int, Sequence[Sequence[str]]]],
                           keys: Sequence[Sequence[bytes]],
                           schema: Schema,
                           validate_data: bool,
@@ -261,7 +262,7 @@ def generate_clks_from_csv_as_stream(filename: str,
                                                         f.result()[1]))
                     futures.append(future)
 
-                results = [[] for _ in range(num_chunks)]
+                results: List = [[] for _ in range(num_chunks)]
                 for future in futures:
                     clks, clk_stats, chunk_idx = future.result()
                     results[chunk_idx] = clks
@@ -322,9 +323,9 @@ def chunks_gen(iterable: Iterable[T], chunk_size: int) -> Iterator[Tuple[int, Se
 def line_count(filename: str) -> int:
     """ counts the number of lines in a textfile """
 
-    def blocks(files, size=65536):
+    def blocks(file: TextIO, size=65536):
         while True:
-            b = files.read(size)
+            b = file.read(size)
             if not b:
                 break
             yield b
