@@ -1,7 +1,7 @@
 """
 Generate CLK from data.
 """
-
+from __future__ import annotations
 import concurrent.futures
 import csv
 import logging
