@@ -30,7 +30,7 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
                schema: Schema,
                validate_data: bool,
                row_index_offset: int
-               ) -> Tuple[List[bitarray], Sequence[int]]:
+               ) -> Tuple[List[bitarray], List[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
     It also computes and outputs the Hamming weight (or popcount) -- the number of bits
@@ -41,6 +41,8 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     :param Schema schema: Schema specifying the entry formats and
             hashing settings.
     :param validate_data: validate pi data against format spec
+    :param row_index_offset: row index offset for reporting location
+            of validation errors in provided data.
     :return: A list of Bloom filters as bitarrays and a list of corresponding popcounts
     """
     validate_row_lengths(schema.fields, chunk_pii_data)

@@ -58,11 +58,11 @@ def validate_entries(fields: Sequence[FieldSpec],
     validators = [f.validate for f in fields]
 
     for i, row in enumerate(data):
-        row_index = i + row_index_offset
         for entry, v in zip(row, validators):
             try:
                 v(entry)
             except InvalidEntryError as e:
+                row_index = i + row_index_offset
                 msg = (
                     'Invalid entry in row {row_index}, column '
                     "'{column_name}'. {original_message}"
