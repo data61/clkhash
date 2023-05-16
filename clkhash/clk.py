@@ -6,9 +6,8 @@ import concurrent.futures
 import csv
 import logging
 import math
-import multiprocessing
-import queue
-from itertools import islice, chain
+from functools import partial
+from itertools import islice
 from pathlib import Path
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, Tuple, TypeVar, Union, Iterator, TextIO)
@@ -56,11 +55,12 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     return clk_data, clk_popcounts
 
 
-def hash_chunk_from_queue(pii_chunks_queue: queue.Queue[Tuple[int, Sequence[Sequence[str]]]],
-                          keys: Sequence[Sequence[bytes]],
-                          schema: Schema,
-                          validate_data: bool,
-                          chunk_size: int
+def hash_chunk_from_queue(
+          pii_chunk: Tuple[int, Sequence[Sequence[str]]],
+          keys: Sequence[Sequence[bytes]],
+          schema: Schema,
+          validate_data: bool,
+          chunk_size: int
                           ) -> Tuple[List[bitarray], Sequence[int], int]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
@@ -74,7 +74,7 @@ def hash_chunk_from_queue(pii_chunks_queue: queue.Queue[Tuple[int, Sequence[Sequ
     :param validate_data: validate pi data against format spec
     :return: A list of Bloom filters as bitarrays and a list of corresponding popcounts
     """
-    chunk_idx, pi_chunk = pii_chunks_queue.get()
+    chunk_idx, pi_chunk = pii_chunk
     clk_data, clk_popcounts = hash_chunk(pi_chunk, keys, schema, validate_data, chunk_idx + chunk_size)
     return clk_data, clk_popcounts, chunk_idx
 
@@ -89,28 +89,28 @@ def generate_clk_from_csv(filename: str,
                           ) -> List[bitarray]:
     """ Generate Bloom filters for the records of a CSV file.
 
-            This function also computes and outputs the Hamming weight
-            (a.k.a popcount -- the number of bits set to high) of the
-            generated Bloom filters.
+    This function also computes and outputs the Hamming weight
+    (a.k.a popcount -- the number of bits set to high) of the
+    generated Bloom filters.
 
-            :param filename: The name of the file of csv data to hash.
-            :param secret: A secret.
-            :param schema: Schema specifying the record formats and
-                hashing settings.
-            :param validate: Set to `False` to disable validation of
-                data against the schema. Note that this will silence
-                warnings whose aim is to keep the hashes consistent between
-                data sources; this may affect linkage accuracy.
-            :param header: Set to `False` if the CSV file does not have
-                a header. Set to `'ignore'` if the CSV file does have a
-                header but it should not be checked against the schema.
-            :param bool progress_bar: Set to `False` to disable the progress
-                bar.
-            :param int max_workers: Passed to ProcessPoolExecutor except for the
-                special case where the value is 1, in which case no processes
-                or threads are used. This may be useful or required on platforms
-                that are not capable of spawning subprocesses.
-            :return: A list of Bloom filters as bitarrays.
+    :param filename: The name of the file of csv data to hash.
+    :param secret: A secret.
+    :param schema: Schema specifying the record formats and
+        hashing settings.
+    :param validate: Set to `False` to disable validation of
+        data against the schema. Note that this will silence
+        warnings whose aim is to keep the hashes consistent between
+        data sources; this may affect linkage accuracy.
+    :param header: Set to `False` if the CSV file does not have
+        a header. Set to `'ignore'` if the CSV file does have a
+        header but it should not be checked against the schema.
+    :param bool progress_bar: Set to `False` to disable the progress
+        bar.
+    :param int max_workers: Passed to ProcessPoolExecutor except for the
+        special case where the value is 1, in which case no processes
+        or threads are used. This may be useful or required on platforms
+        that are not capable of spawning subprocesses.
+    :return: A list of Bloom filters as bitarrays.
         """
     if header not in {False, True, 'ignore'}:
         raise ValueError("header must be False, True or 'ignore' but is {!s}."
@@ -240,37 +240,30 @@ def generate_clks_from_csv_as_stream(filename: str,
     # Chunks PII
     chunk_size = 10000
     num_chunks = math.ceil((record_count if not header else record_count - 1) / chunk_size)
-    futures = []
+    results: List = []
     if num_chunks == 1:
         max_workers = 1
 
     if max_workers is None or max_workers > 1:
 
-        with multiprocessing.Manager() as manager:
-            manager = cast(multiprocessing.managers.SyncManager, manager)
-            queue_size = max_workers * 2 if max_workers is not None else multiprocessing.cpu_count() * 2
-            chunks_queue = manager.Queue(queue_size)
-            # create process that fills queue with chunks
-            chunk_producer = multiprocessing.Process(target=produce_chunks, args=(chunks_queue, filename, chunk_size, header, schema))
-            chunk_producer.start()
+        # iterator that produces in chunk_size batches
+        chunky_iterator = produce_chunks(filename, chunk_size, header, schema)
 
-            # Compute Bloom filter from the chunks and then serialise it
-            with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-                for _ in range(num_chunks):
-                    future = executor.submit(hash_chunk_from_queue, chunks_queue, key_lists, schema, validate, chunk_size)
-                    if callback is not None:
-                        unpacked_callback = cast(Callable[[int, Sequence[int]], None],
-                                                 callback)
-                        future.add_done_callback(
-                            lambda f: unpacked_callback(len(f.result()[0]),
-                                                        f.result()[1]))
-                    futures.append(future)
 
-                results: List = [[] for _ in range(num_chunks)]
-                for future in futures:
-                    clks, clk_stats, chunk_idx = future.result()
-                    results[chunk_idx] = clks
-                results = list(chain(*results))
+        # Compute Bloom filter from the chunks and then serialise it
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+            hash_one_chunk_with_config = partial(hash_chunk_from_queue, keys=key_lists, schema=schema, validate_data=validate,
+                        chunk_size=chunk_size)
+            for (clks, clk_stats, chunk_idx) in executor.map(hash_one_chunk_with_config,
+                chunky_iterator,
+                chunksize=1
+            ):
+
+                if callback is not None:
+                    callback(len(clks), clk_stats)
+
+                results.extend(clks)
+
     else:
         results = []
         with open(filename, 'rt') as f:
@@ -288,7 +281,7 @@ def generate_clks_from_csv_as_stream(filename: str,
     return results
 
 
-def produce_chunks(queue, filename, chunk_size, header, schema):
+def produce_chunks(filename, chunk_size, header, schema):
     with open(filename, 'rt') as f:
         reader = csv.reader(f)
         if header:
@@ -297,7 +290,7 @@ def produce_chunks(queue, filename, chunk_size, header, schema):
                 validate_header(schema.fields, column_names)
 
         for chunk_idx, pi_chunk in chunks_gen(reader, chunk_size):
-            queue.put((chunk_idx, pi_chunk))
+            yield (chunk_idx, pi_chunk)
 
 
 def chunks(seq: Sequence[T], chunk_size: int) -> Iterable[Sequence[T]]:
