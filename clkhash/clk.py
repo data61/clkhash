@@ -5,10 +5,13 @@ from __future__ import annotations
 import concurrent.futures
 import csv
 import logging
+import time
+from multiprocessing import Process, Queue
 import math
 from functools import partial
 from itertools import islice
 from pathlib import Path
+from threading import Thread
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, Tuple, TypeVar, Union, Iterator, TextIO)
 from bitarray import bitarray
@@ -28,7 +31,7 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
                keys: Sequence[Sequence[bytes]],
                schema: Schema,
                validate_data: bool,
-               row_index_offset: int
+               #row_index_offset: int
                ) -> Tuple[List[bitarray], List[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
@@ -46,7 +49,7 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     """
     validate_row_lengths(schema.fields, chunk_pii_data)
     if validate_data:
-        validate_entries(schema.fields, chunk_pii_data, row_index_offset=row_index_offset)
+        validate_entries(schema.fields, chunk_pii_data)
     clk_data = []
     clk_popcounts = []
     for clk in stream_bloom_filters(chunk_pii_data, keys, schema):
@@ -55,31 +58,40 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     return clk_data, clk_popcounts
 
 
+def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue):
+    for item in iterable:
+        queue.put(item)
+
+
 def hash_chunk_from_queue(
-          pii_chunk: Sequence[Sequence[str]],
-          keys: Sequence[Sequence[bytes]],
-          schema: Schema,
-          validate_data: bool,
-          chunk_size: int
-                          ) -> Tuple[List[bitarray], Sequence[int]]:
+        pii_chunk_queue: Queue[Sequence[Sequence[str]]],
+        results_queue: Queue,
+        keys: Sequence[Sequence[bytes]],
+        schema: Schema,
+        validate_data: bool,
+
+    ) -> Tuple[List[bitarray], Sequence[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
     It also computes and outputs the Hamming weight (or popcount) -- the number of bits
     set to one -- of the generated Bloom filters.
 
     :param pii_chunks_queue: Queue that provides indexed chunks of pii.
+    :param results_queue: Queue that a list of Bloom filters as bitarrays and a list of corresponding popcounts
+            will be added to on the completion of each chunk.
     :param keys: A tuple of two lists of keys used in the HMAC. Should have been created by `generate_key_lists`.
     :param Schema schema: Schema specifying the entry formats and
             hashing settings.
     :param validate_data: validate pi data against format spec
-    :return: A list of Bloom filters as bitarrays and a list of corresponding popcounts
+
     """
-    pi_chunk = pii_chunk
-    clk_data, clk_popcounts = hash_chunk(pi_chunk, keys, schema, validate_data, chunk_size)
-    return clk_data, clk_popcounts
+    while chunk_info := pii_chunk_queue.get():
+        chunk_index, chunk = chunk_info
+        clk_data, clk_popcounts = hash_chunk(chunk, keys, schema, validate_data)
+        results_queue.put((clk_data, clk_popcounts))
 
 
-def generate_clk_from_csv(filename: str,
+def generate_clk_from_csv(input_f: TextIO,
                           secret: AnyStr,
                           schema: Schema,
                           validate: bool = True,
@@ -115,36 +127,41 @@ def generate_clk_from_csv(filename: str,
     if header not in {False, True, 'ignore'}:
         raise ValueError("header must be False, True or 'ignore' but is {!s}."
                          .format(header))
-    if not Path(filename).exists():
-        raise ValueError(f"File {filename} does not exist.")
 
-    record_count = line_count(filename) if header is False else line_count(filename) - 1
+    record_count = line_count(input_f)
+
+    reader = csv.reader(input_f)
+    if header:
+        column_names = next(reader)
+        if header != 'ignore':
+            validate_header(schema.fields, column_names)
+
 
     if progress_bar:
         stats = OnlineMeanVariance()
-        with tqdm(desc="generating CLKs", total=record_count, unit='clk', unit_scale=True,
+        with tqdm(desc="generating CLKs", unit='clk', unit_scale=True,
                   postfix={'mean': stats.mean(), 'std': stats.std()}) as pbar:
             def callback(tics, clk_stats):
                 stats.update(clk_stats)
                 pbar.set_postfix(mean=stats.mean(), std=stats.std(), refresh=False)
                 pbar.update(tics)
 
-            results = generate_clks_from_csv_as_stream(filename,
+            results = generate_clks_from_csv_as_stream(reader,
                                                        record_count,
                                                        schema,
                                                        secret,
                                                        validate=validate,
-                                                       header=header,
+
                                                        callback=callback,
                                                        max_workers=max_workers
                                                        )
     else:
-        results = generate_clks_from_csv_as_stream(filename,
+        results = generate_clks_from_csv_as_stream(reader,
                                                    record_count,
                                                    schema,
                                                    secret,
                                                    validate=validate,
-                                                   header=header,
+
                                                    max_workers=max_workers
                                                    )
     return results
@@ -183,6 +200,7 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
                 future = executor.submit(
                     hash_chunk,
                     chunk, key_lists, schema, validate, chunk_idx * chunk_size)
+
                 if callback is not None:
                     unpacked_callback = cast(Callable[[int, Sequence[int]], None],
                                              callback)
@@ -209,21 +227,14 @@ def generate_clks(pii_data: Sequence[Sequence[str]],
 T = TypeVar('T')  # Declare generic type variable
 
 
-def generate_clks_from_csv_as_stream(filename: str,
+def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
                                      record_count: int,
                                      schema: Schema,
                                      secret: AnyStr,
                                      validate: bool = True,
-                                     header: Union[bool, AnyStr] = True,
                                      callback: Optional[Callable[[int, Sequence[int]], None]] = None,
                                      max_workers: Optional[int] = None
                                      ) -> List[bitarray]:
-
-    if header not in {False, True, 'ignore'}:
-        raise ValueError("header must be False, True or 'ignore' but is {!s}."
-                         .format(header))
-    if record_count + (1 if header else 0) == 0:
-        raise ValueError(f"file {filename} does not contain any records.")
 
     # Generate two keys for each identifier from the secret, one key per hashing method used when computing
     # the bloom filters.
@@ -237,58 +248,53 @@ def generate_clks_from_csv_as_stream(filename: str,
         kdf=schema.kdf_type,
         hash_algo=schema.kdf_hash)
 
-    # Chunks PII
-    chunk_size = 100_000
+    # Chunk PII
+    chunk_size = 10_000
     if record_count < chunk_size:
         max_workers = 1
 
     results: List = []
     if max_workers is None or max_workers > 1:
+        # We put chunks of raw data into the queue
+        queue = Queue(maxsize=512)
+        results_queue = Queue()
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-            # iterator that produces in chunk_size batches
-            for chunk in produce_chunks(filename, chunk_size, header, schema):
-                chunk_idx, chunk_data = chunk
-                chunk_data = chunks(chunk_data, 10_000)
-                hash_one_chunk_with_config = partial(hash_chunk_from_queue, keys=key_lists, schema=schema, validate_data=validate,
-                            chunk_size=10_000)
-                for (clks, clk_stats) in executor.map(hash_one_chunk_with_config,
-                    chunk_data,
-                    chunksize=1
-                ):
+        # producer thread that consumes the iterable and puts chunk_size batches into a fixed size queue
+        producer_thread = Thread(target=iterable_to_queue, args=(chunks_gen(data, chunk_size), queue))
+        producer_thread.start()
 
-                    if callback is not None:
-                        callback(len(clks), clk_stats)
+        consumers = []
+        for _ in range(max_workers):
+            p = Process(
+                target=hash_chunk_from_queue,
+                args=(queue, results_queue),
+                kwargs={
+                    'keys': key_lists,
+                    'schema': schema,
+                    'validate_data': validate,
+                }
+            )
+            p.start()
+            consumers.append(p)
 
-                    results.extend(clks)
+        while result := results_queue.get():
+            (clks, clk_stats) = result
+
+            if callback is not None:
+                callback(len(clks), clk_stats)
+
+            results.extend(clks)
 
     else:
         results = []
-        with open(filename, 'rt') as f:
-            reader = csv.reader(f)
-            if header:
-                column_names = next(reader)
-                if header != 'ignore':
-                    validate_header(schema.fields, column_names)
-            for chunk_idx, chunk in chunks_gen(reader, chunk_size):
-                clks, clk_stats = hash_chunk(chunk, key_lists, schema, validate, chunk_idx * chunk_size)
-                if callback is not None:
-                    unpacked_callback = cast(Callable[[int, Sequence[int]], None], callback)
-                    unpacked_callback(len(clks), clk_stats)
-                results.extend(clks)
+
+        for chunk_idx, chunk in chunks_gen(data, chunk_size):
+            clks, clk_stats = hash_chunk(chunk, key_lists, schema, validate, chunk_idx * chunk_size)
+            if callback is not None:
+                unpacked_callback = cast(Callable[[int, Sequence[int]], None], callback)
+                unpacked_callback(len(clks), clk_stats)
+            results.extend(clks)
     return results
-
-
-def produce_chunks(filename, chunk_size, header, schema):
-    with open(filename, 'rt') as f:
-        reader = csv.reader(f)
-        if header:
-            column_names = next(reader)
-            if header != 'ignore':
-                validate_header(schema.fields, column_names)
-
-        for chunk_idx, pi_chunk in chunks_gen(reader, chunk_size):
-            yield (chunk_idx, pi_chunk)
 
 
 def chunks(seq: Sequence[T], chunk_size: int) -> Iterable[Sequence[T]]:
@@ -315,7 +321,7 @@ def chunks_gen(iterable: Iterable[T], chunk_size: int) -> Iterator[Tuple[int, Se
         idx += 1
 
 
-def line_count(filename: str) -> int:
+def line_count(file: TextIO) -> int:
     """ counts the number of lines in a textfile """
 
     def blocks(file: TextIO, size=65536):
@@ -325,5 +331,7 @@ def line_count(filename: str) -> int:
                 break
             yield b
 
-    with open(filename, "r", encoding="utf-8", errors='ignore') as f:
-        return sum(bl.count("\n") for bl in blocks(f))
+
+    count = sum(bl.count("\n") for bl in blocks(file))
+    file.seek(0)
+    return count
