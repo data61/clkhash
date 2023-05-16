@@ -5,6 +5,7 @@ from __future__ import annotations
 import concurrent.futures
 import csv
 import logging
+import multiprocessing
 import time
 from multiprocessing import Process, Queue
 import math
@@ -260,6 +261,7 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
 
     results: List = []
     if max_workers is None or max_workers > 1:
+        max_workers = multiprocessing.cpu_count() if max_workers is None else max_workers
         # We put chunks of raw data into the queue
         queue = Queue(maxsize=2*max_workers)
         results_queue = Queue()
