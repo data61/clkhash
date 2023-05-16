@@ -56,12 +56,12 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
 
 
 def hash_chunk_from_queue(
-          pii_chunk: Tuple[int, Sequence[Sequence[str]]],
+          pii_chunk: Sequence[Sequence[str]],
           keys: Sequence[Sequence[bytes]],
           schema: Schema,
           validate_data: bool,
           chunk_size: int
-                          ) -> Tuple[List[bitarray], Sequence[int], int]:
+                          ) -> Tuple[List[bitarray], Sequence[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
     It also computes and outputs the Hamming weight (or popcount) -- the number of bits
@@ -74,9 +74,9 @@ def hash_chunk_from_queue(
     :param validate_data: validate pi data against format spec
     :return: A list of Bloom filters as bitarrays and a list of corresponding popcounts
     """
-    chunk_idx, pi_chunk = pii_chunk
-    clk_data, clk_popcounts = hash_chunk(pi_chunk, keys, schema, validate_data, chunk_idx + chunk_size)
-    return clk_data, clk_popcounts, chunk_idx
+    pi_chunk = pii_chunk
+    clk_data, clk_popcounts = hash_chunk(pi_chunk, keys, schema, validate_data, chunk_size)
+    return clk_data, clk_popcounts
 
 
 def generate_clk_from_csv(filename: str,
@@ -238,31 +238,29 @@ def generate_clks_from_csv_as_stream(filename: str,
         hash_algo=schema.kdf_hash)
 
     # Chunks PII
-    chunk_size = 10000
-    num_chunks = math.ceil((record_count if not header else record_count - 1) / chunk_size)
-    results: List = []
-    if num_chunks == 1:
+    chunk_size = 100_000
+    if record_count < chunk_size:
         max_workers = 1
 
+    results: List = []
     if max_workers is None or max_workers > 1:
 
-        # iterator that produces in chunk_size batches
-        chunky_iterator = produce_chunks(filename, chunk_size, header, schema)
-
-
-        # Compute Bloom filter from the chunks and then serialise it
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-            hash_one_chunk_with_config = partial(hash_chunk_from_queue, keys=key_lists, schema=schema, validate_data=validate,
-                        chunk_size=chunk_size)
-            for (clks, clk_stats, chunk_idx) in executor.map(hash_one_chunk_with_config,
-                chunky_iterator,
-                chunksize=1
-            ):
+            # iterator that produces in chunk_size batches
+            for chunk in produce_chunks(filename, chunk_size, header, schema):
+                chunk_idx, chunk_data = chunk
+                chunk_data = chunks(chunk_data, 10_000)
+                hash_one_chunk_with_config = partial(hash_chunk_from_queue, keys=key_lists, schema=schema, validate_data=validate,
+                            chunk_size=10_000)
+                for (clks, clk_stats) in executor.map(hash_one_chunk_with_config,
+                    chunk_data,
+                    chunksize=1
+                ):
 
-                if callback is not None:
-                    callback(len(clks), clk_stats)
+                    if callback is not None:
+                        callback(len(clks), clk_stats)
 
-                results.extend(clks)
+                    results.extend(clks)
 
     else:
         results = []
