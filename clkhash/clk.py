@@ -62,8 +62,9 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
 def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, num_workers):
     for item in iterable:
         queue.put(item)
+
     for _ in range(num_workers):
-        queue.put("DONE")
+        queue.put(None)
 
 
 def hash_chunk_from_queue(
@@ -89,12 +90,13 @@ def hash_chunk_from_queue(
 
     """
     while chunk_info := pii_chunk_queue.get():
-        if chunk_info == "DONE":
+        if chunk_info is None:
             break
         chunk_index, chunk = chunk_info
         clk_data, clk_popcounts = hash_chunk(chunk, keys, schema, validate_data)
         results_queue.put((clk_data, clk_popcounts, chunk_index))
-    results_queue.put("DONE")
+
+    results_queue.put(None)
 
 
 def generate_clk_from_csv(input_f: TextIO,
@@ -255,7 +257,7 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
         hash_algo=schema.kdf_hash)
 
     # Chunk PII
-    chunk_size = 10_000
+    chunk_size = 1_000
     if record_count < chunk_size:
         max_workers = 1
 
@@ -263,7 +265,7 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
     if max_workers is None or max_workers > 1:
         max_workers = multiprocessing.cpu_count() if max_workers is None else max_workers
         # We put chunks of raw data into the queue
-        queue = Queue(maxsize=2*max_workers)
+        queue = Queue(maxsize=1*max_workers)
         results_queue = Queue()
 
         # producer thread that consumes the iterable and puts chunk_size batches into a fixed size queue
@@ -287,7 +289,7 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
         finished_workers = 0
         while finished_workers < max_workers:
             result = results_queue.get()
-            if result == "DONE":
+            if result is None:
                 finished_workers += 1
             else:
                 (clks, clk_stats, chunk_idx) = result
