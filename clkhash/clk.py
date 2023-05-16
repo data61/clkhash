@@ -58,9 +58,11 @@ def hash_chunk(chunk_pii_data: Sequence[Sequence[str]],
     return clk_data, clk_popcounts
 
 
-def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue):
+def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, num_workers):
     for item in iterable:
         queue.put(item)
+    for _ in range(num_workers):
+        queue.put("DONE")
 
 
 def hash_chunk_from_queue(
@@ -86,9 +88,12 @@ def hash_chunk_from_queue(
 
     """
     while chunk_info := pii_chunk_queue.get():
+        if chunk_info == "DONE":
+            break
         chunk_index, chunk = chunk_info
         clk_data, clk_popcounts = hash_chunk(chunk, keys, schema, validate_data)
-        results_queue.put((clk_data, clk_popcounts))
+        results_queue.put((clk_data, clk_popcounts, chunk_index))
+    results_queue.put("DONE")
 
 
 def generate_clk_from_csv(input_f: TextIO,
@@ -256,11 +261,11 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
     results: List = []
     if max_workers is None or max_workers > 1:
         # We put chunks of raw data into the queue
-        queue = Queue(maxsize=512)
+        queue = Queue(maxsize=2*max_workers)
         results_queue = Queue()
 
         # producer thread that consumes the iterable and puts chunk_size batches into a fixed size queue
-        producer_thread = Thread(target=iterable_to_queue, args=(chunks_gen(data, chunk_size), queue))
+        producer_thread = Thread(target=iterable_to_queue, args=(chunks_gen(data, chunk_size), queue, max_workers))
         producer_thread.start()
 
         consumers = []
@@ -277,13 +282,18 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
             p.start()
             consumers.append(p)
 
-        while result := results_queue.get():
-            (clks, clk_stats) = result
+        finished_workers = 0
+        while finished_workers < max_workers:
+            result = results_queue.get()
+            if result == "DONE":
+                finished_workers += 1
+            else:
+                (clks, clk_stats, chunk_idx) = result
 
-            if callback is not None:
-                callback(len(clks), clk_stats)
+                if callback is not None:
+                    callback(len(clks), clk_stats)
 
-            results.extend(clks)
+                results.extend(clks)
 
     else:
         results = []
