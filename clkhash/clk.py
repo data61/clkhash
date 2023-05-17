@@ -72,7 +72,7 @@ def hash_chunk(
     return clk_data, clk_popcounts
 
 
-def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, number_of_sentinels:int =1, sentinel=None):
+def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, number_of_sentinels:int = 1, sentinel=None):
     """
     Consumes an iterable placing all items into a queue, appending sentinel values at the end.
     """
@@ -95,7 +95,7 @@ def process_chuck_with_queues(
     putting the results for each chunk onto the results queue.
 
     :param chunk_queue: The queue supplying indexed chunks of PII to be processed.
-    :param result_queue: The queue where results (a list of Bloom filters as bitarrays, a list of
+    :param results_queue: The queue where results (a list of Bloom filters as bitarrays, a list of
             corresponding popcounts, and the chunk_index) are placed upon completion of each chunk.
     :param keys: A tuple of two lists of keys used in the HMAC. These should have
             been created by the `generate_key_lists` function.
@@ -217,9 +217,6 @@ def generate_clks(
     )
 
 
-T = TypeVar("T")  # Declare generic type variable
-
-
 def generate_clks_from_csv_as_stream(
     data: Iterable[Sequence[str]],
     record_count: int,
@@ -259,7 +256,7 @@ def generate_clks_from_csv_as_stream(
         # producer thread that consumes the iterable and puts chunk_size batches into a fixed size queue
         producer_thread = Thread(
             target=iterable_to_queue,
-            args=(chunks_gen(data, chunk_size), queue, max_workers),
+            args=(chunks(data, chunk_size), queue, max_workers),
         )
         producer_thread.start()
 
@@ -288,7 +285,7 @@ def generate_clks_from_csv_as_stream(
     else:
         results = []
 
-        for chunk_idx, chunk in chunks_gen(data, chunk_size):
+        for chunk_idx, chunk in chunks(data, chunk_size):
             clks, clk_stats = hash_chunk(
                 chunk, key_lists, schema, validate, chunk_idx * chunk_size
             )
@@ -299,16 +296,19 @@ def generate_clks_from_csv_as_stream(
     return results
 
 
-def chunks(seq: Sequence[T], chunk_size: int) -> Iterable[Sequence[T]]:
-    """Split seq into chunk_size-sized chunks.
+T = TypeVar("T")  # Declare generic type variable
 
-    :param seq: A sequence to chunk.
-    :param chunk_size: The size of chunk.
-    """
-    return (seq[i : i + chunk_size] for i in range(0, len(seq), chunk_size))
+#
+# def chunks(seq: Sequence[T], chunk_size: int) -> Iterable[Sequence[T]]:
+#     """Split seq into chunk_size-sized chunks.
+#
+#     :param seq: A sequence to chunk.
+#     :param chunk_size: The size of chunk.
+#     """
+#     return (seq[i : i + chunk_size] for i in range(0, len(seq), chunk_size))
+#
 
-
-def chunks_gen(
+def chunks(
     iterable: Iterable[T], chunk_size: int
 ) -> Iterator[Tuple[int, Sequence[T]]]:
     """Batch data into chunks of length chunk_size. The last chunk may be shorter.

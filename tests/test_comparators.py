@@ -134,6 +134,7 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
         assert tokens == tokens_again, "NumericComparison should be deterministic"
         assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
+
 @mark.xfail(reason="https://github.com/data61/clkhash/issues/676")
 @given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
