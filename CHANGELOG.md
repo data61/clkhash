@@ -1,8 +1,12 @@
 ## new version
 
-## 0.18.1
+## 0.18.2
 
 - Memory and performance improvements on large files. #675
+
+## 0.18.1
+
+- Allow wider range of dependency versions
 
 ## 0.18.0
 
