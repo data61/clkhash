@@ -1,5 +1,9 @@
 ## new version
 
+## 0.18.1
+
+- Memory and performance improvements on large files. #675
+
 ## 0.18.0
 
 - Performance improvements by caching hashes of tokens. #664 
