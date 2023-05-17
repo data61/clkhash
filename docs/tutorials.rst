@@ -16,10 +16,10 @@ running the tutorials
 The notebooks can run online using binder.
 
 .. image:: https://mybinder.org/badge_logo.svg
-  :target: https://mybinder.org/v2/gh/data61/clkhash/master?filepath=docs
+  :target: https://mybinder.org/v2/gh/data61/clkhash/main?filepath=docs
 
 
-You can download the tutorials from `github <https://github.com/data61/clkhash/tree/master/docs>`_.
+You can download the tutorials from `github <https://github.com/data61/clkhash/tree/main/docs>`_.
 The dependencies are listed in `doc-requirements.txt`. Install and start Jupyter from the ``docs``
 directory::
 

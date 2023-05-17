@@ -20,7 +20,7 @@ encoding operation, along with any configuration for the low level hashing itsel
 
 The format of the linkage schema is defined in a separate
 `JSON Schema <https://json-schema.org/specification.html>`_ specification document -
-`schemas/v3.json <https://github.com/data61/clkhash/blob/master/clkhash/schemas/v3.json>`_.
+`schemas/v3.json <https://github.com/data61/clkhash/blob/main/clkhash/schemas/v3.json>`_.
 
 Earlier versions of the linkage schema will continue to work, internally they
 are converted to the latest version (currently ``v3``).

@@ -6,7 +6,7 @@
 
 <div align="center">
 
-[![codecov](https://codecov.io/gh/data61/clkhash/branch/master/graph/badge.svg)](https://codecov.io/gh/data61/clkhash)
+[![codecov](https://codecov.io/gh/data61/clkhash/branch/main/graph/badge.svg)](https://codecov.io/gh/data61/clkhash)
 [![Documentation Status](https://readthedocs.org/projects/clkhash/badge/?version=latest)](http://clkhash.readthedocs.io/en/latest/?badge=latest)
 [![Unit Testing](https://github.com/data61/clkhash/actions/workflows/unittests.yml/badge.svg)](https://github.com/data61/clkhash/actions/workflows/unittests.yml)
 [![Typechecking](https://github.com/data61/clkhash/actions/workflows/typechecking.yml/badge.svg)](https://github.com/data61/clkhash/actions/workflows/typechecking.yml)
