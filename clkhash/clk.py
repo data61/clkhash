@@ -6,12 +6,8 @@ import concurrent.futures
 import csv
 import logging
 import multiprocessing
-import time
 from multiprocessing import Process, Queue
-import math
-from functools import partial
 from itertools import islice
-from pathlib import Path
 from threading import Thread
 from typing import (AnyStr, Callable, cast, Iterable, List, Optional,
                     Sequence, Tuple, TypeVar, Union, Iterator, TextIO)
@@ -19,6 +15,7 @@ from bitarray import bitarray
 from tqdm import tqdm
 
 from clkhash.bloomfilter import stream_bloom_filters
+from clkhash.concurent_helpers import queue_to_sorted_iterable
 from clkhash.key_derivation import generate_key_lists
 from clkhash.schema import Schema
 from clkhash.stats import OnlineMeanVariance
@@ -257,7 +254,7 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
         hash_algo=schema.kdf_hash)
 
     # Chunk PII
-    chunk_size = 1_000
+    chunk_size = 10_000
     if record_count < chunk_size:
         max_workers = 1
 
@@ -286,18 +283,14 @@ def generate_clks_from_csv_as_stream(data: Iterable[Sequence[str]],
             p.start()
             consumers.append(p)
 
-        finished_workers = 0
-        while finished_workers < max_workers:
-            result = results_queue.get()
-            if result is None:
-                finished_workers += 1
-            else:
-                (clks, clk_stats, chunk_idx) = result
+        for result in queue_to_sorted_iterable(results_queue, max_workers):
+            (clks, clk_stats, chunk_idx) = result
 
-                if callback is not None:
-                    callback(len(clks), clk_stats)
+            if callback is not None:
+                callback(len(clks), clk_stats)
 
-                results.extend(clks)
+            results.extend(clks)
+
 
     else:
         results = []
