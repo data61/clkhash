@@ -43,7 +43,7 @@ def validate_row_lengths(fields: Sequence[FieldSpec],
 
 def validate_entries(fields: Sequence[FieldSpec],
                      data: Sequence[Sequence[str]],
-                     row_index_offset: int = 0
+                     row_index_offset: int = None
                      ) -> None:
     """ Validate the `data` entries according to the specification in
         `fields`.
@@ -62,7 +62,7 @@ def validate_entries(fields: Sequence[FieldSpec],
             try:
                 v(entry)
             except InvalidEntryError as e:
-                row_index = i + row_index_offset
+                row_index = i + row_index_offset if row_index_offset is not None else i
                 msg = (
                     'Invalid entry in row {row_index}, column '
                     "'{column_name}'. {original_message}"

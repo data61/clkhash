@@ -44,9 +44,9 @@ def hash_chunk(
     chunk_pii_data: Sequence[Sequence[str]],
     keys: Sequence[Sequence[bytes]],
     schema: Schema,
-    validate_data: bool,
-    row_index_offset: int,
-) -> Tuple[List[bitarray], List[int]]:
+    validate_data: bool = True,
+    row_index_offset: Optional[int] = None,
+) -> Tuple[List[bitarray], list[int]]:
     """
     Generate Bloom filters (ie hash) from chunks of PII.
     It also computes and outputs the Hamming weight (or popcount) -- the number of bits
@@ -72,40 +72,45 @@ def hash_chunk(
     return clk_data, clk_popcounts
 
 
-def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, num_workers):
+def iterable_to_queue(iterable: Iterable[Sequence], queue: Queue, number_of_sentinels:int =1, sentinel=None):
+    """
+    Consumes an iterable placing all items into a queue, appending sentinel values at the end.
+    """
     for item in iterable:
         queue.put(item)
 
-    for _ in range(num_workers):
-        queue.put(None)
+    for _ in range(number_of_sentinels):
+        queue.put(sentinel)
 
 
-def hash_chunk_from_queue(
-    pii_chunk_queue: Queue[Sequence[Sequence[str]]],
-    results_queue: Queue,
+def process_chuck_with_queues(
+    chunk_queue: Queue[Optional[Tuple[int, Sequence[Sequence[str]]]]],
+    results_queue: Queue[Optional[Tuple[list[bitarray], list[int], int]]],
     keys: Sequence[Sequence[bytes]],
     schema: Schema,
     validate_data: bool,
-) -> Tuple[List[bitarray], Sequence[int]]:
+):
     """
-    Generate Bloom filters (ie hash) from chunks of PII.
-    It also computes and outputs the Hamming weight (or popcount) -- the number of bits
-    set to one -- of the generated Bloom filters.
+    Encodes chunks of Personally Identifiable Information (PII) from a source queue,
+    putting the results for each chunk onto the results queue.
 
-    :param pii_chunks_queue: Queue that provides indexed chunks of pii.
-    :param results_queue: Queue that a list of Bloom filters as bitarrays and a list of corresponding popcounts
-            will be added to on the completion of each chunk.
-    :param keys: A tuple of two lists of keys used in the HMAC. Should have been created by `generate_key_lists`.
-    :param Schema schema: Schema specifying the entry formats and
-            hashing settings.
-    :param validate_data: validate pi data against format spec
+    :param chunk_queue: The queue supplying indexed chunks of PII to be processed.
+    :param result_queue: The queue where results (a list of Bloom filters as bitarrays, a list of
+            corresponding popcounts, and the chunk_index) are placed upon completion of each chunk.
+    :param keys: A tuple of two lists of keys used in the HMAC. These should have
+            been created by the `generate_key_lists` function.
+    :param schema: The schema defining the entry formats and hashing settings.
+    :param validate_data: Whether to validate the PII data against the format specification.
 
+    The function will stop processing once it encounters a `None` in the `chunk_queue`,
+    which is added to the result queue.
     """
-    while chunk_info := pii_chunk_queue.get():
+    while chunk_info := chunk_queue.get():
         if chunk_info is None:
             break
         chunk_index, chunk = chunk_info
-        clk_data, clk_popcounts = hash_chunk(chunk, keys, schema, validate_data)
+        offset = chunk_index * len(chunk)
+        clk_data, clk_popcounts = hash_chunk(chunk, keys, schema, validate_data, offset)
         results_queue.put((clk_data, clk_popcounts, chunk_index))
 
     results_queue.put(None)
@@ -248,8 +253,8 @@ def generate_clks_from_csv_as_stream(
             multiprocessing.cpu_count() if max_workers is None else max_workers
         )
         # We put chunks of raw data into the queue
-        queue = Queue(maxsize=1 * max_workers)
-        results_queue = Queue()
+        queue: Queue[Tuple[int, Sequence[Sequence[str]]]] = Queue(maxsize=1 * max_workers)
+        results_queue: Queue[Optional[Tuple[int, List[bitarray], int]]] = Queue()
 
         # producer thread that consumes the iterable and puts chunk_size batches into a fixed size queue
         producer_thread = Thread(
@@ -261,7 +266,7 @@ def generate_clks_from_csv_as_stream(
         consumers = []
         for _ in range(max_workers):
             p = Process(
-                target=hash_chunk_from_queue,
+                target=process_chuck_with_queues,
                 args=(queue, results_queue),
                 kwargs={
                     "keys": key_lists,

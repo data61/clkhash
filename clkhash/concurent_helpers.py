@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import heapq
 from multiprocessing import Queue
-from typing import Iterator, Tuple
+from typing import Iterator, Tuple, List, TypeVar, Optional
 
+A = TypeVar('A')
+B = TypeVar('B')
+ENCODED_CHUNK = Tuple[A, B, int]
 
-def queue_to_sorted_iterable(queue: Queue, sentinel_count: int) -> Iterator[Tuple[int, int, int]]:
+def queue_to_sorted_iterable(queue: Queue[Optional[ENCODED_CHUNK]], sentinel_count: int) -> Iterator[ENCODED_CHUNK]:
     """
     Consume items from a multiprocessing Queue and yield them in order of their index.
 
@@ -23,7 +26,7 @@ def queue_to_sorted_iterable(queue: Queue, sentinel_count: int) -> Iterator[Tupl
     memory usage as low as possible by only storing out-of-order items.
     """
     # keep the out of order items from the queue in a heap
-    heap = []
+    heap: List[Tuple[int, ENCODED_CHUNK]] = []
     next_index = 0
     seen_sentinels = 0
     while seen_sentinels < sentinel_count:
