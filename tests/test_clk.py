@@ -39,7 +39,8 @@ class TestComplexSchemaChanges(unittest.TestCase):
         "JOHN HOWARD, ESQ.",stv534,1992-02-29,M,16
         JULIA,alp423,0123-01-12,F,0
         """)
-        self.CSV_FILE = tempfile_from_content(CSV_INPUT)
+        self.CSV_FILE_NAME = tempfile_from_content(CSV_INPUT)
+        self.CSV_FILE = open(self.CSV_FILE_NAME, 'rt')
         self.PI_INPUT = [["name", "id", "dob", "gender", "children"],
                          ["KÉVIN", "kev007", "1963-12-13", "M", "1"],
                          ["JOHN HOWARD, ESQ.", "stv534", "1992-02-29", "M", "16"],
@@ -108,7 +109,7 @@ class TestComplexSchemaChanges(unittest.TestCase):
 
     def tearDown(self):
         try:
-            os.remove(self.CSV_FILE)
+            os.remove(self.CSV_FILE_NAME)
         except Exception:
             pass
 
@@ -211,7 +212,7 @@ class TestHeaderChecking(unittest.TestCase):
 
     def test_header(self):
         out = clk.generate_clk_from_csv(
-            self.csv_correct_header,
+            open(self.csv_correct_header, 'rt'),
             'open sesame',
             self.schema,
             header=True,
@@ -221,7 +222,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
-                self.csv_incorrect_header_name,
+                open(self.csv_incorrect_header_name, 'rt'),
                 'open sesame',
                 self.schema,
                 header=True,
@@ -229,7 +230,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
-                self.csv_incorrect_count,
+                open(self.csv_incorrect_count, 'rt'),
                 'open sesame',
                 self.schema,
                 header=True,
@@ -237,7 +238,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
-                self.csv_no_header,
+                open(self.csv_no_header, 'rt'),
                 'open sesame',
                 self.schema,
                 header=True,
@@ -245,7 +246,7 @@ class TestHeaderChecking(unittest.TestCase):
 
     def test_ignore_header(self):
         out = clk.generate_clk_from_csv(
-            self.csv_correct_header,
+            open(self.csv_correct_header,'rt'),
             'open sesame',
             self.schema,
             header='ignore',
@@ -253,7 +254,7 @@ class TestHeaderChecking(unittest.TestCase):
         self.assertEqual(len(out), 3)
 
         out = clk.generate_clk_from_csv(
-            self.csv_incorrect_header_name,
+            open(self.csv_incorrect_header_name,'rt'),
             'open sesame',
             self.schema,
             header='ignore',
@@ -261,7 +262,7 @@ class TestHeaderChecking(unittest.TestCase):
         self.assertEqual(len(out), 3)
 
         out = clk.generate_clk_from_csv(
-            self.csv_incorrect_count,
+            open(self.csv_incorrect_count, 'rt'),
             'open sesame',
             self.schema,
             header='ignore',
@@ -269,7 +270,7 @@ class TestHeaderChecking(unittest.TestCase):
         self.assertEqual(len(out), 3)
 
         out = clk.generate_clk_from_csv(
-            self.csv_no_header,
+            open(self.csv_no_header, 'rt'),
             'open sesame',
             self.schema,
             header='ignore',
@@ -279,7 +280,7 @@ class TestHeaderChecking(unittest.TestCase):
     def test_no_header(self):
         with self.assertRaises(validate_data.EntryError):
             clk.generate_clk_from_csv(
-                self.csv_correct_header,
+                open(self.csv_correct_header, 'rt'),
                 'open sesame',
                 self.schema,
                 header=False,
@@ -287,7 +288,7 @@ class TestHeaderChecking(unittest.TestCase):
 
         with self.assertRaises(validate_data.EntryError):
             clk.generate_clk_from_csv(
-                self.csv_incorrect_header_name,
+                open(self.csv_incorrect_header_name, 'rt'),
                 'open sesame',
                 self.schema,
                 header=False,
@@ -295,14 +296,14 @@ class TestHeaderChecking(unittest.TestCase):
 
         with self.assertRaises(validate_data.FormatError):
             clk.generate_clk_from_csv(
-                self.csv_incorrect_count,
+                open(self.csv_incorrect_count, 'rt'),
                 'open sesame',
                 self.schema,
                 header=False,
                 progress_bar=False)
 
         out = clk.generate_clk_from_csv(
-            self.csv_no_header,
+            open(self.csv_no_header, 'rt'),
             'open sesame',
             self.schema,
             header=False,
