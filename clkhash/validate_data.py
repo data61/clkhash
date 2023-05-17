@@ -43,7 +43,7 @@ def validate_row_lengths(fields: Sequence[FieldSpec],
 
 def validate_entries(fields: Sequence[FieldSpec],
                      data: Sequence[Sequence[str]],
-                     row_index_offset: int = None
+                     row_index_offset: Optional[int] = None
                      ) -> None:
     """ Validate the `data` entries according to the specification in
         `fields`.
