@@ -5,7 +5,7 @@ import math
 import pytest
 from hypothesis import given, assume
 from hypothesis.strategies import text, integers, floats
-from pytest import fixture
+from pytest import fixture, mark
 
 from clkhash import comparators
 from clkhash.comparators import NgramComparison, NonComparison, ExactComparison, NumericComparison
@@ -135,6 +135,7 @@ def test_numeric_properties(thresh_dist, resolution, precision, candidate):
         assert len(set(tokens)) == 2 * resolution + 1, "tokens should be unique"
 
 
+@mark.xfail(reason="https://github.com/data61/clkhash/issues/676")
 @given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),
@@ -165,6 +166,7 @@ def test_numeric_overlaps_around_threshdistance(thresh_dist, resolution, precisi
         cand_tokens) - 2, "numbers that are not more than the modulus apart have all or all - 2 tokens in common"
 
 
+@mark.xfail(reason="https://github.com/data61/clkhash/issues/676")
 @given(thresh_dist=floats(allow_infinity=False, allow_nan=False, min_value=0.0, max_value=1e20, exclude_min=True),
        resolution=integers(min_value=1, max_value=256),
        precision=integers(min_value=0, max_value=20),

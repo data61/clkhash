@@ -21,7 +21,7 @@ def compute_hash_speed(num: int, quiet: bool = False, max_workers=None) -> float
         for person in namelist.names:
             print(','.join([str(field) for field in person]), file=f)
 
-    with open(tmpfile_name) as f:
+    with open(tmpfile_name, 'rt') as f:
         start = timer()
         generate_clk_from_csv(f, 'secret', schema, progress_bar=not quiet, max_workers=max_workers)
         end = timer()

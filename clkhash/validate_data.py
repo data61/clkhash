@@ -42,7 +42,8 @@ def validate_row_lengths(fields: Sequence[FieldSpec],
 
 
 def validate_entries(fields: Sequence[FieldSpec],
-                     data: Sequence[Sequence[str]]
+                     data: Sequence[Sequence[str]],
+                     row_index_offset: Optional[int] = None
                      ) -> None:
     """ Validate the `data` entries according to the specification in
         `fields`.
@@ -50,6 +51,7 @@ def validate_entries(fields: Sequence[FieldSpec],
         :param fields: The `FieldSpec` objects forming the
             specification.
         :param data: The data to validate.
+        :param row_index_offset: row index offset for provided data
         :raises EntryError: When an entry is not valid according to its
             :class:`FieldSpec`.
     """
@@ -60,16 +62,17 @@ def validate_entries(fields: Sequence[FieldSpec],
             try:
                 v(entry)
             except InvalidEntryError as e:
+                row_index = i + row_index_offset if row_index_offset is not None else i
                 msg = (
                     'Invalid entry in row {row_index}, column '
                     "'{column_name}'. {original_message}"
                 ).format(
-                    row_index=i,
+                    row_index=row_index,
                     column_name=cast(FieldSpec, e.field_spec).identifier,
                     original_message=e.args[0])
                 e_invalid_entry = EntryError(msg)
                 e_invalid_entry.field_spec = e.field_spec
-                e_invalid_entry.row_index = i
+                e_invalid_entry.row_index = row_index
                 raise e_invalid_entry from e
 
 
