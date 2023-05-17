@@ -167,6 +167,7 @@ def generate_clk_from_csv(
         stats = OnlineMeanVariance()
         with tqdm(
             desc="generating CLKs",
+            total=record_count,
             unit="clk",
             unit_scale=True,
             postfix={"mean": stats.mean(), "std": stats.std()},
