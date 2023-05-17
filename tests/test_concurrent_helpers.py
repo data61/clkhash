@@ -30,6 +30,20 @@ class TestIterableToQueue(unittest.TestCase):
         with self.assertRaises(Exception):
             queue.get(timeout=0.1)
 
+    def test_iterable_to_queue_keeps_order(self):
+        queue = Queue()
+        num_items = 100
+        iterable_to_queue([[num] for num in range(num_items)], queue)
+        last_result = -1
+        for _ in range(num_items):
+            result = queue.get()[0]
+            assert result > last_result
+            last_result = result
+        result = queue.get()  # Get sentinel
+        assert result is None
+        with self.assertRaises(Exception):
+            queue.get(timeout=0.1)
+
 class TestQueueToSortedIterable(unittest.TestCase):
 
     def test_queue_to_sorted_iterable_no_items(self):
