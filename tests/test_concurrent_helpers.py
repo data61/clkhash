@@ -2,8 +2,33 @@ import unittest
 from queue import Queue
 from hypothesis import given, strategies as st
 
+from clkhash.clk import iterable_to_queue
 from clkhash.concurent_helpers import queue_to_sorted_iterable
 
+
+class TestIterableToQueue(unittest.TestCase):
+
+    def test_iterable_to_queue_adds_sentinel(self):
+        queue = Queue()
+
+        iterable_to_queue([], queue)
+        result = queue.get()  # Get sentinel
+        assert result is None
+        # ensure a queue.get times out - meaning no more items
+        with self.assertRaises(Exception):
+            queue.get(timeout=0.1)
+
+
+    def test_iterable_to_queue_adds_multiple_sentinels(self):
+        queue = Queue()
+
+        iterable_to_queue([], queue, 2)
+        for _ in range(2):
+            result = queue.get()  # Get sentinel
+            assert result is None
+        # ensure a queue.get times out - meaning no more items
+        with self.assertRaises(Exception):
+            queue.get(timeout=0.1)
 
 class TestQueueToSortedIterable(unittest.TestCase):
 
